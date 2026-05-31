@@ -61,11 +61,31 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
 
 
+def _sanitize_db_error(exc: Exception) -> str:
+    msg = str(exc).split("\n")[0][:280]
+    for token in ("password", "postgresql", "asyncpg", "://"):
+        if token in msg.lower():
+            return "Database connection refused or authentication failed. Reset Supabase DB password, copy fresh pooler URI to Render, then Manual Deploy."
+    return msg or "Unknown database connection error"
+
+
 async def check_database_connection() -> bool:
+    ok, _ = await check_database_connection_detailed()
+    return ok
+
+
+async def check_database_connection_detailed() -> tuple[bool, str | None]:
     try:
         factory = get_session_factory()
         async with factory() as session:
             await session.execute(text("SELECT 1"))
-        return True
-    except Exception:
-        return False
+        return True, None
+    except Exception as exc:
+        return False, _sanitize_db_error(exc)
+
+
+def reset_database_engine() -> None:
+    """Drop cached engine after DATABASE_URL changes (requires redeploy on Render)."""
+    global _engine, _session_factory
+    _engine = None
+    _session_factory = None

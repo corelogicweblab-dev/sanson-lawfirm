@@ -39,7 +39,12 @@ export default function LoginPage() {
           cache: "no-store",
         });
         const body = (await r.json()) as {
-          data?: { database?: string; database_url_issues?: string[] };
+          data?: {
+            database?: string;
+            database_url_issues?: string[];
+            database_error?: string | null;
+            hint?: string | null;
+          };
         };
         if (body?.data?.database === "connected") {
           setApiStatus(null);
@@ -48,12 +53,14 @@ export default function LoginPage() {
         const issues = body?.data?.database_url_issues ?? [];
         if (issues.length > 0) {
           setApiStatus(
-            `Mali ang DATABASE_URL sa Render: ${issues[0]} Ilagay ang password pagkatapos ng colon (:), hindi tuldok (.).`
+            `Mali ang format ng DATABASE_URL: ${issues[0]} Dapat colon (:) bago password, hindi tuldok (.).`
           );
           return;
         }
+        const detail = body?.data?.database_error || body?.data?.hint;
         setApiStatus(
-          "Database offline sa Render. Kopyahin ang buong URI mula Supabase → Database → Transaction pooler (port 6543)."
+          detail ||
+            "Database offline sa Render. I-save ang DATABASE_URL → Manual Deploy → hintayin Live, tapos refresh."
         );
       } catch {
         if (attempt < 2) {
