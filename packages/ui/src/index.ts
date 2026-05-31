@@ -22,7 +22,7 @@ export const theme = {
     accent: "#EC4899",
     accentLight: "#F472B6",
     text: "#ffffff",
-    muted: "#FCE7F3",
+    muted: "#D4D4D8",
     border: "rgba(255, 255, 255, 0.15)",
   },
 } as const;

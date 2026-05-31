@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function ParalegalWorkflowStrip({ className }: { className?: string }) {
   return (
     <div className={cn("sanson-panel overflow-x-auto p-4", className)}>
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-pink-300">
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-300">
         Paralegal-centric case workflow
       </p>
       <ol className="flex min-w-max gap-2">

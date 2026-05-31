@@ -13,7 +13,8 @@
 
   --background: #3d0f28;
   --foreground: #ffffff;
-  --muted: #fce7f3;
+  --muted: #d4d4d8;
+  --muted-accent: #fce7f3;
   --accent: var(--pink-primary);
   --accent-light: var(--pink-luxury);
   --surface: rgba(8, 8, 8, 0.55);
@@ -784,6 +785,56 @@ body {
     0 24px 64px rgba(0, 0, 0, 0.5),
     0 0 32px rgba(255, 79, 163, 0.12);
   border-color: var(--glass-border) !important;
+}
+
+/* Marketing / landing — readable on pink animated background */
+.sanson-hero-panel {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 48rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--glass-border);
+  background: rgba(8, 8, 8, 0.78);
+  padding: 1.75rem 1.25rem;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 640px) {
+  .sanson-hero-panel {
+    padding: 2.5rem 2rem;
+  }
+}
+
+.sanson-hero-panel h1,
+.sanson-hero-panel h2 {
+  color: var(--text-primary);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+.sanson-hero-panel p {
+  color: var(--text-secondary);
+}
+
+.sanson-hero-accent {
+  color: #fdf2f8;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
+}
+
+.sanson-glass-header .font-bold,
+.sanson-glass-header nav {
+  color: var(--text-primary);
+}
+
+.sanson-marketing-badge {
+  border-color: var(--glass-border);
+  background: rgba(8, 8, 8, 0.55);
+  color: var(--text-secondary);
+}
+
+.sanson-marketing-badge svg {
+  color: var(--pink-luxury);
 }
 
 [data-motion-tier="reduced"] .sanson-aurora,
