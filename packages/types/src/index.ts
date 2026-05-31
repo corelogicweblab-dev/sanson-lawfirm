@@ -190,7 +190,14 @@ export interface CaseStatus {
   is_terminal: boolean;
 }
 
-export type CaseSourceType = "LEGACY" | "AI_INTAKE" | "MANUAL";
+export type CaseSourceType =
+  | "LEGACY"
+  | "AI_INTAKE"
+  | "MANUAL"
+  | "WALK_IN"
+  | "REFERRAL"
+  | "PHONE_INQUIRY"
+  | "EMAIL_INQUIRY";
 
 export interface CaseItem {
   id: string;
@@ -209,6 +216,8 @@ export interface CaseItem {
   closed_at: string | null;
   created_at: string;
   updated_at: string;
+  master_data?: Record<string, unknown>;
+  parties?: Array<Record<string, unknown>>;
 }
 
 export interface TaskItem {

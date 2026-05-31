@@ -71,6 +71,11 @@ async def upload_document(
     ip: str | None = Depends(get_client_ip),
     ua: str | None = Depends(get_user_agent),
 ):
+    if user.role_name == "LAWYER":
+        raise HTTPException(
+            status_code=403,
+            detail="Lawyers review documents only. Paralegals manage case file uploads.",
+        )
     data = await file.read()
     svc = DocumentService(db)
     try:

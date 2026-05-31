@@ -31,6 +31,7 @@ import {
   SlidersHorizontal,
   Rocket,
   FolderInput,
+  FolderPlus,
   Server,
   Bot,
 } from "lucide-react";
@@ -60,24 +61,25 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Documents", href: "/dashboard/client/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
   ],
   LAWYER: [
-    { label: "Dashboard", href: "/dashboard/lawyer", icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
-    { label: "Requests", href: "/dashboard/lawyer/requests", icon: <ClipboardList className="h-4 w-4 shrink-0" /> },
+    { label: "Review Hub", href: "/dashboard/lawyer", icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
+    { label: "Approvals", href: "/dashboard/lawyer/approvals", icon: <Scale className="h-4 w-4 shrink-0" /> },
+    { label: "My Cases", href: "/dashboard/lawyer/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
     { label: "Consultations", href: "/dashboard/lawyer/consultations", icon: <CalendarDays className="h-4 w-4 shrink-0" /> },
-    { label: "Cases", href: "/dashboard/lawyer/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
-    { label: "Tasks", href: "/dashboard/lawyer/tasks", icon: <ListTodo className="h-4 w-4 shrink-0" /> },
-    { label: "Documents", href: "/dashboard/lawyer/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
-    { label: "Evidence", href: "/dashboard/lawyer/evidence", icon: <Shield className="h-4 w-4 shrink-0" /> },
+    { label: "Review Documents", href: "/dashboard/lawyer/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
+    { label: "Legal Notes", href: "/dashboard/lawyer/tasks", icon: <ListTodo className="h-4 w-4 shrink-0" /> },
     { label: "Search", href: "/dashboard/lawyer/search", icon: <Search className="h-4 w-4 shrink-0" /> },
     { label: "Knowledge", href: "/dashboard/lawyer/knowledge", icon: <BookOpen className="h-4 w-4 shrink-0" /> },
   ],
   PARALEGAL: [
-    { label: "Dashboard", href: "/dashboard/paralegal", icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
-    { label: "Case Management", href: "/dashboard/paralegal/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
+    { label: "Operations", href: "/dashboard/paralegal", icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
+    { label: "Intake Queue", href: "/dashboard/paralegal/intake", icon: <ClipboardList className="h-4 w-4 shrink-0" /> },
+    { label: "Case Repository", href: "/dashboard/paralegal/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
+    { label: "New Case", href: "/dashboard/paralegal/cases/new", icon: <FolderPlus className="h-4 w-4 shrink-0" /> },
+    { label: "Documents & Files", href: "/dashboard/paralegal/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
+    { label: "Calendar", href: "/dashboard/paralegal/calendar", icon: <CalendarDays className="h-4 w-4 shrink-0" /> },
+    { label: "Legacy Migration", href: "/dashboard/paralegal/migration-center", icon: <FolderInput className="h-4 w-4 shrink-0" /> },
     { label: "Tasks", href: "/dashboard/paralegal/tasks", icon: <ListTodo className="h-4 w-4 shrink-0" /> },
-    { label: "Case Migration Center", href: "/dashboard/paralegal/migration-center", icon: <FolderInput className="h-4 w-4 shrink-0" /> },
-    { label: "Documents", href: "/dashboard/paralegal/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
     { label: "Search", href: "/dashboard/lawyer/search", icon: <Search className="h-4 w-4 shrink-0" /> },
-    { label: "Knowledge", href: "/dashboard/lawyer/knowledge", icon: <BookOpen className="h-4 w-4 shrink-0" /> },
   ],
   ADMIN: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
@@ -85,6 +87,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Appointments", href: "/dashboard/admin/appointments", icon: <CalendarDays className="h-4 w-4 shrink-0" /> },
     { label: "Cases", href: "/dashboard/admin/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
     { label: "Case Migration", href: "/dashboard/paralegal/migration-center", icon: <FolderInput className="h-4 w-4 shrink-0" /> },
+    { label: "Documents", href: "/dashboard/paralegal/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
     { label: "Users", href: "/dashboard/admin/users", icon: <Users className="h-4 w-4 shrink-0" /> },
     { label: "Roles", href: "/dashboard/admin/roles", icon: <Shield className="h-4 w-4 shrink-0" /> },
     { label: "System Health", href: "/dashboard/admin/system-health", icon: <Activity className="h-4 w-4 shrink-0" /> },
@@ -151,7 +154,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
     breadcrumbs?.length ? breadcrumbs[breadcrumbs.length - 1].label : title;
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] overflow-x-hidden bg-[var(--background)]">
+    <div className="flex min-h-screen min-h-[100dvh] overflow-x-hidden bg-transparent">
       {sidebarOpen && (
         <button
           type="button"
@@ -162,7 +165,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/10 bg-zinc-950/98 backdrop-blur-md safe-top",
+          "sanson-glass-sidebar fixed inset-y-0 left-0 z-50 flex flex-col safe-top",
           "w-[min(18rem,85vw)] transition-[transform,width] duration-200 ease-out",
           "lg:static lg:z-auto lg:translate-x-0",
           sidebarCollapsed ? "lg:w-[4.5rem]" : "lg:w-64 xl:w-72",
@@ -247,7 +250,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="safe-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-white/10 bg-zinc-950/90 px-3 backdrop-blur-md sm:h-16 sm:gap-3 sm:px-4 lg:px-6">
+        <header className="sanson-glass-header safe-top sticky top-0 z-30 mx-2 mt-2 flex h-14 shrink-0 items-center gap-2 rounded-2xl px-3 sm:mx-3 sm:h-16 sm:gap-3 sm:px-4 lg:px-6">
           <button
             type="button"
             className="shrink-0 rounded-lg p-2 lg:hidden"
@@ -324,7 +327,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
                     className="fixed inset-0 z-40"
                     onClick={() => setProfileOpen(false)}
                   />
-                  <div className="sanson-notification-enter absolute right-0 z-50 mt-2 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-xl">
+                  <div className="sanson-notification-enter sanson-glass absolute right-0 z-50 mt-2 w-[min(14rem,calc(100vw-2rem))] p-2 shadow-[var(--glow-pink)]">
                     <p className="truncate px-3 py-2 text-sm font-medium text-white">{displayName}</p>
                     <p className="truncate px-3 pb-2 text-xs text-zinc-400">{user?.email}</p>
                     <p className="px-3 pb-2 text-xs text-pink-400">{user?.role?.display_name}</p>

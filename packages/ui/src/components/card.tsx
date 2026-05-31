@@ -11,7 +11,7 @@ export function Card({ className, interactive = false, ...props }: CardProps) {
     <div
       className={cn(
         glassSurface(),
-        "shadow-lg shadow-black/15",
+        "shadow-[0_8px_32px_rgba(190,24,93,0.18)]",
         interactive && motionCard(),
         className
       )}

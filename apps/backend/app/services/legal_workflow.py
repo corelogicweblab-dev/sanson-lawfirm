@@ -349,7 +349,7 @@ class LegalWorkflowService:
     async def get_case(self, case_id: UUID) -> Case | None:
         result = await self.db.execute(
             select(Case)
-            .options(selectinload(Case.status))
+            .options(selectinload(Case.status), selectinload(Case.parties))
             .where(Case.id == case_id, Case.deleted_at.is_(None))
         )
         return result.scalar_one_or_none()

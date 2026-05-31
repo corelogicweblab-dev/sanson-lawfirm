@@ -11,9 +11,9 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const fieldBase =
-  "flex h-10 w-full rounded-xl border border-white/10 bg-white/5 text-sm text-white transition-all duration-200";
+  "sanson-input-glow flex h-10 w-full rounded-xl border border-white/15 bg-white/[0.08] text-sm text-white transition-all duration-200";
 const fieldFocus =
-  "focus-within:outline-none focus-within:ring-2 focus-within:ring-pink-500/40 focus-within:border-pink-500/30";
+  "focus-within:outline-none focus-within:ring-2 focus-within:ring-[#FF4FA3]/45 focus-within:border-[#F472B6]/50";
 const inputInner =
   "min-w-0 flex-1 border-0 bg-transparent px-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50";
 

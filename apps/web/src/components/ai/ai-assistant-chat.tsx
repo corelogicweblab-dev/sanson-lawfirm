@@ -43,7 +43,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-lg backdrop-blur-md",
             isClient && "rounded-br-md bg-pink-500/20 text-white",
-            !isClient && !isSystem && "rounded-bl-md border border-white/10 bg-white/5 text-zinc-100",
+            !isClient && !isSystem && "rounded-bl-md border sanson-panel text-zinc-100",
             isSystem && "border border-violet-500/20 bg-violet-500/10 text-violet-100"
           )}
         >
@@ -188,7 +188,7 @@ export function AiAssistantChat() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr] xl:grid-cols-[minmax(0,260px)_1fr_minmax(0,280px)]">
-      <Card className="order-2 border-white/10 bg-white/5 p-3 backdrop-blur-md lg:order-1">
+      <Card className="order-2 sanson-panel p-3 backdrop-blur-md lg:order-1">
         <Button
           className="mb-3 w-full gap-2"
           onClick={startNewSession}
@@ -253,7 +253,7 @@ export function AiAssistantChat() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/20">
                 <Bot className="h-4 w-4 text-violet-300" />
               </div>
-              <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-zinc-100">
+              <div className="max-w-[85%] rounded-2xl rounded-bl-md border sanson-panel px-4 py-2.5 text-sm text-zinc-100">
                 {streamBuffer}
                 <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-pink-400" />
               </div>
@@ -277,7 +277,7 @@ export function AiAssistantChat() {
                   <button
                     key={q}
                     type="button"
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300 hover:border-pink-500/30 hover:text-pink-200"
+                    className="rounded-full border sanson-panel px-3 py-1 text-xs text-zinc-300 hover:border-pink-500/30 hover:text-pink-200"
                     onClick={() => sendMessage(q)}
                   >
                     {q.length > 60 ? `${q.slice(0, 60)}…` : q}
@@ -346,7 +346,7 @@ export function AiAssistantChat() {
 
       <div className="order-3 space-y-4">
         <LegalDisclaimer compact />
-        <Card className="border-white/10 bg-white/5 p-4 backdrop-blur-md">
+        <Card className="sanson-panel p-4 backdrop-blur-md">
           <h3 className="mb-3 text-sm font-semibold text-white">Intake insights</h3>
           {!insights?.classification && !insights?.summary && (
             <p className="text-xs text-zinc-500">

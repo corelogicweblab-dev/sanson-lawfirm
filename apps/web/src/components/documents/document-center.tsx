@@ -17,9 +17,11 @@ import { cn } from "@/lib/utils";
 interface DocumentCenterProps {
   showProcess?: boolean;
   caseId?: string;
+  /** Lawyers: view/download only — no uploads (paralegal-centric file authority). */
+  readOnly?: boolean;
 }
 
-export function DocumentCenter({ showProcess = false, caseId }: DocumentCenterProps) {
+export function DocumentCenter({ showProcess = false, caseId, readOnly = false }: DocumentCenterProps) {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [categories, setCategories] = useState<DocumentCategory[]>([]);
   const [categoryId, setCategoryId] = useState("");
@@ -79,6 +81,7 @@ export function DocumentCenter({ showProcess = false, caseId }: DocumentCenterPr
 
   return (
     <div className="space-y-6">
+      {!readOnly && (
       <Card className="border-dashed border-white/20 bg-white/5 backdrop-blur-md">
         <CardContent className="p-6">
           <div
@@ -131,17 +134,27 @@ export function DocumentCenter({ showProcess = false, caseId }: DocumentCenterPr
           </div>
         </CardContent>
       </Card>
+      )}
+      {readOnly && (
+        <p className="rounded-lg border border-pink-500/20 bg-pink-950/20 px-3 py-2 text-sm text-zinc-400">
+          Read-only view. Paralegals upload and organize all case files.
+        </p>
+      )}
 
       {documents.length === 0 ? (
         <EmptyState
           icon={<FileText className="h-12 w-12" />}
           title="No documents yet"
-          description="Upload contracts, evidence, affidavits, and supporting files."
+          description={
+            readOnly
+              ? "No documents on this case yet. Paralegals add files in Document Center."
+              : "Upload contracts, evidence, affidavits, photos, video, audio, and court filings."
+          }
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {documents.map((doc) => (
-            <Card key={doc.id} className="border-white/10 bg-white/5 backdrop-blur-md">
+            <Card key={doc.id} className="sanson-panel">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">

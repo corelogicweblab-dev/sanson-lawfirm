@@ -12,11 +12,36 @@ from app.core.dependencies import (
 )
 from app.core.responses import PaginationMeta, PaginationParams, success_response
 from app.domain.authenticated_user import AuthenticatedUser
+from app.schemas.case_intake import MasterCaseIntakeCreate
 from app.schemas.legal import CaseCreate, CaseFromRequest, CaseUpdate
+from app.services.case_intake_service import CaseIntakeService
 from app.schemas.legal_mappers import to_case, to_case_status
 from app.services.legal_workflow import LegalWorkflowService
 
 router = APIRouter()
+
+
+@router.post("/master-intake")
+async def create_master_case_intake(
+    body: MasterCaseIntakeCreate,
+    request: Request,
+    current_user: AuthenticatedUser = Depends(require_permission("cases:write")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
+    db: AsyncSession = Depends(get_db),
+):
+    service = CaseIntakeService(db)
+    try:
+        case, client = await service.create_master_case(
+            body,
+            performed_by=current_user.id,
+            ip=get_client_ip(request),
+            ua=get_user_agent(request),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    payload = to_case(case)
+    payload["client_email"] = client.email
+    return success_response(payload, f"Case {case.case_number} created — open workspace to upload files")
 
 
 @router.post("/")

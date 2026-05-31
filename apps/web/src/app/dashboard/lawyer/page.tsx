@@ -1,43 +1,72 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, Briefcase, AlertTriangle, ListTodo } from "lucide-react";
-import { PageContainer, SectionHeader, StatCard } from "@sanson/ui";
+import Link from "next/link";
+import { Scale, Briefcase, ListTodo, FileText } from "lucide-react";
+import { PageContainer, SectionHeader, StatCard, Button } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { InstallAppPrompt } from "@/components/layout/install-app-prompt";
 import { api } from "@/lib/api";
-import { AiRecommendationsPanel } from "@/components/search/ai-recommendations-panel";
-import type { Appointment, CaseItem, TaskItem } from "@sanson/types";
+import type { CaseItem, TaskItem } from "@sanson/types";
 
 export default function LawyerDashboardPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [cases, setCases] = useState<CaseItem[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [a, c, t] = await Promise.all([api.listAppointments(), api.listCases(), api.listTasks()]);
-      if (a.success && a.data) setAppointments(a.data);
+      const [c, t] = await Promise.all([api.listCases(), api.listTasks()]);
       if (c.success && c.data) setCases(c.data);
       if (t.success && t.data) setTasks(t.data);
     })();
   }, []);
 
+  const pendingReview = cases.filter((c) =>
+    ["UNDER_REVIEW", "OPEN", "WAITING_DOCUMENTS"].includes(c.status?.name ?? "")
+  );
+
   return (
     <AuthGuard allowedRoles={["LAWYER"]}>
-      <DashboardShell title="Lawyer Dashboard" breadcrumbs={[{ label: "Dashboard" }]}>
+      <DashboardShell title="Lawyer Dashboard" breadcrumbs={[{ label: "Legal Review" }]}>
         <PageContainer>
-          <SectionHeader title="Consultation & Case Operations" description="Manage consultations and active legal matters" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Pending Consultations" value={appointments.filter((x)=>["PENDING","CONFIRMED"].includes(x.status)).length} icon={<CalendarDays className="h-5 w-5" />} />
-            <StatCard title="Assigned Cases" value={cases.length} icon={<Briefcase className="h-5 w-5" />} />
-            <StatCard title="Urgent Cases" value={cases.filter((x)=>x.priority==="URGENT").length} icon={<AlertTriangle className="h-5 w-5" />} />
-            <StatCard title="Pending Tasks" value={tasks.filter((x)=>["PENDING","IN_PROGRESS"].includes(x.status)).length} icon={<ListTodo className="h-5 w-5" />} />
+          <SectionHeader
+            title="Legal Review & Decisions"
+            description="Lawyers focus on review, strategy, approvals, and closure. Paralegals manage cases and files."
+          />
+
+          <div className="mb-8">
+            <InstallAppPrompt />
           </div>
-          <AiRecommendationsPanel />
+
+          <div className="mb-8 grid gap-3 sm:grid-cols-3">
+            <Link href="/dashboard/lawyer/approvals">
+              <Button className="h-auto w-full flex-col gap-2 py-4">
+                <Scale className="h-5 w-5" />
+                Approvals queue
+              </Button>
+            </Link>
+            <Link href="/dashboard/lawyer/cases">
+              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
+                <Briefcase className="h-5 w-5" />
+                My cases
+              </Button>
+            </Link>
+            <Link href="/dashboard/lawyer/documents">
+              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
+                <FileText className="h-5 w-5" />
+                Review documents
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard title="Awaiting approval" value={pendingReview.length} icon={<Scale className="h-5 w-5" />} />
+            <StatCard title="Assigned cases" value={cases.length} icon={<Briefcase className="h-5 w-5" />} />
+            <StatCard title="Review tasks" value={tasks.length} icon={<ListTodo className="h-5 w-5" />} />
+          </div>
         </PageContainer>
       </DashboardShell>
     </AuthGuard>
   );
 }
-

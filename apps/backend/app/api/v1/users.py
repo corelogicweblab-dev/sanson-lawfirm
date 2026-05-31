@@ -8,6 +8,7 @@ from app.core.dependencies import (
     get_client_ip,
     get_current_user,
     get_user_agent,
+    require_legal_operator,
     require_permission,
 )
 from app.core.responses import PaginationMeta, PaginationParams, success_response
@@ -43,6 +44,37 @@ async def list_users(
         "Users retrieved",
         meta=meta.model_dump(),
     )
+
+
+@router.get("/directory")
+async def legal_user_directory(
+    role: str | None = None,
+    pagination: PaginationParams = Depends(),
+    _user: AuthenticatedUser = Depends(require_permission("cases:write")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
+    db: AsyncSession = Depends(get_db),
+):
+    """Minimal user list for paralegal case intake (clients, lawyers)."""
+    service = UserService(db)
+    users, _total = await service.list_users(
+        page=pagination.page,
+        page_size=min(pagination.page_size, 100),
+        role_name=role,
+    )
+    items = [
+        {
+            "id": str(u.id),
+            "email": u.email,
+            "role": u.role.name if u.role else None,
+            "display_name": (
+                f"{u.profile.first_name} {u.profile.last_name}".strip()
+                if u.profile
+                else u.email
+            ),
+        }
+        for u in users
+    ]
+    return success_response(items, "Directory retrieved")
 
 
 @router.get("/stats")

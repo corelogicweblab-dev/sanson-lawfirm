@@ -1,0 +1,39 @@
+-- =============================================================================
+-- SANSON Legal OS — DO NOT RUN THIS FILE ALONE
+-- =============================================================================
+-- This file is only a checklist. Supabase SQL Editor cannot run markdown (.md).
+--
+-- For EACH file below: open the file in your project folder, copy ALL contents,
+-- paste into Supabase SQL Editor, click Run. Repeat for the next file.
+--
+-- Reset (optional — deletes ALL public tables + enums + data):
+--   000_drop_all_schema.sql
+--
+-- Order:
+--   001_phase1_schema.sql
+--   002_phase1_seed.sql
+--   003_phase2_schema.sql
+--   004_phase2_seed.sql
+--   005_phase3_schema.sql
+--   006_phase3_seed.sql
+--   007_phase4_schema.sql
+--   008_phase4_seed.sql
+--   009_phase5_schema.sql
+--   010_phase5_seed.sql
+--   011_phase6_schema.sql
+--   012_phase6_seed.sql
+--   013_phase7_schema.sql   <-- required for login
+--   014_phase7_seed.sql
+--   015_phase8_schema.sql
+--   016_phase8_seed.sql
+--   017_case_migration_schema.sql
+--   018_case_migration_seed.sql
+--   019_case_source_schema.sql
+--   020_operations_model_rbac.sql
+--   021_paralegal_file_authority.sql
+--
+-- Verify after 002:
+--   SELECT name FROM roles;
+-- =============================================================================
+
+SELECT 'Open 001_phase1_schema.sql next — paste that file into SQL Editor, not this checklist.' AS next_step;

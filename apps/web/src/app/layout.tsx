@@ -10,15 +10,21 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "SANSON Legal OS",
-  description: "AI-Powered Legal Operating System for SANSON Law Firm",
+  description: "AI-Powered Premium Legal Operating System for SANSON Law Firm",
   metadataBase: new URL("https://sansonlawfirm.web.app"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SANSON Legal OS",
+  },
 };
 
 export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0a0a0a",
+  themeColor: "#EC4899",
 };
 
 export default function RootLayout({

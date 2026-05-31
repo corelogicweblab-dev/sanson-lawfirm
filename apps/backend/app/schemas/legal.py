@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class LegalRequestCreate(BaseModel):
+    client_id: UUID | None = None
     case_category: str
     subject: str = Field(..., min_length=3, max_length=255)
     description: str = Field(..., min_length=10)

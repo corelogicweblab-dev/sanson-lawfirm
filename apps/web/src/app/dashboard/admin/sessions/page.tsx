@@ -56,7 +56,7 @@ export default function SessionsPage() {
             title="Session Management"
             description="Active device sessions across the platform."
           />
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-0">
               {sessions.length === 0 ? (
                 <p className="p-6 text-sm text-zinc-500">

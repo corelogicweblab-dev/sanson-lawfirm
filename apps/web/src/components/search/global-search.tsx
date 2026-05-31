@@ -111,7 +111,7 @@ export function GlobalSearch({
 
       <div className="space-y-3">
         {results.map((r, i) => (
-          <Card key={`${r.type}-${r.sourceId}-${i}`} className="border-white/10 bg-white/5 backdrop-blur-md">
+          <Card key={`${r.type}-${r.sourceId}-${i}`} className="sanson-panel">
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>

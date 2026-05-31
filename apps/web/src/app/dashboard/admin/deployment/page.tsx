@@ -61,7 +61,7 @@ export default function DeploymentPage() {
             title="Deployment Dashboard"
             description="CI/CD history, migrations, and environment validation."
           />
-          <Card className="mb-6 border-white/10 bg-white/5">
+          <Card className="mb-6 sanson-panel">
             <CardContent className="p-4 sm:p-6">
               <p className="text-sm text-zinc-300">
                 <span className="text-zinc-500">Environment:</span> {String(env.environment ?? "—")}
@@ -74,7 +74,7 @@ export default function DeploymentPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-0">
               {deployments.length === 0 ? (
                 <p className="p-6 text-sm text-zinc-500">

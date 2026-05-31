@@ -9,13 +9,8 @@ export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] overflow-x-hidden bg-[var(--background)]">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-pink-600/10 blur-3xl sm:h-96 sm:w-96" />
-        <div className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-pink-500/5 blur-3xl sm:h-96 sm:w-96" />
-      </div>
-
-      <nav className="safe-top relative z-20 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-6">
+    <div className="relative min-h-screen min-h-[100dvh] overflow-x-hidden">
+      <nav className="sanson-glass-header safe-top relative z-20 mx-3 mt-3 flex items-center justify-between rounded-2xl px-4 py-4 sm:mx-6 sm:px-8 sm:py-5">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400 sm:h-10 sm:w-10">
             <Scale className="h-4 w-4 text-white sm:h-5 sm:w-5" />
@@ -46,7 +41,7 @@ export default function HomePage() {
       </nav>
 
       {menuOpen && (
-        <div className="relative z-20 border-b border-white/10 bg-zinc-950/95 px-4 py-4 sm:hidden">
+        <div className="sanson-glass relative z-20 mx-3 mt-2 px-4 py-4 sm:hidden">
           <div className="flex flex-col gap-2">
             <Link href="/login" onClick={() => setMenuOpen(false)}>
               <Button variant="secondary" className="w-full">

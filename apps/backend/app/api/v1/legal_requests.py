@@ -21,12 +21,24 @@ async def create_legal_request(
     current_user: AuthenticatedUser = Depends(require_permission("legal_requests:create")),
     db: AsyncSession = Depends(get_db),
 ):
-    if current_user.role_name != "CLIENT" and not current_user.has_permission("legal_requests:write"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only clients can create legal requests")
+    if current_user.role_name not in ("CLIENT", "PARALEGAL") and not current_user.has_permission(
+        "legal_requests:write"
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to create legal requests")
+
+    if current_user.role_name == "PARALEGAL":
+        if not body.client_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="client_id required when paralegal creates intake on behalf of a client",
+            )
+        client_id = body.client_id
+    else:
+        client_id = current_user.id
 
     service = LegalWorkflowService(db)
     req = await service.create_legal_request(
-        client_id=current_user.id,
+        client_id=client_id,
         case_category=body.case_category,
         subject=body.subject,
         description=body.description,
@@ -53,7 +65,7 @@ async def list_legal_requests(
         limit=pagination.page_size,
         client_id=client_id,
         status=status,
-        lawyer_view=lawyer_view,
+        lawyer_view=staff_view,
     )
     meta = PaginationMeta(
         page=pagination.page,

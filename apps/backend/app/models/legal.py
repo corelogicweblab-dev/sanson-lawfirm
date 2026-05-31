@@ -18,6 +18,10 @@ class CaseSourceTypeEnum(str, enum.Enum):
     LEGACY = "LEGACY"
     AI_INTAKE = "AI_INTAKE"
     MANUAL = "MANUAL"
+    WALK_IN = "WALK_IN"
+    REFERRAL = "REFERRAL"
+    PHONE_INQUIRY = "PHONE_INQUIRY"
+    EMAIL_INQUIRY = "EMAIL_INQUIRY"
 
 
 class CaseCategoryEnum(str, enum.Enum):
@@ -203,14 +207,36 @@ class Case(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     )
     opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    master_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     status: Mapped["CaseStatus"] = relationship(back_populates="cases")
+    parties: Mapped[List["CaseParty"]] = relationship(back_populates="case")
     request: Mapped["LegalRequest | None"] = relationship(back_populates="case")
     activities: Mapped[List["CaseActivity"]] = relationship(back_populates="case")
     assignments: Mapped[List["CaseAssignment"]] = relationship(back_populates="case")
     tasks: Mapped[List["Task"]] = relationship(back_populates="case")
     comments: Mapped[List["Comment"]] = relationship(back_populates="case")
     timelines: Mapped[List["Timeline"]] = relationship(back_populates="case")
+
+
+class CaseParty(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "case_parties"
+
+    case_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"))
+    party_role: Mapped[str] = mapped_column(String(32), default="OPPOSING")
+    party_type: Mapped[str] = mapped_column(String(32), default="INDIVIDUAL")
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    contact_phone: Mapped[str | None] = mapped_column(String(30))
+    contact_email: Mapped[str | None] = mapped_column(String(255))
+    address: Mapped[str | None] = mapped_column(Text)
+    province: Mapped[str | None] = mapped_column(String(100))
+    city: Mapped[str | None] = mapped_column(String(100))
+    relationship_to_case: Mapped[str | None] = mapped_column(String(120))
+    position_in_case: Mapped[str | None] = mapped_column(String(120))
+    notes: Mapped[str | None] = mapped_column(Text)
+    details: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    case: Mapped["Case"] = relationship(back_populates="parties")
 
 
 class CaseActivity(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):

@@ -61,7 +61,7 @@ export default function AuditLogsPage() {
               AI Audit
             </button>
           </div>
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-0 sm:p-0">
               {rows.length === 0 ? (
                 <p className="p-6 text-sm text-zinc-500">

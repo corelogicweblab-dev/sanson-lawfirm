@@ -162,6 +162,66 @@ export class ApiClient {
     return this.request("/cases/");
   }
 
+  async listUserDirectory(role?: string): Promise<ApiResponse<Record<string, unknown>[]>> {
+    const q = role ? `?role=${encodeURIComponent(role)}&page_size=100` : "?page_size=100";
+    return this.request(`/users/directory${q}`);
+  }
+
+  async createCase(payload: Record<string, unknown>): Promise<ApiResponse<CaseItem>> {
+    return this.request("/cases/", { method: "POST", body: JSON.stringify(payload) });
+  }
+
+  async createMasterCase(payload: Record<string, unknown>): Promise<ApiResponse<CaseItem & { master_data?: Record<string, unknown> }>> {
+    return this.request("/cases/master-intake", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async createCaseFromRequest(
+    requestId: string,
+    payload: Record<string, unknown>
+  ): Promise<ApiResponse<CaseItem>> {
+    return this.request(`/cases/from-request/${requestId}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateCase(caseId: string, payload: Record<string, unknown>): Promise<ApiResponse<CaseItem>> {
+    return this.request(`/cases/${caseId}`, { method: "PATCH", body: JSON.stringify(payload) });
+  }
+
+  async assignCase(
+    caseId: string,
+    payload: { assignee_id: string; assignee_role: string; notes?: string }
+  ): Promise<ApiResponse<unknown>> {
+    return this.request(`/assignments/cases/${caseId}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async createTimelineEvent(
+    caseId: string,
+    payload: Record<string, unknown>
+  ): Promise<ApiResponse<unknown>> {
+    return this.request(`/timelines/cases/${caseId}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async createAppointment(payload: Record<string, unknown>): Promise<ApiResponse<Appointment>> {
+    return this.request("/appointments/", { method: "POST", body: JSON.stringify(payload) });
+  }
+
+  async createIntakeRequest(
+    payload: Record<string, unknown>
+  ): Promise<ApiResponse<LegalRequest>> {
+    return this.request("/legal-requests/", { method: "POST", body: JSON.stringify(payload) });
+  }
+
   async listTasks(): Promise<ApiResponse<TaskItem[]>> {
     return this.request("/tasks/");
   }

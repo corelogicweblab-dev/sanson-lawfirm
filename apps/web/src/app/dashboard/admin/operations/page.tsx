@@ -52,7 +52,7 @@ export default function OperationsPage() {
             />
             <StatCard title="R2 Storage" value={health.r2_configured ? "On" : "Off"} />
           </div>
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-6">
               <h3 className="mb-4 font-semibold text-white">Operations hubs</h3>
               <ul className="grid gap-2 sm:grid-cols-2">

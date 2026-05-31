@@ -100,6 +100,7 @@ class UserProfile(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     phone: Mapped[str | None] = mapped_column(String(30))
     address: Mapped[str | None] = mapped_column(Text)
     profile_photo: Mapped[str | None] = mapped_column(Text)
+    client_details: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="profile")
 

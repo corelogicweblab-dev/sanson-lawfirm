@@ -53,7 +53,7 @@ export default function SystemHealthPage() {
             <StatCard title="R2 Storage" value={health.r2_configured ? "On" : "Off"} />
             <StatCard title="Realtime" value={health.realtime?.supabase_configured ? "On" : "Off"} />
           </div>
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-6">
               <h3 className="mb-4 font-semibold text-white">AI Usage</h3>
               <ul className="space-y-2 text-sm text-zinc-300">

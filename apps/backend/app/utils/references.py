@@ -21,12 +21,12 @@ async def generate_request_reference(db: AsyncSession) -> str:
 
 async def generate_case_number(db: AsyncSession) -> str:
     year = datetime.now(timezone.utc).strftime("%Y")
-    prefix = f"CASE-{year}-"
+    prefix = f"SLF-{year}-"
     result = await db.execute(
         select(func.count(Case.id)).where(Case.case_number.like(f"{prefix}%"))
     )
     count = (result.scalar() or 0) + 1
-    return f"{prefix}{count:05d}"
+    return f"{prefix}{count:03d}"
 
 
 async def generate_chat_session_reference(db: AsyncSession) -> str:

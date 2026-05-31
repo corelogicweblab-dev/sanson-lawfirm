@@ -43,7 +43,7 @@ export default function LawyerEvidencePage() {
               ) : (
                 <div className="space-y-3">
                   {items.map((e) => (
-                    <Card key={e.id} className="border-white/10 bg-white/5">
+                    <Card key={e.id} className="sanson-panel">
                       <CardContent className="p-4">
                         <p className="font-medium text-white">{e.title}</p>
                         <p className="text-xs text-zinc-500">
@@ -58,7 +58,7 @@ export default function LawyerEvidencePage() {
                 </div>
               )}
             </div>
-            <Card className="border-white/10 bg-white/5 p-6">
+            <Card className="sanson-panel p-6">
               <h3 className="mb-4 font-semibold text-white">Evidence Timeline</h3>
               <TimelineViewer />
             </Card>

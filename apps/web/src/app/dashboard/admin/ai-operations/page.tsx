@@ -49,7 +49,7 @@ export default function AiOperationsPage() {
             <StatCard title="Tokens in" value={ai.tokens_input ?? 0} />
             <StatCard title="Tokens out" value={ai.tokens_output ?? 0} />
           </div>
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-0">
               {aiLogs.length === 0 ? (
                 <p className="p-6 text-sm text-zinc-500">No AI audit entries yet.</p>

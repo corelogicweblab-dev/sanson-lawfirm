@@ -25,7 +25,7 @@ export function AdvancedSearchPanel() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-white/10 bg-white/5">
+      <Card className="sanson-panel">
         <CardContent className="p-4">
           <p className="mb-3 text-sm font-medium text-white">Advanced options</p>
           <div className="mb-4">

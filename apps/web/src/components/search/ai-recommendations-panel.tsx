@@ -43,7 +43,7 @@ export function AiRecommendationsPanel() {
         description="Related documents, pending reviews, and your recent searches."
       />
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-white/10 bg-white/5">
+        <Card className="sanson-panel">
           <CardContent className="p-4">
             <div className="mb-3 flex items-center gap-2 text-pink-300">
               <Sparkles className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function AiRecommendationsPanel() {
             </Link>
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-white/5">
+        <Card className="sanson-panel">
           <CardContent className="p-4">
             <div className="mb-3 flex items-center gap-2 text-zinc-400">
               <History className="h-4 w-4" />

@@ -77,6 +77,25 @@ def to_case(c: Case) -> dict:
         "closed_at": c.closed_at.isoformat() if c.closed_at else None,
         "created_at": c.created_at.isoformat(),
         "updated_at": c.updated_at.isoformat(),
+        "master_data": getattr(c, "master_data", None) or {},
+        "parties": [
+            {
+                "id": str(p.id),
+                "party_role": p.party_role,
+                "party_type": p.party_type,
+                "full_name": p.full_name,
+                "contact_phone": p.contact_phone,
+                "contact_email": p.contact_email,
+                "address": p.address,
+                "province": p.province,
+                "city": p.city,
+                "relationship_to_case": p.relationship_to_case,
+                "position_in_case": p.position_in_case,
+                "notes": p.notes,
+                "details": p.details or {},
+            }
+            for p in (getattr(c, "parties", None) or [])
+        ],
     }
 
 

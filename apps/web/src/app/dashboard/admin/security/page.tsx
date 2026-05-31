@@ -34,7 +34,7 @@ export default function SecurityPage() {
             title="Security Events"
             description="Authentication anomalies, lockouts, and platform security activity."
           />
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-0">
               <ul className="divide-y divide-white/5">
                 {events.length === 0 ? (

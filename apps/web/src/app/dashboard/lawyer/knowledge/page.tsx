@@ -42,7 +42,7 @@ export default function KnowledgeCenterPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {articles.map((a) => (
                 <Link key={a.id} href={`/dashboard/lawyer/knowledge/article?slug=${encodeURIComponent(a.slug)}`}>
-                  <Card className="border-white/10 bg-white/5 transition hover:border-pink-500/30">
+                  <Card className="sanson-panel transition hover:border-pink-500/30">
                     <CardContent className="p-4">
                       <p className="text-xs text-pink-300">{a.category?.displayName || "General"}</p>
                       <p className="mt-1 font-medium text-white">{a.title}</p>

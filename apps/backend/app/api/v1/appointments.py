@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_client_ip, get_current_user, get_user_agent, require_permission
+from app.core.dependencies import (
+    get_client_ip,
+    get_current_user,
+    get_user_agent,
+    require_legal_operator,
+    require_permission,
+)
 from app.core.responses import PaginationMeta, PaginationParams, success_response
 from app.domain.authenticated_user import AuthenticatedUser
 from app.schemas.legal import AppointmentCreate, AppointmentUpdate
@@ -19,6 +25,7 @@ async def create_appointment(
     body: AppointmentCreate,
     request: Request,
     current_user: AuthenticatedUser = Depends(require_permission("appointments:schedule")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
     db: AsyncSession = Depends(get_db),
 ):
     service = LegalWorkflowService(db)
@@ -51,6 +58,7 @@ async def list_appointments(
     service = LegalWorkflowService(db)
     client_id = current_user.id if current_user.role_name == "CLIENT" else None
     lawyer_id = current_user.id if current_user.role_name == "LAWYER" else None
+    # Paralegals see all firm appointments (calendar management)
     data, total = await service.list_appointments(
         offset=pagination.offset,
         limit=pagination.page_size,

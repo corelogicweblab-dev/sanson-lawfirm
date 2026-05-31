@@ -18,10 +18,10 @@ export default function ParalegalDocumentsPage() {
         <PageContainer>
           <SectionHeader
             title="Evidence Preparation"
-            description="Validate uploads, organize evidence, and review AI timelines."
+            description="Primary file authority — contracts, evidence, affidavits, court filings, photos, video, and audio."
           />
           <DocumentCenter showProcess />
-          <Card className="mt-8 border-white/10 bg-white/5 p-6">
+          <Card className="mt-8 sanson-panel p-6">
             <h3 className="mb-4 font-semibold text-white">Timeline Review</h3>
             <TimelineViewer />
           </Card>

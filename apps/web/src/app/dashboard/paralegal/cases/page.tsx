@@ -41,6 +41,11 @@ export default function ParalegalCasesPage() {
           <SectionHeader
             title="Centralized Case Repository"
             description="All legacy, AI intake, and manual cases — single system (paralegal-operated)."
+            action={
+              <Link href="/dashboard/paralegal/cases/new">
+                <span className="text-sm font-medium text-pink-400 hover:underline">+ New draft case</span>
+              </Link>
+            }
           />
           {items.length === 0 ? (
             <EmptyState

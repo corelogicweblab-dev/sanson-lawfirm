@@ -18,9 +18,9 @@ export default function LawyerDocumentsPage() {
         <PageContainer>
           <SectionHeader
             title="Document Center"
-            description="Review client uploads, run OCR, and generate AI analysis."
+            description="Read-only review — paralegals upload and organize all case files."
           />
-          <DocumentCenter showProcess />
+          <DocumentCenter readOnly showProcess={false} />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>

@@ -53,7 +53,7 @@ export default function ControlCenterPage() {
           />
 
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
-            <Card className="border-white/10 bg-white/5">
+            <Card className="sanson-panel">
               <CardContent className="p-6">
                 <h3 className="mb-2 font-semibold text-white">Maintenance Mode</h3>
                 <p className="mb-4 text-sm text-zinc-400">
@@ -75,7 +75,7 @@ export default function ControlCenterPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/5">
+            <Card className="sanson-panel">
               <CardContent className="p-6">
                 <h3 className="mb-2 font-semibold text-white">Emergency Lockout</h3>
                 <p className="mb-4 text-sm text-zinc-400">
@@ -97,7 +97,7 @@ export default function ControlCenterPage() {
             </Card>
           </div>
 
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-6">
               <h3 className="mb-4 font-semibold text-white">Feature Flags</h3>
               <ul className="space-y-3">

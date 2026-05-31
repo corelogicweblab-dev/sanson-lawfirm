@@ -17,6 +17,38 @@ export const ROLE_DISPLAY: Record<UserRole, string> = {
   ADMIN: "Administrator",
 };
 
+/** Paralegal-centric case lifecycle (official workflow). */
+export const PARALEGAL_CASE_WORKFLOW = [
+  { step: 1, label: "Client request", owner: "CLIENT" as const },
+  { step: 2, label: "Paralegal review", owner: "PARALEGAL" as const },
+  { step: 3, label: "Draft case created", owner: "PARALEGAL" as const },
+  { step: 4, label: "Documents & evidence uploaded", owner: "PARALEGAL" as const },
+  { step: 5, label: "Timeline & calendar built", owner: "PARALEGAL" as const },
+  { step: 6, label: "Lawyer assigned", owner: "PARALEGAL" as const },
+  { step: 7, label: "Lawyer review", owner: "LAWYER" as const },
+  { step: 8, label: "Lawyer approval", owner: "LAWYER" as const },
+  { step: 9, label: "Official active case", owner: "SYSTEM" as const },
+] as const;
+
+export const PARALEGAL_FILE_TYPES = [
+  "Contracts",
+  "Evidence",
+  "Photos",
+  "Videos",
+  "Audio",
+  "Affidavits",
+  "Court filings",
+  "Correspondence",
+] as const;
+
+export const CASE_ORIGIN_LABELS: Record<string, string> = {
+  AI_INTAKE: "AI Legal Intake",
+  MANUAL: "Walk-in / manual intake",
+  LEGACY: "Legacy migration",
+  PHONE: "Phone call",
+  REFERRAL: "Referral",
+};
+
 export const ROLE_DASHBOARD_PATH: Record<UserRole, string> = {
   CLIENT: "/dashboard/client",
   LAWYER: "/dashboard/lawyer",
@@ -133,40 +165,25 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.PROFILE_WRITE,
     PERMISSIONS.DASHBOARD_LAWYER,
     PERMISSIONS.LEGAL_REQUESTS_READ,
-    PERMISSIONS.LEGAL_REQUESTS_WRITE,
     PERMISSIONS.APPOINTMENTS_READ,
-    PERMISSIONS.APPOINTMENTS_WRITE,
-    PERMISSIONS.APPOINTMENTS_SCHEDULE,
     PERMISSIONS.CASES_READ,
-    PERMISSIONS.CASES_WRITE,
-    PERMISSIONS.CASES_ASSIGN,
     PERMISSIONS.CASES_APPROVE,
     PERMISSIONS.CASES_CLOSE,
     PERMISSIONS.TASKS_READ,
-    PERMISSIONS.TASKS_WRITE,
     PERMISSIONS.COMMENTS_READ,
     PERMISSIONS.COMMENTS_WRITE,
     PERMISSIONS.CONSULTATIONS_READ,
     PERMISSIONS.CONSULTATIONS_WRITE,
     PERMISSIONS.TIMELINES_READ,
-    PERMISSIONS.TIMELINES_WRITE,
     PERMISSIONS.CHAT_READ,
     PERMISSIONS.AI_READ,
     PERMISSIONS.AI_GENERATE,
     PERMISSIONS.DOCUMENTS_READ,
-    PERMISSIONS.DOCUMENTS_WRITE,
-    PERMISSIONS.DOCUMENTS_DELETE,
     PERMISSIONS.DOCUMENTS_REVIEW,
     PERMISSIONS.EVIDENCE_READ,
-    PERMISSIONS.EVIDENCE_WRITE,
-    PERMISSIONS.OCR_RUN,
-    PERMISSIONS.DOCUMENT_ANALYSIS_RUN,
     PERMISSIONS.EVIDENCE_TIMELINES_READ,
-    PERMISSIONS.EVIDENCE_TIMELINES_WRITE,
     PERMISSIONS.SEARCH_READ,
     PERMISSIONS.KNOWLEDGE_READ,
-    PERMISSIONS.KNOWLEDGE_WRITE,
-    PERMISSIONS.EMBEDDINGS_RUN,
     PERMISSIONS.RECOMMENDATIONS_READ,
     PERMISSIONS.CONTEXT_READ,
   ],
@@ -175,9 +192,16 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.PROFILE_WRITE,
     PERMISSIONS.DASHBOARD_PARALEGAL,
     PERMISSIONS.LEGAL_REQUESTS_READ,
+    PERMISSIONS.LEGAL_REQUESTS_WRITE,
+    PERMISSIONS.LEGAL_REQUESTS_CREATE,
     PERMISSIONS.APPOINTMENTS_READ,
+    PERMISSIONS.APPOINTMENTS_WRITE,
+    PERMISSIONS.APPOINTMENTS_SCHEDULE,
     PERMISSIONS.CASES_READ,
     PERMISSIONS.CASES_WRITE,
+    PERMISSIONS.CASES_ASSIGN,
+    PERMISSIONS.MIGRATION_READ,
+    PERMISSIONS.MIGRATION_WRITE,
     PERMISSIONS.TASKS_READ,
     PERMISSIONS.TASKS_WRITE,
     PERMISSIONS.COMMENTS_READ,
@@ -225,10 +249,14 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 export const CASE_SOURCE_TYPES = ["LEGACY", "AI_INTAKE", "MANUAL"] as const;
 export type CaseSourceType = (typeof CASE_SOURCE_TYPES)[number];
 
-export const CASE_SOURCE_LABELS: Record<CaseSourceType, string> = {
+export const CASE_SOURCE_LABELS: Record<string, string> = {
   LEGACY: "Legacy (migrated)",
   AI_INTAKE: "AI intake",
   MANUAL: "Manual / draft",
+  WALK_IN: "Walk-in",
+  REFERRAL: "Referral",
+  PHONE_INQUIRY: "Phone inquiry",
+  EMAIL_INQUIRY: "Email inquiry",
 };
 
 export const AUDIT_ACTIONS = {

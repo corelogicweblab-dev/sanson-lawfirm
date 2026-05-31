@@ -16,6 +16,58 @@ class UserService:
         self.role_repo = RoleRepository(db)
         self.audit = AuditService(db)
 
+    async def create_firm_client(
+        self,
+        *,
+        email: str,
+        first_name: str,
+        last_name: str,
+        middle_name: str | None = None,
+        suffix: str | None = None,
+        phone: str | None = None,
+        address: str | None = None,
+        client_details: dict | None = None,
+        performed_by: UUID,
+    ) -> User:
+        from uuid import uuid4
+
+        from app.models import User, UserProfile, UserStatusEnum
+
+        email_norm = email.strip().lower()
+        existing = await self.user_repo.get_by_email(email_norm)
+        if existing:
+            return existing
+        role = await self.role_repo.get_by_name("CLIENT")
+        if not role:
+            raise ValueError("CLIENT role not found")
+        user = User(
+            firebase_uid=f"firm-client-{uuid4()}",
+            email=email_norm,
+            role_id=role.id,
+            status=UserStatusEnum.ACTIVE,
+            is_active=True,
+        )
+        await self.user_repo.create(user)
+        profile = UserProfile(
+            user_id=user.id,
+            first_name=first_name,
+            middle_name=middle_name,
+            last_name=last_name,
+            suffix=suffix,
+            phone=phone,
+            address=address,
+            client_details=client_details or {},
+        )
+        await self.profile_repo.create(profile)
+        await self.audit.log(
+            "client.create",
+            "users",
+            user.id,
+            performed_by,
+            new_values={"email": email_norm},
+        )
+        return user
+
     async def get_user(self, user_id: UUID) -> User | None:
         return await self.user_repo.get_by_id(user_id)
 

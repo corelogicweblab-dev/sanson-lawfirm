@@ -23,7 +23,7 @@ function ArticleContent() {
 
   return (
     article && (
-      <Card className="border-white/10 bg-white/5">
+      <Card className="sanson-panel">
         <CardContent className="prose prose-invert max-w-none p-8">
           <p className="text-sm text-zinc-500">{article.category?.displayName}</p>
           <h1 className="text-2xl font-bold text-white">{article.title}</h1>

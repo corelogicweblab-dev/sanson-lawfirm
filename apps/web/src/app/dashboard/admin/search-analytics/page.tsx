@@ -50,7 +50,7 @@ export default function SearchAnalyticsPage() {
             <StatCard title="Evidence Embeddings" value={emb?.evidence ?? 0} />
             <StatCard title="Knowledge Views" value={stats.knowledge_usage?.article_views ?? 0} />
           </div>
-          <Card className="border-white/10 bg-white/5">
+          <Card className="sanson-panel">
             <CardContent className="p-6">
               <h3 className="mb-4 font-semibold text-white">Popular Searches</h3>
               {(stats.popular_searches || []).length === 0 ? (
