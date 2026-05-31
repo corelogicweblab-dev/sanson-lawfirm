@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -10,7 +10,9 @@ import {
 import { Scale } from "lucide-react";
 import { Button, Input, PoweredByCoreLogic, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
 import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
+import { formatFirebaseAuthError } from "@/lib/auth-errors";
 import { api } from "@/lib/api";
+import { getApiBaseUrl } from "@/lib/api-url";
 import { useAuthStore } from "@/store/auth";
 
 export default function LoginPage() {
@@ -20,16 +22,38 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [apiStatus, setApiStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const base = getApiBaseUrl();
+    fetch(`${base}/api/v1/health/ready`)
+      .then((r) => r.json())
+      .then((body: { data?: { database?: string } }) => {
+        if (body?.data?.database === "connected") {
+          setApiStatus(null);
+        } else {
+          setApiStatus(
+            "API database is offline on Render. Login will fail until DATABASE_URL is fixed in Render → Environment."
+          );
+        }
+      })
+      .catch(() => {
+        setApiStatus(`Cannot reach API at ${base}. Check Render service and redeploy web.`);
+      });
+  }, []);
 
   const handleSyncAndRedirect = async (token: string) => {
     setToken(token);
     api.setToken(token);
     const response = await api.syncUser({ role: "CLIENT" });
-    if (response.success && response.data) {
+    if (response.success && response.data?.user) {
       setUser(response.data.user);
       router.push(getDashboardPath());
     } else {
-      setError(response.message || "Failed to sync user");
+      setError(
+        response.message ||
+          "Failed to sync user. If the database is offline, fix DATABASE_URL on Render (Supabase pooler URL)."
+      );
     }
   };
 
@@ -50,7 +74,7 @@ export default function LoginPage() {
       const token = await credential.user.getIdToken();
       await handleSyncAndRedirect(token);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : formatFirebaseAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -83,15 +107,15 @@ export default function LoginPage() {
         router.push(getDashboardPath());
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Google login failed");
+      setError(formatFirebaseAuthError(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-gradient flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="auth-gradient flex min-h-screen min-h-[100dvh] items-center justify-center p-4 safe-top safe-bottom">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
             <Scale className="h-6 w-6 text-white" />
@@ -123,6 +147,11 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
+            {apiStatus && (
+              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                {apiStatus}
+              </p>
+            )}
             {error && <p className="text-sm text-red-400">{error}</p>}
             <Button type="submit" className="w-full" loading={loading}>
               Sign In

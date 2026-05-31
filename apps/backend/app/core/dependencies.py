@@ -55,6 +55,12 @@ async def _resolve_user(
     auth_service = AuthService(db)
     rbac = RBACService(db)
 
+    from app.services.session_service import SessionService
+
+    session_svc = SessionService(db)
+    if await session_svc.is_token_revoked(token):
+        return None
+
     if is_firebase_configured():
         claims = verify_firebase_token(token)
         if not claims:

@@ -21,6 +21,7 @@ from app.models.ai_chat import (
     SessionDecisionTypeEnum,
 )
 from app.models.legal import CaseCategoryEnum, PriorityLevelEnum
+from app.services.ai_audit_service import AiAuditService
 from app.services.audit_service import AuditService
 from app.services.legal_workflow import LegalWorkflowService
 from app.services.openai_service import OpenAIService, sanitize_user_input
@@ -183,6 +184,15 @@ class ChatService:
             ChatSenderTypeEnum.AI,
             ai_text,
             token_usage=tokens,
+        )
+        await AiAuditService(self.db).log(
+            user_id=client_id,
+            prompt_type="client_chat",
+            model_name=self.openai.model,
+            tokens_output=tokens or 0,
+            output_summary=ai_text[:500] if ai_text else None,
+            session_id=session_id,
+            ip_address=ip,
         )
         await self._touch_session(session)
         return user_msg, ai_msg

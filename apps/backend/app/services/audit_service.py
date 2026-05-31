@@ -22,15 +22,49 @@ class AuditService:
         new_values: dict | None = None,
         metadata: dict | None = None,
     ) -> AuditLog:
-        entry = AuditLog(
+        return await self.log_intelligent(
             action=action,
-            entity_type=entity_type,
-            entity_id=entity_id,
-            performed_by=performed_by,
+            resource_type=entity_type,
+            resource_id=entity_id,
+            actor_id=performed_by,
+            before_state=old_values,
+            after_state=new_values,
             ip_address=ip_address,
             user_agent=user_agent,
-            old_values=old_values,
-            new_values=new_values,
+            metadata=metadata,
+        )
+
+    async def log_intelligent(
+        self,
+        action: str,
+        resource_type: str,
+        resource_id: UUID | None = None,
+        actor_id: UUID | None = None,
+        actor_role: str | None = None,
+        before_state: dict | None = None,
+        after_state: dict | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        device_id: UUID | None = None,
+        correlation_id: str | None = None,
+        metadata: dict | None = None,
+    ) -> AuditLog:
+        entry = AuditLog(
+            action=action,
+            entity_type=resource_type,
+            entity_id=resource_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            performed_by=actor_id,
+            actor_role=actor_role,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            old_values=before_state,
+            new_values=after_state,
+            before_state=before_state,
+            after_state=after_state,
+            device_id=device_id,
+            correlation_id=correlation_id,
             metadata_=metadata or {},
         )
         return await self.repo.create(entry)

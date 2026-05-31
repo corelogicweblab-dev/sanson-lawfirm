@@ -54,6 +54,14 @@ firebase deploy --only hosting
 
 Project is pinned in `.firebaserc` → `sansonlawfirm`.
 
+### Firebase Console — Enable login (required)
+
+If login shows `auth/configuration-not-found`, Email/Password is not enabled. Full steps: **[FIREBASE-AUTH-SETUP.md](FIREBASE-AUTH-SETUP.md)**.
+
+1. **Authentication** → **Sign-in method** → **Email/Password** → **Enable**
+2. **Authentication** → **Users** → **Add user** (e.g. `admin@sansonlaw.ph`)
+3. After first login, set ADMIN role in Supabase (see setup doc)
+
 ### Firebase Console — Auth authorized domains
 
 **Authentication** → Settings → **Authorized domains** should include:

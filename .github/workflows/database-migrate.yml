@@ -1,0 +1,42 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+      confirm:
+        description: Type APPLY to run migration checklist
+        required: true
+
+jobs:
+  migration-checklist:
+    name: Migration verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node scripts/migrate-pipeline.js --check
+      - name: Manifest summary
+        run: node scripts/migrate-pipeline.js --manifest
+      - name: Confirm gate
+        if: inputs.confirm != 'APPLY'
+        run: |
+          echo "Re-run with confirm=APPLY to acknowledge manual Supabase migration"
+          exit 1
+      - name: Instructions
+        run: |
+          echo "Apply scripts/migrations/*.sql in order via Supabase SQL Editor"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Then verify: GET /api/v1/ops/migrations"
+
+# Migrations are applied manually to Supabase for safety.
+# Use Supabase branching for staging when available.

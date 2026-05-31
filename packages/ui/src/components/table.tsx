@@ -3,8 +3,8 @@ import { cn } from "../lib/cn";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="relative w-full overflow-auto rounded-xl border border-white/10">
-      <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
+    <div className="relative w-full overflow-x-auto overscroll-x-contain rounded-xl border border-white/10 [-webkit-overflow-scrolling:touch]">
+      <table className={cn("w-full min-w-[32rem] caption-bottom text-sm", className)} {...props} />
     </div>
   );
 }
@@ -43,6 +43,6 @@ export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTa
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn("px-4 py-3 align-middle text-zinc-200", className)} {...props} />
+    <td className={cn("px-3 py-2.5 align-middle text-zinc-200 sm:px-4 sm:py-3", className)} {...props} />
   );
 }

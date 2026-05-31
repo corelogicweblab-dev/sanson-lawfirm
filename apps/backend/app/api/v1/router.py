@@ -10,12 +10,29 @@ from app.api.v1 import (
     chat,
     comments,
     consultations,
+    document_analysis,
+    documents,
+    evidence,
+    evidence_timelines,
     health,
+    knowledge,
+    mobile,
+    notifications,
+    devices,
+    sync,
+    security,
+    system,
+    sessions,
+    ops,
+    recommendations,
+    search,
     legal_requests,
+    ocr,
     permissions,
     roles,
     tasks,
     timelines,
+    uploads,
     users,
     workflow,
 )
@@ -41,4 +58,29 @@ api_router.include_router(workflow.router, prefix="/workflow", tags=["Workflow"]
 
 api_router.include_router(chat.router, prefix="/chat", tags=["AI Chat"])
 api_router.include_router(ai.router, prefix="/ai", tags=["AI Engine"])
+
+api_router.include_router(documents.router, prefix="/documents", tags=["Documents"])
+api_router.include_router(uploads.router, prefix="/uploads", tags=["Uploads"])
+api_router.include_router(evidence.router, prefix="/evidence", tags=["Evidence"])
+api_router.include_router(ocr.router, prefix="/ocr", tags=["OCR"])
+api_router.include_router(
+    document_analysis.router, prefix="/document-analysis", tags=["Document Analysis"]
+)
+api_router.include_router(
+    evidence_timelines.router, prefix="/evidence-timelines", tags=["Evidence Timelines"]
+)
+
+api_router.include_router(search.router, prefix="/search", tags=["Search"])
+api_router.include_router(knowledge.router, prefix="/knowledge", tags=["Knowledge Base"])
+api_router.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
+
+api_router.include_router(mobile.router, prefix="/mobile", tags=["Mobile"])
+api_router.include_router(devices.router, prefix="/devices", tags=["Mobile Devices"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
+api_router.include_router(sync.router, prefix="/sync", tags=["Realtime Sync"])
+
+api_router.include_router(security.router, prefix="/security", tags=["Security"])
+api_router.include_router(system.router, prefix="/system", tags=["System"])
+api_router.include_router(sessions.router, prefix="/sessions", tags=["Sessions"])
+api_router.include_router(ops.router, prefix="/ops", tags=["Operations"])
 

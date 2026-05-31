@@ -51,3 +51,37 @@ async def recent_audit_logs(
         "Recent audit activity retrieved",
     )
 
+
+@router.get("/ai")
+async def list_ai_audit(
+    pagination: PaginationParams = Depends(),
+    _user: AuthenticatedUser = Depends(require_permission("ai_audit:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.ai_audit_service import AiAuditService
+
+    svc = AiAuditService(db)
+    logs, total = await svc.list_logs(pagination.page_size, pagination.offset)
+    meta = PaginationMeta(
+        page=pagination.page,
+        page_size=pagination.page_size,
+        total=total,
+        total_pages=(total + pagination.page_size - 1) // pagination.page_size if pagination.page_size else 0,
+    )
+    return success_response(
+        [
+            {
+                "id": str(l.id),
+                "promptType": l.prompt_type,
+                "modelName": l.model_name,
+                "tokensInput": l.tokens_input,
+                "tokensOutput": l.tokens_output,
+                "confidenceScore": float(l.confidence_score) if l.confidence_score else None,
+                "createdAt": l.created_at.isoformat(),
+            }
+            for l in logs
+        ],
+        "AI audit logs",
+        meta=meta.model_dump(),
+    )
+

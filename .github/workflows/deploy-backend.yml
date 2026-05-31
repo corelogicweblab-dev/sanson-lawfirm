@@ -1,0 +1,36 @@
+name: Deploy Backend (Render)
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - "apps/backend/**"
+      - "render.yaml"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+jobs:
+  validate-production-env:
+    name: Production env checklist
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/validate-env.js --check-templates
+
+  notify-deploy:
+    name: Record deployment metadata
+    runs-on: ubuntu-latest
+    needs: [validate-production-env]
+    if: always() && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deployment note
+        run: |
+          echo "Render auto-deploys from GitHub when connected."
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "After deploy, POST /api/v1/ops/deployments with CI token (optional)."
+
+# Render connects to this repo and deploys apps/backend on push to main.
+# Configure: Render Dashboard → sanson-lawfirm → Settings → Auto-Deploy branch: main

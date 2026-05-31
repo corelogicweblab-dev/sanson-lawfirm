@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
     <AuthGuard allowedRoles={["ADMIN"]}>
       <DashboardShell title="Admin Dashboard" breadcrumbs={[{ label: "Dashboard" }]}>
         <PageContainer>
-          <SectionHeader title="Phase 2 Operations Overview" description="Monitor legal request and case workflow health" />
+          <SectionHeader title="Operations Overview" description="Monitor workflow health and enterprise controls (Phase 7)" />
           <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Requests" value={stats?.total_requests ?? 0} icon={<ClipboardList className="h-5 w-5" />} />
             <StatCard title="Consultations Scheduled" value={stats?.consultations_scheduled ?? 0} icon={<CalendarDays className="h-5 w-5" />} />

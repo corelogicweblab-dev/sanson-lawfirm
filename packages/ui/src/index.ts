@@ -23,6 +23,7 @@ export * from "./components/card";
 export * from "./components/badge";
 export * from "./components/dialog";
 export * from "./components/table";
+export * from "./components/data-table-shell";
 export * from "./components/loading";
 export * from "./components/empty-state";
 export * from "./components/error-state";

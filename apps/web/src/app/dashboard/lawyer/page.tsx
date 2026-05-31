@@ -6,6 +6,7 @@ import { PageContainer, SectionHeader, StatCard } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { api } from "@/lib/api";
+import { AiRecommendationsPanel } from "@/components/search/ai-recommendations-panel";
 import type { Appointment, CaseItem, TaskItem } from "@sanson/types";
 
 export default function LawyerDashboardPage() {
@@ -33,6 +34,7 @@ export default function LawyerDashboardPage() {
             <StatCard title="Urgent Cases" value={cases.filter((x)=>x.priority==="URGENT").length} icon={<AlertTriangle className="h-5 w-5" />} />
             <StatCard title="Pending Tasks" value={tasks.filter((x)=>["PENDING","IN_PROGRESS"].includes(x.status)).length} icon={<ListTodo className="h-5 w-5" />} />
           </div>
+          <AiRecommendationsPanel />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>

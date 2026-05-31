@@ -14,7 +14,7 @@ _session_factory = None
 
 
 def _connect_args() -> dict:
-    args: dict = {}
+    args: dict = {"timeout": 15, "command_timeout": 15}
     if settings.requires_database_ssl:
         ssl_ctx = ssl.create_default_context()
         ssl_ctx.check_hostname = False

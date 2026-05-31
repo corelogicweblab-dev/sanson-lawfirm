@@ -187,8 +187,8 @@ export function AiAssistantChat() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[260px_1fr_300px]">
-      <Card className="border-white/10 bg-white/5 p-3 backdrop-blur-xl">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr] xl:grid-cols-[minmax(0,260px)_1fr_minmax(0,280px)]">
+      <Card className="order-2 border-white/10 bg-white/5 p-3 backdrop-blur-xl lg:order-1">
         <Button
           className="mb-3 w-full gap-2"
           onClick={startNewSession}
@@ -200,7 +200,7 @@ export function AiAssistantChat() {
         <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
           Session history
         </p>
-        <div className="max-h-[420px] space-y-1 overflow-y-auto">
+        <div className="max-h-[200px] space-y-1 overflow-y-auto sm:max-h-[320px] lg:max-h-[420px]">
           {sessions.length === 0 && (
             <p className="text-xs text-zinc-500">No sessions yet</p>
           )}
@@ -223,7 +223,7 @@ export function AiAssistantChat() {
         </div>
       </Card>
 
-      <Card className="flex min-h-[560px] flex-col border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-xl">
+      <Card className="order-1 flex min-h-[min(70dvh,560px)] flex-col border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-xl sm:min-h-[480px] lg:order-2 lg:min-h-[560px]">
         <div className="border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-pink-400" />
@@ -344,7 +344,7 @@ export function AiAssistantChat() {
         )}
       </Card>
 
-      <div className="space-y-4">
+      <div className="order-3 space-y-4">
         <LegalDisclaimer compact />
         <Card className="border-white/10 bg-white/5 p-4 backdrop-blur-xl">
           <h3 className="mb-3 text-sm font-semibold text-white">Intake insights</h3>

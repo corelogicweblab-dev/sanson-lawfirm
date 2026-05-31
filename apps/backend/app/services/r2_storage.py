@@ -1,0 +1,107 @@
+import uuid
+from datetime import datetime, timezone
+
+import boto3
+from botocore.client import Config
+from botocore.exceptions import ClientError
+
+from app.core.config import get_settings
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+}
+
+ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt", ".png", ".jpg", ".jpeg", ".webp"}
+
+
+class R2StorageService:
+    def __init__(self) -> None:
+        self.settings = get_settings()
+
+    @property
+    def configured(self) -> bool:
+        return self.settings.r2_configured
+
+    def _client(self):
+        if not self.configured:
+            raise RuntimeError("Cloudflare R2 is not configured")
+        return boto3.client(
+            "s3",
+            endpoint_url=self.settings.r2_endpoint,
+            aws_access_key_id=self.settings.r2_access_key_id,
+            aws_secret_access_key=self.settings.r2_secret_access_key,
+            config=Config(signature_version="s3v4"),
+            region_name="auto",
+        )
+
+    def validate_file(self, filename: str, mime_type: str, size: int) -> None:
+        ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        if ext not in ALLOWED_EXTENSIONS:
+            raise ValueError(f"File type not allowed: {ext or 'unknown'}")
+        if mime_type and mime_type not in ALLOWED_MIME_TYPES:
+            if not mime_type.startswith("image/"):
+                raise ValueError(f"MIME type not allowed: {mime_type}")
+        if size > self.settings.document_max_size_bytes:
+            raise ValueError(f"File exceeds {self.settings.document_max_size_mb}MB limit")
+
+    def build_storage_path(self, user_id: uuid.UUID, filename: str) -> str:
+        safe = "".join(c for c in filename if c.isalnum() or c in ".-_")[:200]
+        date_prefix = datetime.now(timezone.utc).strftime("%Y/%m/%d")
+        return f"documents/{user_id}/{date_prefix}/{uuid.uuid4()}_{safe}"
+
+    def upload_bytes(self, storage_path: str, data: bytes, mime_type: str) -> str:
+        client = self._client()
+        client.put_object(
+            Bucket=self.settings.r2_bucket_name,
+            Key=storage_path,
+            Body=data,
+            ContentType=mime_type,
+        )
+        return storage_path
+
+    def download_bytes(self, storage_path: str) -> bytes:
+        client = self._client()
+        obj = client.get_object(Bucket=self.settings.r2_bucket_name, Key=storage_path)
+        return obj["Body"].read()
+
+    def generate_presigned_upload_url(
+        self, storage_path: str, mime_type: str, expires_in: int | None = None
+    ) -> dict:
+        client = self._client()
+        ttl = expires_in or self.settings.document_signed_url_ttl_seconds
+        url = client.generate_presigned_url(
+            "put_object",
+            Params={
+                "Bucket": self.settings.r2_bucket_name,
+                "Key": storage_path,
+                "ContentType": mime_type,
+            },
+            ExpiresIn=ttl,
+        )
+        return {"upload_url": url, "storage_path": storage_path, "expires_in": ttl}
+
+    def generate_presigned_download_url(
+        self, storage_path: str, expires_in: int | None = None
+    ) -> str:
+        client = self._client()
+        ttl = expires_in or self.settings.document_signed_url_ttl_seconds
+        return client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self.settings.r2_bucket_name, "Key": storage_path},
+            ExpiresIn=ttl,
+        )
+
+    def delete_object(self, storage_path: str) -> None:
+        try:
+            self._client().delete_object(
+                Bucket=self.settings.r2_bucket_name, Key=storage_path
+            )
+        except ClientError:
+            pass

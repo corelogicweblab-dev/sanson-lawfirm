@@ -323,3 +323,172 @@ export interface SessionInsights {
   }>;
 }
 
+export type DocumentVisibility = "PRIVATE" | "CLIENT" | "STAFF" | "CASE_TEAM";
+export type DocumentReviewStatus =
+  | "PENDING"
+  | "IN_REVIEW"
+  | "APPROVED"
+  | "REJECTED"
+  | "ARCHIVED";
+export type EvidenceType =
+  | "PHOTO"
+  | "SCREENSHOT"
+  | "VIDEO_REFERENCE"
+  | "DOCUMENT"
+  | "CONTRACT"
+  | "RECEIPT"
+  | "MEDICAL_RECORD"
+  | "COMMUNICATION_RECORD"
+  | "OTHER";
+
+export interface DocumentCategory {
+  id: string;
+  name: string;
+  displayName: string;
+  description?: string | null;
+  sortOrder: number;
+}
+
+export interface DocumentItem {
+  id: string;
+  fileName: string;
+  originalFileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedBy: string;
+  categoryId: string | null;
+  category: DocumentCategory | null;
+  caseId: string | null;
+  legalRequestId: string | null;
+  visibility: DocumentVisibility;
+  reviewStatus: DocumentReviewStatus;
+  versionNumber: number;
+  keywords: string[];
+  downloadUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentAnalysisResult {
+  id: string;
+  documentId: string;
+  summaryText: string | null;
+  importantFindings: string[];
+  parties: string[];
+  datesFound: string[];
+  legalSignificance: string | null;
+  riskIndicators: string[];
+  missingAttachments: string[];
+  extractedEntities: Record<string, unknown>;
+  keywords: string[];
+  generatedAt: string;
+}
+
+export interface EvidenceItemRecord {
+  id: string;
+  documentId: string | null;
+  caseId: string | null;
+  legalRequestId: string | null;
+  evidenceType: EvidenceType;
+  title: string;
+  description: string | null;
+  status: string;
+  ownerId: string;
+  createdAt: string;
+}
+
+export interface EvidenceTimelineEvent {
+  id: string;
+  eventDate: string;
+  eventTitle: string;
+  eventDescription: string | null;
+  location: string | null;
+  people: string[];
+  organizations: string[];
+  sourceType: string;
+  confidenceScore: number | null;
+}
+
+export type SearchMode = "SEMANTIC" | "KEYWORD" | "HYBRID" | "METADATA";
+
+export interface SearchResultItem {
+  title: string;
+  type: string;
+  relevanceScore: number;
+  rankingScore: number;
+  confidenceScore: number;
+  summary: string;
+  source: string;
+  sourceId: string | null;
+  date: string | null;
+  openAction: string | null;
+}
+
+export interface KnowledgeCategoryItem {
+  id: string;
+  name: string;
+  displayName: string;
+  description?: string | null;
+  sortOrder: number;
+}
+
+export interface KnowledgeArticleItem {
+  id: string;
+  title: string;
+  slug: string;
+  categoryId: string | null;
+  category: KnowledgeCategoryItem | null;
+  content: string;
+  summary: string | null;
+  visibility: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SearchHistoryItem {
+  id: string;
+  queryText: string;
+  searchMode: SearchMode;
+  createdAt: string;
+}
+
+export interface MobileNotification {
+  id: string;
+  channel: string;
+  title: string;
+  body: string;
+  payload: Record<string, unknown>;
+  isRead: boolean;
+  createdAt: string | null;
+}
+
+export interface MobileDashboardWidgets {
+  recentAiConversations?: { id: string; status: string }[];
+  pendingRequests?: number;
+  upcomingAppointments?: { id: string; date: string; status: string }[];
+  activeCases?: { id: string; title: string }[];
+  todaysConsultations?: number;
+  urgentCases?: number;
+  pendingReviews?: number;
+  assignedTasks?: number;
+  totalUsers?: number;
+  recentNotifications?: { id: string; title: string; body: string; isRead: boolean }[];
+}
+
+export interface MobileDashboard {
+  role: UserRole;
+  widgets: MobileDashboardWidgets;
+  quickActions: { label: string; route: string }[];
+}
+
+export interface SyncEvent {
+  id: string;
+  eventType: string;
+  entityType: string;
+  entityId: string | null;
+  payload: Record<string, unknown>;
+  channelName: string | null;
+  createdAt: string | null;
+}
+

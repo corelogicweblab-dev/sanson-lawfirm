@@ -60,7 +60,7 @@ Kung private ang repo: kailangan ng Render na may access sa org, o gawing public
 
 | Key | Notes |
 |-----|--------|
-| `DATABASE_URL` | Buong URI mula Supabase. Format: `postgresql://USER:PASSWORD@HOST:PORT/postgres` — dapat may **`@`** bago ang host. |
+| `DATABASE_URL` | Buong URI mula Supabase — **encode `@` sa password bilang `%40`** (tingnan ibaba) |
 | `DATABASE_SSL` | `true` |
 | `FIREBASE_PROJECT_ID` | `sansonlawfirm` |
 | `FIREBASE_CLIENT_EMAIL` | mula service account JSON |
@@ -69,12 +69,30 @@ Kung private ang repo: kailangan ng Render na may access sa org, o gawing public
 | `OPENAI_API_KEY` | `sk-...` |
 | `OPENAI_MODEL` | `gpt-4o-mini` |
 
-**Halimbawa DATABASE_URL (Supabase pooler):**
+### Password may `@` (karaniwang sanhi ng `database: unavailable`)
+
+Kung ang password ay hal. `Matthew@541994@@`, **huwag** ilagay ang raw `@` sa URL — babasahin ng parser na host na ang `541994@@db...`.
+
+| Character sa password | Ilagay sa URL |
+|----------------------|---------------|
+| `@` | `%40` |
+
+Halimbawa:
+
 ```
-postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
+postgresql+asyncpg://postgres:Matthew%40541994%40%40@db.gutawiiafzycrleddezv.supabase.co:6543/postgres
 ```
 
-Kopyahin mula **Supabase → Database → Connection string** — huwag manu-manong dikit.
+(`Matthew@541994@@` → `Matthew%40541994%40%40`)
+
+**Pinakamabuti:** Supabase → **Database** → **Connection string** → **URI** → **Transaction pooler** → **Copy** (auto-encoded na).
+
+**Halimbawa DATABASE_URL (Supabase pooler):**
+```
+postgresql+asyncpg://postgres.PROJECT_REF:ENCODED_PASSWORD@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
+```
+
+Pagkatapos i-save, test: `/api/v1/health/ready` → `"database":"connected"` at walang `database_url_issues`.
 
 ---
 

@@ -6,6 +6,7 @@ import structlog
 from openai import AsyncOpenAI
 
 from app.core.config import get_settings
+from app.utils.circuit_breaker import openai_breaker
 from app.services.prompts import (
     CLASSIFY_PROMPT,
     INTAKE_EXTRACT_PROMPT,
@@ -90,6 +91,9 @@ class OpenAIService:
     ) -> tuple[str, int | None]:
         if not self.enabled:
             return self._fallback_reply(user_message), None
+        if not openai_breaker.allow_request():
+            logger.warning("openai_circuit_open")
+            return self._fallback_reply(user_message), None
 
         messages = build_conversation_messages(history, user_message)
         try:
@@ -101,8 +105,10 @@ class OpenAIService:
             )
             content = response.choices[0].message.content or ""
             usage = response.usage.total_tokens if response.usage else None
+            openai_breaker.record_success()
             return sanitize_ai_output(content), usage
         except Exception as exc:
+            openai_breaker.record_failure()
             logger.error("openai_chat_failed", error=str(exc))
             return (
                 "I apologize — I'm temporarily unable to process your message. "

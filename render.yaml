@@ -7,8 +7,10 @@ services:
     rootDir: apps/backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /api/v1/health/
+    healthCheckPath: /api/v1/health/ready
     envVars:
+      - key: ENVIRONMENT
+        value: production
       - key: DATABASE_URL
         sync: false
       - key: DATABASE_SSL
@@ -21,9 +23,21 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: http://localhost:3000,http://127.0.0.1:3000,https://sansonlawfirm.web.app,https://sansonlawfirm.firebaseapp.com
+      - key: FRONTEND_URL
+        value: https://sansonlawfirm.web.app
+      - key: FIELD_ENCRYPTION_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4o-mini
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-3-small
       - key: RATE_LIMIT_PER_MINUTE
         value: "60"
