@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 
 export function ParalegalWorkflowStrip({ className }: { className?: string }) {
   return (
-    <div className={cn("overflow-x-auto rounded-xl border border-pink-500/20 bg-pink-950/20 p-4", className)}>
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-pink-300/90">
+    <div className={cn("sanson-panel overflow-x-auto p-4", className)}>
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-pink-300">
         Paralegal-centric case workflow
       </p>
       <ol className="flex min-w-max gap-2">
@@ -16,10 +16,10 @@ export function ParalegalWorkflowStrip({ className }: { className?: string }) {
             className={cn(
               "flex shrink-0 flex-col rounded-lg border px-3 py-2 text-center",
               s.owner === "PARALEGAL"
-                ? "border-pink-500/40 bg-pink-500/10"
+                ? "border-pink-500/40 bg-black/40"
                 : s.owner === "LAWYER"
-                  ? "border-violet-500/30 bg-violet-500/10"
-                  : "sanson-panel"
+                  ? "border-violet-500/30 bg-black/35"
+                  : "border-white/15 bg-black/30"
             )}
           >
             <span className="text-[10px] text-zinc-500">Step {s.step}</span>

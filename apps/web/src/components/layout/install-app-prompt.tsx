@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Smartphone, Monitor, Download } from "lucide-react";
+import { Smartphone, Monitor, Download, Apple } from "lucide-react";
 import { Button, Card, CardContent } from "@sanson/ui";
 import { cn } from "@/lib/utils";
 
@@ -13,12 +13,8 @@ type BeforeInstallPromptEvent = Event & {
 export function InstallAppPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
-  const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
-    const ua = navigator.userAgent;
-    setIsIos(/iPad|iPhone|iPod/.test(ua));
-
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setInstalled(true);
     }
@@ -46,28 +42,33 @@ export function InstallAppPrompt() {
   if (installed) return null;
 
   return (
-    <Card className={cn("sanson-stagger-item")} interactive>
+    <Card className={cn("sanson-stagger-item sanson-panel")} interactive>
       <CardContent className="p-4 sm:p-5">
         <div className="mb-3 flex items-center gap-2">
-          <Download className="h-5 w-5 text-pink-300" />
+          <Download className="h-5 w-5 text-pink-400" />
           <h3 className="font-semibold text-white">Install SANSON Legal OS</h3>
         </div>
-        <p className="mb-4 text-sm text-pink-100/80">
+        <p className="mb-4 text-sm text-zinc-400">
           Install on your device for faster access, home-screen launch, and a native app experience.
         </p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          {isIos ? (
-            <Button variant="outline" className="flex-1" onClick={() => alert("Safari → Share → Add to Home Screen")}>
-              <Smartphone className="h-4 w-4" />
-              Install for iOS
-            </Button>
-          ) : (
-            <Button variant="outline" className="flex-1" onClick={() => alert("Chrome menu → Install app, or Add to Home screen on Android.")}>
-              <Smartphone className="h-4 w-4" />
-              Install for Android
-            </Button>
-          )}
-          <Button className="flex-1" onClick={installDesktop}>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Button
+            variant="outline"
+            className="h-auto flex-col gap-1.5 py-3"
+            onClick={() => alert("Safari → Share → Add to Home Screen")}
+          >
+            <Apple className="h-4 w-4" />
+            Install for iOS
+          </Button>
+          <Button
+            variant="outline"
+            className="h-auto flex-col gap-1.5 py-3"
+            onClick={() => alert("Chrome menu → Install app, or Add to Home screen on Android.")}
+          >
+            <Smartphone className="h-4 w-4" />
+            Install for Android
+          </Button>
+          <Button className="h-auto flex-col gap-1.5 py-3" onClick={installDesktop}>
             <Monitor className="h-4 w-4" />
             Install Desktop App
           </Button>

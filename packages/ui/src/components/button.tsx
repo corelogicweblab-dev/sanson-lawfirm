@@ -12,11 +12,11 @@ const variants = {
   default:
     "bg-gradient-to-r from-[#BE185D] via-[#EC4899] to-[#FF4FA3] text-white hover:from-[#EC4899] hover:via-[#F472B6] hover:to-[#FF4FA3] shadow-lg shadow-[#FF4FA3]/30",
   secondary:
-    "bg-white/10 text-white border border-white/15 hover:bg-white/15 hover:border-[#F9A8D4]/40 hover:shadow-[0_0_20px_rgba(255,79,163,0.2)]",
-  ghost: "text-pink-100 hover:text-white hover:bg-white/10",
+    "bg-[#111111]/80 text-white border border-pink-500/25 hover:bg-[#1A1A1A]/90 hover:border-pink-400/40",
+  ghost: "text-zinc-300 hover:text-white hover:bg-black/30",
   destructive: "bg-red-600/90 text-white hover:bg-red-500",
   outline:
-    "border border-white/20 text-[#F9A8D4] hover:bg-white/10 hover:border-[#FF4FA3]/50 hover:shadow-[0_0_16px_rgba(255,79,163,0.25)]",
+    "border border-pink-500/30 bg-[#080808]/55 text-white hover:bg-[#111111]/90 hover:border-[#FF4FA3]/50 hover:shadow-[0_0_16px_rgba(255,79,163,0.2)]",
 };
 
 const sizes = {

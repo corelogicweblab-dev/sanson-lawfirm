@@ -16,11 +16,13 @@
   --muted: #fce7f3;
   --accent: var(--pink-primary);
   --accent-light: var(--pink-luxury);
-  --surface: rgba(255, 255, 255, 0.08);
-  --surface-sidebar: rgba(255, 255, 255, 0.1);
-  --surface-header: rgba(255, 255, 255, 0.12);
-  --border: rgba(255, 255, 255, 0.15);
-  --glass-bg: rgba(255, 255, 255, 0.08);
+  --surface: rgba(8, 8, 8, 0.55);
+  --surface-sidebar: rgba(8, 8, 8, 0.82);
+  --surface-header: rgba(17, 17, 17, 0.88);
+  --border: rgba(236, 72, 153, 0.22);
+  --glass-bg: rgba(8, 8, 8, 0.65);
+  --glass-bg-elevated: rgba(17, 17, 17, 0.82);
+  --glass-border: rgba(244, 114, 182, 0.28);
   --motion-duration: 200ms;
   --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --glow-pink: 0 0 40px rgba(255, 79, 163, 0.35);
@@ -75,10 +77,22 @@ body {
 }
 
 /* Blended mesh grid — luxury depth without flat single-color */
+.sanson-depth-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 75% at 55% 45%,
+    rgba(8, 8, 8, 0.35) 0%,
+    rgba(8, 8, 8, 0.12) 45%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
 .sanson-mesh-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.35;
+  opacity: 0.22;
   background-image:
     radial-gradient(ellipse 120% 80% at 10% 0%, rgba(255, 79, 163, 0.45), transparent 50%),
     radial-gradient(ellipse 90% 70% at 90% 10%, rgba(249, 168, 212, 0.4), transparent 45%),
@@ -144,8 +158,8 @@ body {
 .sanson-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.55;
+  filter: blur(72px);
+  opacity: 0.38;
   will-change: transform;
 }
 
@@ -381,11 +395,13 @@ body {
 
 .sanson-glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(190, 24, 93, 0.12);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .glass-card {
@@ -399,26 +415,71 @@ body {
 /* Legacy panel classes → premium glass */
 .sanson-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(190, 24, 93, 0.12);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .sanson-glass-header {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 24px rgba(255, 79, 163, 0.08);
+  background: var(--glass-bg-elevated);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(255, 79, 163, 0.08);
 }
 
 .sanson-glass-sidebar {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--glass-bg-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.45);
+}
+
+.sanson-dashboard-canvas {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.sanson-action-tile {
+  display: flex;
+  height: 100%;
+  min-height: 5.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #f4f4f5;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  transition:
+    transform var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease);
+}
+
+.sanson-action-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 79, 163, 0.45);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(255, 79, 163, 0.15);
+}
+
+.sanson-action-tile svg {
+  color: var(--pink-luxury);
 }
 
 .sanson-input-glow:focus-within {
@@ -432,7 +493,7 @@ body {
 }
 
 .neon-text {
-  text-shadow: 0 0 24px rgba(255, 79, 163, 0.6);
+  text-shadow: 0 0 12px rgba(255, 79, 163, 0.35);
 }
 
 .auth-gradient {
@@ -442,10 +503,11 @@ body {
 }
 
 .sanson-auth-card {
+  background: var(--glass-bg-elevated) !important;
   box-shadow:
-    var(--glow-pink),
-    0 24px 64px rgba(190, 24, 93, 0.35);
-  border-color: rgba(255, 255, 255, 0.22) !important;
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 0 32px rgba(255, 79, 163, 0.12);
+  border-color: var(--glass-border) !important;
 }
 
 [data-motion-tier="reduced"] .sanson-blob,

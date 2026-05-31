@@ -13,7 +13,7 @@ import {
   FolderPlus,
 } from "lucide-react";
 import { PARALEGAL_FILE_TYPES } from "@sanson/shared";
-import { PageContainer, SectionHeader, StatCard, Button } from "@sanson/ui";
+import { PageContainer, SectionHeader, StatCard } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ParalegalWorkflowStrip } from "@/components/operations/paralegal-workflow-strip";
@@ -57,42 +57,30 @@ export default function ParalegalDashboardPage() {
             <InstallAppPrompt />
           </div>
 
-          <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/dashboard/paralegal/intake">
-              <Button className="h-auto w-full flex-col gap-2 py-4" variant="default">
-                <ClipboardList className="h-5 w-5" />
-                Intake queue
-              </Button>
+          <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Link href="/dashboard/paralegal/intake" className="sanson-action-tile border-pink-500/40 bg-gradient-to-br from-pink-600/30 to-black/60">
+              <ClipboardList className="h-5 w-5" />
+              Intake queue
             </Link>
-            <Link href="/dashboard/paralegal/cases/new">
-              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
-                <FolderPlus className="h-5 w-5" />
-                New draft case
-              </Button>
+            <Link href="/dashboard/paralegal/cases/new" className="sanson-action-tile">
+              <FolderPlus className="h-5 w-5" />
+              New draft case
             </Link>
-            <Link href="/dashboard/paralegal/documents">
-              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
-                <FileUp className="h-5 w-5" />
-                Upload documents
-              </Button>
+            <Link href="/dashboard/paralegal/documents" className="sanson-action-tile">
+              <FileUp className="h-5 w-5" />
+              Upload documents
             </Link>
-            <Link href="/dashboard/paralegal/calendar">
-              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
-                <CalendarDays className="h-5 w-5" />
-                Calendar
-              </Button>
+            <Link href="/dashboard/paralegal/calendar" className="sanson-action-tile">
+              <CalendarDays className="h-5 w-5" />
+              Calendar
             </Link>
-            <Link href="/dashboard/paralegal/migration-center">
-              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
-                <FolderInput className="h-5 w-5" />
-                Legacy migration
-              </Button>
+            <Link href="/dashboard/paralegal/migration-center" className="sanson-action-tile">
+              <FolderInput className="h-5 w-5" />
+              Legacy migration
             </Link>
-            <Link href="/dashboard/paralegal/cases">
-              <Button className="h-auto w-full flex-col gap-2 py-4" variant="outline">
-                <Briefcase className="h-5 w-5" />
-                All cases
-              </Button>
+            <Link href="/dashboard/paralegal/cases" className="sanson-action-tile">
+              <Briefcase className="h-5 w-5" />
+              All cases
             </Link>
           </div>
 

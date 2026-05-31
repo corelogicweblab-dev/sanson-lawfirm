@@ -217,8 +217,8 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
                 "flex items-center gap-2.5 rounded-xl py-2 text-sm font-medium transition-colors duration-200",
                 sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3",
                 pathname === item.href
-                  ? "bg-pink-500/15 text-pink-400 shadow-sm shadow-pink-500/10"
-                  : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                  ? "border border-pink-500/35 bg-pink-500/20 text-white shadow-sm shadow-pink-500/15"
+                  : "text-zinc-300 hover:border hover:border-white/10 hover:bg-black/30 hover:text-white"
               )}
             >
               {item.icon}
@@ -346,7 +346,9 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
             </div>
           </div>
         </header>
-        <main className="sanson-dashboard-main min-w-0 flex-1 safe-bottom">{children}</main>
+        <main className="sanson-dashboard-main sanson-dashboard-canvas min-w-0 flex-1 safe-bottom">
+          {children}
+        </main>
       </div>
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
