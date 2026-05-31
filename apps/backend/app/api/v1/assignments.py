@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_client_ip, get_user_agent, require_permission
+from app.core.dependencies import get_client_ip, get_user_agent, require_legal_operator, require_permission
 from app.core.responses import success_response
 from app.domain.authenticated_user import AuthenticatedUser
 from app.schemas.legal import AssignmentCreate
@@ -20,6 +20,7 @@ async def assign_case(
     body: AssignmentCreate,
     request: Request,
     current_user: AuthenticatedUser = Depends(require_permission("cases:assign")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
     db: AsyncSession = Depends(get_db),
 ):
     if body.assignee_role not in ("LAWYER", "PARALEGAL"):

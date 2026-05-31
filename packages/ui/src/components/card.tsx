@@ -1,12 +1,18 @@
 import * as React from "react";
 import { cn } from "../lib/cn";
+import { glassSurface, motionCard } from "../motion/classes";
 
-export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  interactive?: boolean;
+}
+
+export function Card({ className, interactive = false, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl",
-        "shadow-xl shadow-black/20",
+        glassSurface(),
+        "shadow-lg shadow-black/15",
+        interactive && motionCard(),
         className
       )}
       {...props}

@@ -37,7 +37,7 @@ export function DialogContent({
     <div
       className={cn(
         "w-full max-w-lg rounded-2xl border border-white/10 bg-zinc-900/95 p-6",
-        "shadow-2xl shadow-black/50 backdrop-blur-xl",
+        "shadow-2xl shadow-black/50 backdrop-blur-md",
         className
       )}
     >

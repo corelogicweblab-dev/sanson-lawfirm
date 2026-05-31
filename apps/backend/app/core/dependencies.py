@@ -111,6 +111,39 @@ def require_role(*roles: str):
     return checker
 
 
+def require_legal_operator():
+    """Block platform ADMIN from legal operations (paralegal-centric model)."""
+
+    async def checker(user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        if user.role_name == "ADMIN":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="System administrators cannot perform legal operations",
+            )
+        return user
+
+    return checker
+
+
+def require_lawyer_approval():
+    """Case approval, closure, and terminal status — lawyers only."""
+
+    async def checker(user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        if user.role_name != "LAWYER":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only lawyers may approve or close cases",
+            )
+        if not user.has_permission("cases:approve") and not user.has_permission("cases:close"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Permission denied: cases:approve or cases:close required",
+            )
+        return user
+
+    return checker
+
+
 def get_client_ip(request: Request) -> str | None:
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:

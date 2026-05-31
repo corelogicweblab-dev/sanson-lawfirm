@@ -1,5 +1,5 @@
 {
-  "schema_version": "016",
+  "schema_version": "020",
   "description": "SANSON Legal OS migration manifest — apply in filename order",
   "rollback_policy": "Manual rollback scripts per phase; never auto-drop production tables",
   "migrations": [
@@ -18,6 +18,10 @@
     { "version": "013", "file": "013_phase7_schema.sql", "phase": 7, "type": "schema" },
     { "version": "014", "file": "014_phase7_seed.sql", "phase": 7, "type": "seed" },
     { "version": "015", "file": "015_phase8_schema.sql", "phase": 8, "type": "schema" },
-    { "version": "016", "file": "016_phase8_seed.sql", "phase": 8, "type": "seed" }
+    { "version": "016", "file": "016_phase8_seed.sql", "phase": 8, "type": "seed" },
+    { "version": "017", "file": "017_case_migration_schema.sql", "phase": 9, "type": "schema" },
+    { "version": "018", "file": "018_case_migration_seed.sql", "phase": 9, "type": "seed" },
+    { "version": "019", "file": "019_case_source_schema.sql", "phase": 10, "type": "schema" },
+    { "version": "020", "file": "020_operations_model_rbac.sql", "phase": 10, "type": "seed" }
   ]
 }

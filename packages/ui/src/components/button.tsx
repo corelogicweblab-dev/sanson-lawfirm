@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "../lib/cn";
+import { motionButton } from "../motion/classes";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "secondary" | "ghost" | "destructive" | "outline";
@@ -29,8 +30,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       disabled={disabled || loading}
+      data-variant={variant}
       className={cn(
-        "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200",
+        "inline-flex items-center justify-center gap-2 font-medium",
+        motionButton(),
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/50",
         "disabled:opacity-50 disabled:pointer-events-none",
         variants[variant],
@@ -40,7 +43,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       {...props}
     >
       {loading && (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        <span
+          className="h-4 w-4 animate-pulse rounded-full bg-white/30"
+          aria-hidden
+        />
       )}
       {children}
     </button>

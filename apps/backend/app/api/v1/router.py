@@ -24,6 +24,7 @@ from app.api.v1 import (
     system,
     sessions,
     ops,
+    case_migration,
     recommendations,
     search,
     legal_requests,
@@ -83,4 +84,7 @@ api_router.include_router(security.router, prefix="/security", tags=["Security"]
 api_router.include_router(system.router, prefix="/system", tags=["System"])
 api_router.include_router(sessions.router, prefix="/sessions", tags=["Sessions"])
 api_router.include_router(ops.router, prefix="/ops", tags=["Operations"])
+api_router.include_router(
+    case_migration.router, prefix="/case-migration", tags=["Case Migration"]
+)
 

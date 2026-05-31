@@ -8,6 +8,8 @@
   --accent-light: #f472b6;
   --surface: rgba(255, 255, 255, 0.03);
   --border: rgba(236, 72, 153, 0.15);
+  --motion-duration: 200ms;
+  --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 @theme inline {
@@ -40,8 +42,134 @@ body {
   }
 }
 
+/* Performance-first motion — transform/opacity only; max 300ms */
+@keyframes sanson-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sanson-notification-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sanson-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sanson-enter {
+  animation: sanson-fade-up var(--motion-duration) var(--motion-ease) forwards;
+}
+
+.sanson-stagger-item {
+  animation: sanson-stagger-in var(--motion-duration) var(--motion-ease) backwards;
+}
+
+.sanson-notification-enter {
+  animation: sanson-notification-in 150ms var(--motion-ease) forwards;
+}
+
+.sanson-card-interactive {
+  transition:
+    transform var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease);
+}
+
+.sanson-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(236, 72, 153, 0.22);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.06);
+}
+
+.sanson-btn-motion {
+  transition:
+    transform 150ms var(--motion-ease),
+    box-shadow 150ms var(--motion-ease),
+    background-color 150ms var(--motion-ease),
+    border-color 150ms var(--motion-ease);
+}
+
+.sanson-btn-motion:hover:not(:disabled) {
+  transform: scale(1.01);
+}
+
+.sanson-btn-motion[data-variant="default"]:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+}
+
+.sanson-glass {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md;
+}
+
 .glass-card {
-  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl;
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md;
+}
+
+[data-motion-tier="reduced"] .sanson-card-interactive:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+[data-motion-tier="reduced"] .sanson-btn-motion:hover:not(:disabled) {
+  transform: none;
+}
+
+[data-motion-tier="minimal"] .sanson-enter,
+[data-motion-tier="minimal"] .sanson-stagger-item,
+[data-motion-tier="minimal"] .sanson-notification-enter {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+[data-motion-tier="minimal"] .sanson-card-interactive:hover,
+[data-motion-tier="minimal"] .sanson-btn-motion:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
+[data-motion-tier="minimal"] .sanson-glass,
+[data-motion-tier="reduced"] .sanson-glass {
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .sanson-enter,
+  .sanson-stagger-item,
+  .sanson-notification-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .sanson-card-interactive:hover,
+  .sanson-btn-motion:hover:not(:disabled) {
+    transform: none !important;
+  }
 }
 
 .neon-text {
@@ -53,4 +181,10 @@ body {
     radial-gradient(ellipse at 20% 20%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
     var(--background);
+}
+
+/* Avoid browser password reveal overlapping our toggle (Edge/IE legacy) */
+input[data-password-input]::-ms-reveal,
+input[data-password-input]::-ms-clear {
+  display: none;
 }

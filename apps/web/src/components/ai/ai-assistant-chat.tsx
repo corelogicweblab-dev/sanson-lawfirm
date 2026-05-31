@@ -188,7 +188,7 @@ export function AiAssistantChat() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr] xl:grid-cols-[minmax(0,260px)_1fr_minmax(0,280px)]">
-      <Card className="order-2 border-white/10 bg-white/5 p-3 backdrop-blur-xl lg:order-1">
+      <Card className="order-2 border-white/10 bg-white/5 p-3 backdrop-blur-md lg:order-1">
         <Button
           className="mb-3 w-full gap-2"
           onClick={startNewSession}
@@ -223,7 +223,7 @@ export function AiAssistantChat() {
         </div>
       </Card>
 
-      <Card className="order-1 flex min-h-[min(70dvh,560px)] flex-col border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-xl sm:min-h-[480px] lg:order-2 lg:min-h-[560px]">
+      <Card className="order-1 flex min-h-[min(70dvh,560px)] flex-col border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-md sm:min-h-[480px] lg:order-2 lg:min-h-[560px]">
         <div className="border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-pink-400" />
@@ -346,7 +346,7 @@ export function AiAssistantChat() {
 
       <div className="order-3 space-y-4">
         <LegalDisclaimer compact />
-        <Card className="border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+        <Card className="border-white/10 bg-white/5 p-4 backdrop-blur-md">
           <h3 className="mb-3 text-sm font-semibold text-white">Intake insights</h3>
           {!insights?.classification && !insights?.summary && (
             <p className="text-xs text-zinc-500">

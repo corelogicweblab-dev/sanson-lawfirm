@@ -31,3 +31,5 @@ export * from "./components/page-container";
 export * from "./components/section-header";
 export * from "./components/stat-card";
 export * from "./components/powered-by";
+export * from "./motion/tokens";
+export * from "./motion/classes";

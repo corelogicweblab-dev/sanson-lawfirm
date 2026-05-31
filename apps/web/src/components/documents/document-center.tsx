@@ -79,7 +79,7 @@ export function DocumentCenter({ showProcess = false, caseId }: DocumentCenterPr
 
   return (
     <div className="space-y-6">
-      <Card className="border-dashed border-white/20 bg-white/5 backdrop-blur-xl">
+      <Card className="border-dashed border-white/20 bg-white/5 backdrop-blur-md">
         <CardContent className="p-6">
           <div
             className={cn(

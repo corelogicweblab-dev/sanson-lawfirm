@@ -14,6 +14,12 @@ if TYPE_CHECKING:
     from app.models import User
 
 
+class CaseSourceTypeEnum(str, enum.Enum):
+    LEGACY = "LEGACY"
+    AI_INTAKE = "AI_INTAKE"
+    MANUAL = "MANUAL"
+
+
 class CaseCategoryEnum(str, enum.Enum):
     CRIMINAL = "CRIMINAL"
     CIVIL = "CIVIL"
@@ -183,6 +189,11 @@ class Case(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     status_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("case_statuses.id"))
     case_category: Mapped[CaseCategoryEnum] = mapped_column(
         Enum(CaseCategoryEnum, name="case_category", create_type=False), nullable=False
+    )
+    source_type: Mapped[CaseSourceTypeEnum] = mapped_column(
+        Enum(CaseSourceTypeEnum, name="case_source_type", create_type=False),
+        default=CaseSourceTypeEnum.MANUAL,
+        nullable=False,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)

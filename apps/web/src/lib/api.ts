@@ -150,6 +150,14 @@ export class ApiClient {
     return this.request("/appointments/");
   }
 
+  async getCase(caseId: string): Promise<ApiResponse<CaseItem>> {
+    return this.request(`/cases/${caseId}`);
+  }
+
+  async listCaseAssignments(caseId: string): Promise<ApiResponse<Record<string, unknown>[]>> {
+    return this.request(`/assignments/cases/${caseId}`);
+  }
+
   async listCases(): Promise<ApiResponse<CaseItem[]>> {
     return this.request("/cases/");
   }
@@ -455,6 +463,58 @@ export class ApiClient {
 
   async getMigrationStatus(): Promise<ApiResponse<Record<string, unknown>>> {
     return this.request("/ops/migrations");
+  }
+
+  async getMigrationSummary(): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.request("/case-migration/summary");
+  }
+
+  async getMigrationQueue(status?: string): Promise<ApiResponse<Record<string, unknown>[]>> {
+    const q = status ? `?status=${encodeURIComponent(status)}` : "";
+    return this.request(`/case-migration/queue${q}`);
+  }
+
+  async createLegacyCase(body: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.request("/case-migration/legacy-case", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async bulkImportCases(cases: Record<string, unknown>[]): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.request("/case-migration/bulk-cases", {
+      method: "POST",
+      body: JSON.stringify({ cases }),
+    });
+  }
+
+  async bulkImportDocuments(
+    documents: Record<string, unknown>[]
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.request("/case-migration/bulk-documents", {
+      method: "POST",
+      body: JSON.stringify({ documents }),
+    });
+  }
+
+  async assignMigrationStaff(
+    itemId: string,
+    body: { lawyer_id?: string; paralegal_id?: string }
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.request(`/case-migration/${itemId}/assign`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async validateMigrationRecord(
+    itemId: string,
+    body: { notes?: string; import_now?: boolean }
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return this.request(`/case-migration/${itemId}/validate`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   }
 }
 

@@ -9,6 +9,8 @@ import {
   Shield,
   LogOut,
   ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
   Bell,
   Search,
   Menu,
@@ -28,6 +30,7 @@ import {
   Monitor,
   SlidersHorizontal,
   Rocket,
+  FolderInput,
   Server,
   Bot,
 } from "lucide-react";
@@ -69,9 +72,9 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   ],
   PARALEGAL: [
     { label: "Dashboard", href: "/dashboard/paralegal", icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
-    { label: "Cases", href: "/dashboard/paralegal/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
+    { label: "Case Management", href: "/dashboard/paralegal/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
     { label: "Tasks", href: "/dashboard/paralegal/tasks", icon: <ListTodo className="h-4 w-4 shrink-0" /> },
-    { label: "Coordination", href: "/dashboard/paralegal/coordination", icon: <Users className="h-4 w-4 shrink-0" /> },
+    { label: "Case Migration Center", href: "/dashboard/paralegal/migration-center", icon: <FolderInput className="h-4 w-4 shrink-0" /> },
     { label: "Documents", href: "/dashboard/paralegal/documents", icon: <FileText className="h-4 w-4 shrink-0" /> },
     { label: "Search", href: "/dashboard/lawyer/search", icon: <Search className="h-4 w-4 shrink-0" /> },
     { label: "Knowledge", href: "/dashboard/lawyer/knowledge", icon: <BookOpen className="h-4 w-4 shrink-0" /> },
@@ -81,6 +84,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: "Requests", href: "/dashboard/admin/requests", icon: <ClipboardList className="h-4 w-4 shrink-0" /> },
     { label: "Appointments", href: "/dashboard/admin/appointments", icon: <CalendarDays className="h-4 w-4 shrink-0" /> },
     { label: "Cases", href: "/dashboard/admin/cases", icon: <Briefcase className="h-4 w-4 shrink-0" /> },
+    { label: "Case Migration", href: "/dashboard/paralegal/migration-center", icon: <FolderInput className="h-4 w-4 shrink-0" /> },
     { label: "Users", href: "/dashboard/admin/users", icon: <Users className="h-4 w-4 shrink-0" /> },
     { label: "Roles", href: "/dashboard/admin/roles", icon: <Shield className="h-4 w-4 shrink-0" /> },
     { label: "System Health", href: "/dashboard/admin/system-health", icon: <Activity className="h-4 w-4 shrink-0" /> },
@@ -108,6 +112,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
   const pathname = usePathname();
   const { user, getRole, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -157,19 +162,38 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[min(18rem,85vw)] flex-col border-r border-white/10 bg-zinc-950/98 backdrop-blur-xl safe-top",
-          "transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-64 lg:translate-x-0 xl:w-72",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/10 bg-zinc-950/98 backdrop-blur-md safe-top",
+          "w-[min(18rem,85vw)] transition-[transform,width] duration-200 ease-out",
+          "lg:static lg:z-auto lg:translate-x-0",
+          sidebarCollapsed ? "lg:w-[4.5rem]" : "lg:w-64 xl:w-72",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-4 sm:h-16 sm:px-5">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-3 sm:h-16 sm:px-4">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
             <Scale className="h-4 w-4 text-white" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "min-w-0 flex-1 overflow-hidden transition-opacity duration-200",
+              sidebarCollapsed && "lg:pointer-events-none lg:opacity-0"
+            )}
+          >
             <p className="truncate text-sm font-bold text-white">SANSON Legal OS</p>
             <PoweredByCoreLogic />
           </div>
+          <button
+            type="button"
+            className="hidden shrink-0 rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white lg:flex"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setSidebarCollapsed((c) => !c)}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeft className="h-5 w-5" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5" />
+            )}
+          </button>
           <button
             type="button"
             className="shrink-0 rounded-lg p-1 lg:hidden"
@@ -179,21 +203,30 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
             <X className="h-5 w-5 text-zinc-400" />
           </button>
         </div>
-        <nav className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-3 sm:p-4">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-2 sm:p-3">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
+              title={sidebarCollapsed ? item.label : undefined}
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-xl py-2 text-sm font-medium transition-colors duration-200",
+                sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3",
                 pathname === item.href
-                  ? "bg-pink-500/15 text-pink-400"
+                  ? "bg-pink-500/15 text-pink-400 shadow-sm shadow-pink-500/10"
                   : "text-zinc-400 hover:bg-white/5 hover:text-white"
               )}
             >
               {item.icon}
-              <span className="truncate">{item.label}</span>
+              <span
+                className={cn(
+                  "truncate transition-opacity duration-200",
+                  sidebarCollapsed && "lg:hidden"
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           ))}
         </nav>
@@ -201,16 +234,20 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+            title="Sign out"
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-xl py-2.5 text-sm text-zinc-400 transition-colors duration-200 hover:bg-white/5 hover:text-white",
+              sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3"
+            )}
           >
             <LogOut className="h-4 w-4 shrink-0" />
-            Sign Out
+            <span className={cn(sidebarCollapsed && "lg:hidden")}>Sign Out</span>
           </button>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="safe-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-white/10 bg-zinc-950/90 px-3 backdrop-blur-xl sm:h-16 sm:gap-3 sm:px-4 lg:px-6">
+        <header className="safe-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-white/10 bg-zinc-950/90 px-3 backdrop-blur-md sm:h-16 sm:gap-3 sm:px-4 lg:px-6">
           <button
             type="button"
             className="shrink-0 rounded-lg p-2 lg:hidden"
@@ -287,7 +324,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
                     className="fixed inset-0 z-40"
                     onClick={() => setProfileOpen(false)}
                   />
-                  <div className="absolute right-0 z-50 mt-2 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-xl">
+                  <div className="sanson-notification-enter absolute right-0 z-50 mt-2 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-xl">
                     <p className="truncate px-3 py-2 text-sm font-medium text-white">{displayName}</p>
                     <p className="truncate px-3 pb-2 text-xs text-zinc-400">{user?.email}</p>
                     <p className="px-3 pb-2 text-xs text-pink-400">{user?.role?.display_name}</p>

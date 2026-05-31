@@ -69,6 +69,7 @@ def to_case(c: Case) -> dict:
         "assigned_paralegal_id": str(c.assigned_paralegal_id) if c.assigned_paralegal_id else None,
         "status": to_case_status(c.status) if c.status else None,
         "case_category": _enum_val(c.case_category),
+        "source_type": _enum_val(c.source_type),
         "title": c.title,
         "description": c.description,
         "priority": _enum_val(c.priority),

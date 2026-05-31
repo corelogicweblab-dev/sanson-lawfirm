@@ -14,6 +14,7 @@ from app.models.legal import (
     CaseActivity,
     CaseAssignment,
     CaseCategoryEnum,
+    CaseSourceTypeEnum,
     CaseStatus,
     Comment,
     ConsultationNote,
@@ -271,9 +272,14 @@ class LegalWorkflowService:
         performed_by: UUID,
         ip: str | None = None,
         ua: str | None = None,
+        source_type: str = "MANUAL",
     ) -> Case:
         case_number = await generate_case_number(self.db)
         status = await self.get_default_open_status()
+        try:
+            src = CaseSourceTypeEnum[source_type]
+        except KeyError:
+            src = CaseSourceTypeEnum.MANUAL
         case = Case(
             case_number=case_number,
             request_id=request_id,
@@ -282,6 +288,7 @@ class LegalWorkflowService:
             assigned_paralegal_id=assigned_paralegal_id,
             status_id=status.id,
             case_category=CaseCategoryEnum[case_category],
+            source_type=src,
             title=title,
             description=description,
             priority=PriorityLevelEnum[priority],
@@ -336,6 +343,7 @@ class LegalWorkflowService:
             performed_by=performed_by,
             ip=ip,
             ua=ua,
+            source_type="AI_INTAKE",
         )
 
     async def get_case(self, case_id: UUID) -> Case | None:

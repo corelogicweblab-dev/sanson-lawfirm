@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_client_ip, get_user_agent, require_permission
+from app.core.dependencies import (
+    get_client_ip,
+    get_user_agent,
+    require_legal_operator,
+    require_permission,
+)
 from app.core.responses import PaginationMeta, PaginationParams, success_response
 from app.domain.authenticated_user import AuthenticatedUser
 from app.schemas.legal import CaseCreate, CaseFromRequest, CaseUpdate
@@ -19,6 +24,7 @@ async def create_case(
     body: CaseCreate,
     request: Request,
     current_user: AuthenticatedUser = Depends(require_permission("cases:write")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
     db: AsyncSession = Depends(get_db),
 ):
     service = LegalWorkflowService(db)
@@ -44,6 +50,7 @@ async def create_case_from_request(
     body: CaseFromRequest,
     request: Request,
     current_user: AuthenticatedUser = Depends(require_permission("cases:write")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
     db: AsyncSession = Depends(get_db),
 ):
     service = LegalWorkflowService(db)
@@ -69,7 +76,8 @@ async def list_cases(
     service = LegalWorkflowService(db)
     client_id = current_user.id if current_user.role_name == "CLIENT" else None
     lawyer_id = current_user.id if current_user.role_name == "LAWYER" else None
-    paralegal_id = current_user.id if current_user.role_name == "PARALEGAL" else None
+    # Paralegals operate the centralized case repository (all cases)
+    paralegal_id = None
     data, total = await service.list_cases(
         offset=pagination.offset,
         limit=pagination.page_size,
@@ -110,8 +118,6 @@ async def get_case(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ownership validation failed")
     if current_user.role_name == "LAWYER" and case.assigned_lawyer_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Assignment validation failed")
-    if current_user.role_name == "PARALEGAL" and case.assigned_paralegal_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Assignment validation failed")
     return success_response(to_case(case), "Case retrieved")
 
 
@@ -121,8 +127,15 @@ async def update_case(
     body: CaseUpdate,
     request: Request,
     current_user: AuthenticatedUser = Depends(require_permission("cases:write")),
+    _legal: AuthenticatedUser = Depends(require_legal_operator()),
     db: AsyncSession = Depends(get_db),
 ):
+    if body.status_name in ("CLOSED", "RESOLVED", "ARCHIVED"):
+        if current_user.role_name != "LAWYER":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only lawyers may approve or close cases",
+            )
     service = LegalWorkflowService(db)
     updated = await service.update_case(
         case_id=case_id,

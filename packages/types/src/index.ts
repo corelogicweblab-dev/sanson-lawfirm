@@ -190,10 +190,13 @@ export interface CaseStatus {
   is_terminal: boolean;
 }
 
+export type CaseSourceType = "LEGACY" | "AI_INTAKE" | "MANUAL";
+
 export interface CaseItem {
   id: string;
   case_number: string;
   request_id: string | null;
+  source_type?: CaseSourceType;
   client_id: string;
   assigned_lawyer_id: string | null;
   assigned_paralegal_id: string | null;

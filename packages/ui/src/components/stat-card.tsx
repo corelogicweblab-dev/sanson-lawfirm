@@ -1,4 +1,5 @@
 import { cn } from "../lib/cn";
+import { motionStaggerChild } from "../motion/classes";
 import { Card, CardContent } from "./card";
 
 interface StatCardProps {
@@ -8,11 +9,25 @@ interface StatCardProps {
   icon?: React.ReactNode;
   trend?: string;
   className?: string;
+  /** Stagger index for dashboard load (max ~8 for performance) */
+  staggerIndex?: number;
 }
 
-export function StatCard({ title, value, description, icon, trend, className }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  description,
+  icon,
+  trend,
+  className,
+  staggerIndex = 0,
+}: StatCardProps) {
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card
+      interactive
+      className={cn(motionStaggerChild(), "overflow-hidden", className)}
+      style={{ animationDelay: `${Math.min(staggerIndex, 7) * 40}ms` }}
+    >
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1 sm:space-y-2">
