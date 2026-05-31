@@ -77,7 +77,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+        className="sanson-field"
       />
     </label>
   );
@@ -101,13 +101,26 @@ function TextArea({
         rows={rows}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+        className="sanson-field"
       />
     </label>
   );
 }
 
-export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null }) {
+const SOURCE_FROM_QUERY: Record<string, string> = {
+  WALK_IN: "WALK_IN",
+  PHONE: "PHONE_INQUIRY",
+  REFERRAL: "REFERRAL",
+  MANUAL: "MANUAL",
+};
+
+export function MasterCaseIntakeForm({
+  requestId,
+  defaultSourceType,
+}: {
+  requestId?: string | null;
+  defaultSourceType?: string | null;
+}) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const [clientMode, setClientMode] = useState<"new" | "existing">("new");
@@ -115,12 +128,15 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
   const [lawyers, setLawyers] = useState<Record<string, unknown>[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [directoryHint, setDirectoryHint] = useState("");
 
   const [caseInfo, setCaseInfo] = useState({
     title: "",
     case_category: "CIVIL",
     priority: "MEDIUM",
-    source_type: requestId ? "AI_INTAKE" : "WALK_IN",
+    source_type: requestId
+      ? "AI_INTAKE"
+      : SOURCE_FROM_QUERY[defaultSourceType?.toUpperCase() ?? ""] ?? "MANUAL",
     description: "",
     statement_of_facts: "",
     legal_issues: "",
@@ -182,7 +198,14 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
 
   useEffect(() => {
     api.listUserDirectory("CLIENT").then((r) => {
-      if (r.success && r.data) setExistingClients(r.data);
+      if (r.success && r.data) {
+        setExistingClients(r.data);
+        if (r.data.length === 0) {
+          setDirectoryHint("No clients in directory yet — use + New client to create one with this case.");
+        }
+      } else {
+        setDirectoryHint("Could not load client list. Use + New client, or refresh after backend deploy.");
+      }
     });
     api.listUserDirectory("LAWYER").then((r) => {
       if (r.success && r.data) setLawyers(r.data);
@@ -316,7 +339,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
           <label className="text-sm text-zinc-400">
             Case type
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+              className="sanson-field"
               value={caseInfo.case_category}
               onChange={(e) => setCaseInfo({ ...caseInfo, case_category: e.target.value })}
             >
@@ -330,7 +353,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
           <label className="text-sm text-zinc-400">
             Priority
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+              className="sanson-field"
               value={caseInfo.priority}
               onChange={(e) => setCaseInfo({ ...caseInfo, priority: e.target.value })}
             >
@@ -344,7 +367,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
           <label className="text-sm text-zinc-400 sm:col-span-2">
             Source type
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+              className="sanson-field"
               value={caseInfo.source_type}
               onChange={(e) => setCaseInfo({ ...caseInfo, source_type: e.target.value })}
             >
@@ -364,7 +387,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
           <label className="block text-sm text-zinc-400">
             Select client (optional — or fill details below)
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+              className="sanson-field"
               value={client.client_id}
               onChange={(e) => {
                 const id = e.target.value;
@@ -416,12 +439,18 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
         <Field label="Emergency phone" value={client.emergency_phone} onChange={(v) => setClient({ ...client, emergency_phone: v })} />
       </Section>
 
-      <Section title="Opposing party">
+      {directoryHint && clientMode === "existing" && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+          {directoryHint}
+        </p>
+      )}
+
+      <Section title="Opposing party" defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-zinc-400">
             Type
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+              className="sanson-field"
               value={opposing.party_type}
               onChange={(e) => setOpposing({ ...opposing, party_type: e.target.value })}
             >
@@ -436,7 +465,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
         <TextArea label="Notes" value={opposing.notes} onChange={(v) => setOpposing({ ...opposing, notes: v })} />
       </Section>
 
-      <Section title="Case details">
+      <Section title="Case details" defaultOpen>
         <TextArea label="Statement of facts" value={caseInfo.statement_of_facts} onChange={(v) => setCaseInfo({ ...caseInfo, statement_of_facts: v })} rows={4} />
         <TextArea label="Legal issues" value={caseInfo.legal_issues} onChange={(v) => setCaseInfo({ ...caseInfo, legal_issues: v })} />
         <TextArea label="Client objectives" value={caseInfo.client_objectives} onChange={(v) => setCaseInfo({ ...caseInfo, client_objectives: v })} />
@@ -448,7 +477,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
         <label className="block text-sm text-zinc-400">
           Lead lawyer
           <select
-            className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
+            className="sanson-field"
             value={team.lawyer_id}
             onChange={(e) => setTeam({ ...team, lawyer_id: e.target.value })}
           >
@@ -489,7 +518,7 @@ export function MasterCaseIntakeForm({ requestId }: { requestId?: string | null 
 
       <div className="sticky bottom-0 z-10 -mx-2 border-t border-white/10 bg-[var(--surface-header)]/95 p-4 backdrop-blur-md">
         <Button loading={loading} onClick={submit} className="w-full sm:w-auto">
-          Create case & open workspace
+          Create draft & open workspace
         </Button>
       </div>
     </div>

@@ -15,18 +15,10 @@ function isSlowConnection(): boolean {
   return t === "slow-2g" || t === "2g" || t === "3g";
 }
 
-function isLowEndDevice(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-  if (mem !== undefined && mem < 4) return true;
-  const cores = navigator.hardwareConcurrency;
-  if (cores !== undefined && cores <= 2) return true;
-  return false;
-}
-
 export function detectMotionTier(): MotionTier {
   if (prefersReducedMotion()) return "minimal";
-  if (isSlowConnection() || isLowEndDevice()) return "reduced";
+  // Only reduce motion on very slow networks — avoid false positives on office laptops.
+  if (isSlowConnection()) return "reduced";
   return "full";
 }
 

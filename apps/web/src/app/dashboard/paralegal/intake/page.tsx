@@ -16,7 +16,6 @@ import {
   Button,
   Card,
   CardContent,
-  Input,
 } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
@@ -26,16 +25,6 @@ import type { LegalRequest } from "@sanson/types";
 
 export default function ParalegalIntakePage() {
   const [items, setItems] = useState<LegalRequest[]>([]);
-  const [clients, setClients] = useState<Record<string, unknown>[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    client_id: "",
-    case_category: "CIVIL",
-    subject: "",
-    description: "",
-    priority: "MEDIUM",
-  });
-  const [message, setMessage] = useState("");
 
   const load = () => {
     api.listMyRequests().then((r) => {
@@ -45,9 +34,6 @@ export default function ParalegalIntakePage() {
 
   useEffect(() => {
     load();
-    api.listUserDirectory("CLIENT").then((r) => {
-      if (r.success && r.data) setClients(r.data);
-    });
   }, []);
 
   return (
@@ -61,64 +47,35 @@ export default function ParalegalIntakePage() {
         <PageContainer>
           <SectionHeader
             title="Intake Queue"
-            description="Review AI intake, walk-ins, phone, and referrals — paralegal creates and routes requests."
+            description="Review AI intake, walk-ins, phone, and referrals — convert to a full case with Master Enterprise Intake."
           />
           <ParalegalWorkflowStrip className="mb-6" />
 
-          <div className="mb-4 flex flex-wrap gap-2">
-            <Button onClick={() => setShowForm(!showForm)}>Manual intake (walk-in / phone)</Button>
-            <Link href="/dashboard/paralegal/cases/new">
-              <Button variant="outline">Create draft case</Button>
-            </Link>
-          </div>
-
-          {showForm && (
-            <Card className="mb-6 sanson-panel">
-              <CardContent className="space-y-3 p-4">
-                <label className="block text-sm text-zinc-400">
-                  Client
-                  <select
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white"
-                    value={form.client_id}
-                    onChange={(e) => setForm({ ...form, client_id: e.target.value })}
-                  >
-                    <option value="">Select client</option>
-                    {clients.map((c) => (
-                      <option key={String(c.id)} value={String(c.id)}>
-                        {String(c.display_name)} ({String(c.email)})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <Input label="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
-                <textarea
-                  className="w-full rounded-lg border border-white/10 bg-black/30 p-3 text-sm text-white"
-                  placeholder="Description (min 10 characters)"
-                  rows={4}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                />
-                <Button
-                  onClick={async () => {
-                    const r = await api.createIntakeRequest(form);
-                    if (!r.success) {
-                      setMessage(r.message || "Failed");
-                      return;
-                    }
-                    setMessage("Intake recorded.");
-                    setShowForm(false);
-                    load();
-                  }}
-                >
-                  Submit intake
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          {message && <p className="mb-4 text-sm text-emerald-300">{message}</p>}
+          <Card className="sanson-panel mb-6 border-pink-500/25">
+            <CardContent className="space-y-4 p-5 sm:p-6">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Master case intake</h2>
+                <p className="mt-1 text-sm text-zinc-300">
+                  Walk-in, phone, referral, or AI request — use one enterprise form to create the client,
+                  opposing party, case details, and auto case number (e.g. SLF-2026-001).
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/dashboard/paralegal/cases/new?source=WALK_IN">
+                  <Button>Walk-in / phone / referral</Button>
+                </Link>
+                <Link href="/dashboard/paralegal/cases/new">
+                  <Button variant="outline">New case (manual)</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
 
           {items.length === 0 ? (
-            <EmptyState title="No intake requests" description="Client AI requests and manual intake appear here." />
+            <EmptyState
+              title="No intake requests"
+              description="Client AI requests appear here. Use Master case intake above for walk-ins."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -139,7 +96,9 @@ export default function ParalegalIntakePage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/dashboard/paralegal/cases/new?requestId=${r.id}`}>
-                        <span className="text-sm text-pink-400 hover:underline">Create draft case →</span>
+                        <Button size="sm" variant="outline">
+                          Open master intake →
+                        </Button>
                       </Link>
                     </TableCell>
                   </TableRow>

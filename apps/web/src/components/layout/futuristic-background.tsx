@@ -4,7 +4,7 @@ import { useMotion } from "@/components/providers/motion-provider";
 
 export function FuturisticBackground() {
   const { tier } = useMotion();
-  const showBlobs = tier === "full";
+  const showBlobs = tier !== "minimal";
 
   return (
     <div className="sanson-app-bg" aria-hidden>

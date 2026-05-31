@@ -346,7 +346,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
             </div>
           </div>
         </header>
-        <main className="min-w-0 flex-1 safe-bottom">{children}</main>
+        <main className="sanson-dashboard-main min-w-0 flex-1 safe-bottom">{children}</main>
       </div>
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
