@@ -22,9 +22,9 @@ export function ParalegalWorkflowStrip({ className }: { className?: string }) {
                   : "border-white/15 bg-black/30"
             )}
           >
-            <span className="text-[10px] text-zinc-500">Step {s.step}</span>
+            <span className="text-[10px] text-zinc-400">Step {s.step}</span>
             <span className="max-w-[7rem] text-xs font-medium text-white">{s.label}</span>
-            <span className="mt-0.5 text-[10px] text-zinc-500">{s.owner}</span>
+            <span className="mt-0.5 text-[10px] text-zinc-400">{s.owner}</span>
           </li>
         ))}
       </ol>

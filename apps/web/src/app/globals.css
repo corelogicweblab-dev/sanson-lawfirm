@@ -26,6 +26,15 @@
   --motion-duration: 200ms;
   --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --glow-pink: 0 0 40px rgba(255, 79, 163, 0.35);
+
+  /* Readable text pairing on dark glass + pink atmosphere */
+  --text-primary: #ffffff;
+  --text-secondary: #e4e4e7;
+  --text-body: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-label: #f4f4f5;
+  --text-accent: #fbcfe8;
+  --text-link: #f9a8d4;
 }
 
 @theme inline {
@@ -221,13 +230,18 @@ body {
   margin-top: 0.25rem;
   width: 100%;
   border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(8, 8, 8, 0.55);
   padding: 0.5rem 0.75rem;
-  color: #fff;
+  color: var(--text-primary);
   transition:
     border-color var(--motion-duration) var(--motion-ease),
     box-shadow var(--motion-duration) var(--motion-ease);
+}
+
+.sanson-field option {
+  background: var(--charcoal);
+  color: var(--text-primary);
 }
 
 .sanson-field:focus,
@@ -240,7 +254,12 @@ body {
 
 .sanson-dashboard-main {
   position: relative;
+  z-index: 10;
   isolation: isolate;
+}
+
+.sanson-form-scroll {
+  padding-bottom: 7rem;
 }
 
 @keyframes sanson-mesh-a {
@@ -304,6 +323,67 @@ body {
   position: relative;
   z-index: 1;
   min-height: 100dvh;
+  color: var(--text-body);
+}
+
+/* Typography on glass surfaces — never pink-on-pink body text */
+.sanson-glass,
+.sanson-panel,
+.sanson-glass-sidebar,
+.sanson-glass-header {
+  color: var(--text-body);
+}
+
+.sanson-glass h1,
+.sanson-glass h2,
+.sanson-glass h3,
+.sanson-panel h1,
+.sanson-panel h2,
+.sanson-panel h3,
+.sanson-glass-header h1 {
+  color: var(--text-primary);
+}
+
+.sanson-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-label);
+}
+
+.sanson-text-muted {
+  color: var(--text-muted);
+}
+
+.sanson-text-secondary {
+  color: var(--text-secondary);
+}
+
+.sanson-text-accent {
+  color: var(--text-accent);
+}
+
+.sanson-link {
+  color: var(--text-link);
+}
+
+.sanson-link:hover {
+  color: var(--text-primary);
+}
+
+.sanson-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 25;
+  margin-top: 1rem;
+  border-top: 1px solid var(--glass-border);
+  background: rgba(8, 8, 8, 0.92);
+  padding: 1rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.45);
 }
 
 @supports (padding: max(0px)) {

@@ -218,7 +218,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
                 sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3",
                 pathname === item.href
                   ? "border border-pink-500/35 bg-pink-500/20 text-white shadow-sm shadow-pink-500/15"
-                  : "text-zinc-300 hover:border hover:border-white/10 hover:bg-black/30 hover:text-white"
+                  : "text-zinc-200 hover:border hover:border-white/10 hover:bg-black/30 hover:text-white"
               )}
             >
               {item.icon}
@@ -264,11 +264,11 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
             <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden text-xs sm:text-sm">
               {breadcrumbs.map((crumb, i) => (
                 <span key={`${crumb.label}-${i}`} className="flex min-w-0 items-center gap-0.5">
-                  {i > 0 && <ChevronRight className="h-3 w-3 shrink-0 text-zinc-600" />}
+                  {i > 0 && <ChevronRight className="h-3 w-3 shrink-0 text-zinc-500" />}
                   {crumb.href ? (
                     <Link
                       href={crumb.href}
-                      className="truncate text-zinc-400 hover:text-white"
+                      className="truncate text-zinc-300 hover:text-white"
                     >
                       {crumb.label}
                     </Link>

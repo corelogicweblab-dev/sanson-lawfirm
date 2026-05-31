@@ -35,7 +35,7 @@ function FormSection({ title, children }: { title: string; children: React.React
   return (
     <Card className="sanson-panel border-pink-500/20 shadow-[0_8px_32px_rgba(255,79,163,0.12)]">
       <div className="border-b border-white/10 bg-pink-500/10 px-4 py-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-100">{title}</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-white">{title}</h3>
       </div>
       <CardContent className="space-y-3 p-4">{children}</CardContent>
     </Card>
@@ -57,7 +57,7 @@ function Field({
 }) {
   return (
     <label className="block text-sm">
-      <span className="text-zinc-400">{label}</span>
+      <span className="sanson-label">{label}</span>
       <input
         type={type}
         value={value}
@@ -82,7 +82,7 @@ function TextArea({
 }) {
   return (
     <label className="block text-sm">
-      <span className="text-zinc-400">{label}</span>
+      <span className="sanson-label">{label}</span>
       <textarea
         rows={rows}
         value={value}
@@ -286,9 +286,9 @@ export function MasterCaseIntakeForm({
   };
 
   return (
-    <div className="space-y-4 pb-24">
-      <p className="rounded-lg border border-pink-500/25 bg-pink-950/30 px-4 py-3 text-sm text-zinc-300">
-        Case number is auto-generated (e.g. <strong className="text-pink-300">SLF-2026-001</strong>).
+    <div className="sanson-form-scroll space-y-4">
+      <p className="rounded-lg border border-pink-500/30 bg-black/55 px-4 py-3 text-sm text-zinc-200">
+        Case number is auto-generated (e.g. <strong className="text-white">SLF-2026-001</strong>).
         After create, upload documents inside the Case Workspace — nothing is stored outside a case.
       </p>
 
@@ -300,7 +300,7 @@ export function MasterCaseIntakeForm({
             "rounded-full px-4 py-2 text-sm font-medium transition",
             clientMode === "new"
               ? "bg-pink-500 text-white"
-              : "border border-white/15 text-zinc-400"
+              : "border border-white/20 bg-black/40 text-zinc-200"
           )}
         >
           + New client
@@ -312,7 +312,7 @@ export function MasterCaseIntakeForm({
             "rounded-full px-4 py-2 text-sm font-medium transition",
             clientMode === "existing"
               ? "bg-pink-500 text-white"
-              : "border border-white/15 text-zinc-400"
+              : "border border-white/20 bg-black/40 text-zinc-200"
           )}
         >
           Existing client
@@ -322,8 +322,8 @@ export function MasterCaseIntakeForm({
       <FormSection title="1 — Case information">
         <Field label="Case title *" value={caseInfo.title} onChange={(v) => setCaseInfo({ ...caseInfo, title: v })} />
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-zinc-400">
-            Case type
+          <label className="block text-sm">
+            <span className="sanson-label">Case type</span>
             <select
               className="sanson-field"
               value={caseInfo.case_category}
@@ -336,8 +336,8 @@ export function MasterCaseIntakeForm({
               ))}
             </select>
           </label>
-          <label className="text-sm text-zinc-400">
-            Priority
+          <label className="block text-sm">
+            <span className="sanson-label">Priority</span>
             <select
               className="sanson-field"
               value={caseInfo.priority}
@@ -350,8 +350,8 @@ export function MasterCaseIntakeForm({
               ))}
             </select>
           </label>
-          <label className="text-sm text-zinc-400 sm:col-span-2">
-            Source type
+          <label className="block text-sm sm:col-span-2">
+            <span className="sanson-label">Source type</span>
             <select
               className="sanson-field"
               value={caseInfo.source_type}
@@ -370,8 +370,8 @@ export function MasterCaseIntakeForm({
 
       <FormSection title="2 — Client information">
         {clientMode === "existing" && (
-          <label className="block text-sm text-zinc-400">
-            Select client (optional — or fill details below)
+          <label className="block text-sm">
+            <span className="sanson-label">Select client (optional — or fill details below)</span>
             <select
               className="sanson-field"
               value={client.client_id}
@@ -433,8 +433,8 @@ export function MasterCaseIntakeForm({
 
       <FormSection title="3 — Opposing party">
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-zinc-400">
-            Type
+          <label className="block text-sm">
+            <span className="sanson-label">Type</span>
             <select
               className="sanson-field"
               value={opposing.party_type}
@@ -493,7 +493,7 @@ export function MasterCaseIntakeForm({
       </FormSection>
 
       <FormSection title="7 — Documents & files (next step)">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-300">
           PDF, DOC, images, video, audio, ZIP — upload after case is created in the Case Workspace Documents tab.
         </p>
       </FormSection>
@@ -502,7 +502,7 @@ export function MasterCaseIntakeForm({
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>
       )}
 
-      <div className="sticky bottom-0 z-10 -mx-2 border-t border-white/10 bg-[var(--surface-header)]/95 p-4 backdrop-blur-md">
+      <div className="sanson-sticky-footer">
         <Button loading={loading} onClick={submit} className="w-full sm:w-auto">
           Create draft & open workspace
         </Button>

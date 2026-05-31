@@ -11,7 +11,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const fieldBase =
-  "sanson-input-glow flex h-10 w-full rounded-xl border border-white/15 bg-white/[0.08] text-sm text-white transition-all duration-200";
+  "sanson-input-glow flex h-10 w-full rounded-xl border border-white/20 bg-[#080808]/60 text-sm text-white transition-all duration-200";
 const fieldFocus =
   "focus-within:outline-none focus-within:ring-2 focus-within:ring-[#FF4FA3]/45 focus-within:border-[#F472B6]/50";
 const inputInner =
@@ -35,7 +35,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-1.5">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-zinc-300">
+          <label htmlFor={inputId} className="sanson-label">
             {label}
           </label>
         )}

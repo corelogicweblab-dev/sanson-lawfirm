@@ -31,7 +31,7 @@ export function StatCard({
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1 sm:space-y-2">
-            <p className="text-xs font-medium text-zinc-400 sm:text-sm">{title}</p>
+            <p className="text-xs font-medium text-zinc-300 sm:text-sm">{title}</p>
             <p className="truncate text-2xl font-bold tracking-tight text-white sm:text-3xl">{value}</p>
             {description && <p className="text-xs text-zinc-500">{description}</p>}
             {trend && <p className="text-xs text-[#FF4FA3]">{trend}</p>}

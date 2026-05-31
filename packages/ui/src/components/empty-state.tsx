@@ -28,7 +28,7 @@ export function EmptyState({
         {icon || <Inbox className="h-7 w-7" />}
       </div>
       <h3 className="mb-1 text-lg font-semibold text-white">{title}</h3>
-      <p className="mb-6 max-w-sm text-sm text-zinc-400">{description}</p>
+      <p className="mb-6 max-w-sm text-sm text-zinc-300">{description}</p>
       {action}
     </div>
   );

@@ -35,7 +35,7 @@ export function BuildVersionGuard() {
 export function BuildVersionStamp() {
   return (
     <div
-      className="pointer-events-none fixed bottom-2 right-2 z-[90] rounded-full border border-white/20 bg-black/40 px-2 py-0.5 text-[10px] text-pink-200/90 backdrop-blur-sm"
+      className="pointer-events-none fixed bottom-3 left-3 z-[5] rounded-full border border-white/25 bg-black/70 px-2 py-0.5 text-[10px] font-medium text-zinc-300 backdrop-blur-sm"
       aria-hidden
     >
       {APP_BUILD_ID}

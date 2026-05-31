@@ -91,7 +91,7 @@ export default function ParalegalDashboardPage() {
             <StatCard title="Tasks" value={tasks.length} icon={<ListTodo className="h-5 w-5" />} />
           </div>
 
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-pink-300/80">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-300">
             File types you manage
           </p>
           <div className="flex flex-wrap gap-2">
