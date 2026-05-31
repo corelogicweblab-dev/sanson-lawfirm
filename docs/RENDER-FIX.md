@@ -69,6 +69,24 @@ Kung private ang repo: kailangan ng Render na may access sa org, o gawing public
 | `OPENAI_API_KEY` | `sk-...` |
 | `OPENAI_MODEL` | `gpt-4o-mini` |
 
+### Mali sa screenshot (tuldok imbes colon) — **pinaka-karaniwang error**
+
+**MALI** (nakita sa Render — password nasa username):
+
+```
+postgresql+asyncpg://postgres.yutawilaizycileduezv.matthew%40341554%40%40@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres
+                                      ↑ TULDOK — mali
+```
+
+**TAMA** (colon `:` pagkatapos ng project ref, bago ang password):
+
+```
+postgresql+asyncpg://postgres.yutawilaizycileduezv:matthew%40341554%40%40@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres
+                                      ↑ COLON — tama
+```
+
+I-copy ang buong string mula **Supabase → Project Settings → Database → Connection string → URI → Transaction pooler**, tapos palitan ang `postgresql://` ng `postgresql+asyncpg://` kung wala pa.
+
 ### Password may `@` (karaniwang sanhi ng `database: unavailable`)
 
 Kung ang password ay hal. `Matthew@541994@@`, **huwag** ilagay ang raw `@` sa URL — babasahin ng parser na host na ang `541994@@db...`.

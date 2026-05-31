@@ -29,23 +29,46 @@ export default function LoginPage() {
 
   useEffect(() => {
     const base = getApiBaseUrl();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12_000);
-    fetch(`${base}/api/v1/health/ready`, { signal: controller.signal })
-      .then((r) => r.json())
-      .then((body: { success?: boolean; data?: { database?: string } }) => {
+
+    const check = async (attempt: number) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 25_000);
+      try {
+        const r = await fetch(`${base}/api/v1/health/ready`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const body = (await r.json()) as {
+          data?: { database?: string; database_url_issues?: string[] };
+        };
         if (body?.data?.database === "connected") {
           setApiStatus(null);
-        } else {
-          setApiStatus(
-            "Database offline sa Render. Ayusin ang DATABASE_URL (Supabase pooler, i-encode ang @ sa password bilang %40)."
-          );
+          return;
         }
-      })
-      .catch(() => {
-        setApiStatus(`Hindi maabot ang API (${base}). Check Render service.`);
-      })
-      .finally(() => clearTimeout(timer));
+        const issues = body?.data?.database_url_issues ?? [];
+        if (issues.length > 0) {
+          setApiStatus(
+            `Mali ang DATABASE_URL sa Render: ${issues[0]} Ilagay ang password pagkatapos ng colon (:), hindi tuldok (.).`
+          );
+          return;
+        }
+        setApiStatus(
+          "Database offline sa Render. Kopyahin ang buong URI mula Supabase → Database → Transaction pooler (port 6543)."
+        );
+      } catch {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 2000));
+          return check(attempt + 1);
+        }
+        setApiStatus(
+          `Hindi maabot ang API (${base}). Kung bagong deploy, hintayin 1–2 minuto (Render cold start) tapos i-refresh.`
+        );
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    check(1);
   }, []);
 
   const handleSyncAndRedirect = async (token: string, userEmail: string, profile?: {

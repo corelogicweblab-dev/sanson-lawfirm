@@ -87,6 +87,17 @@ class Settings(BaseSettings):
         if scheme_end == -1:
             return ["DATABASE_URL must start with postgresql:// or postgresql+asyncpg://"]
         creds_host = url[scheme_end + 3 :]
+        userinfo = creds_host.rsplit("@", 1)[0] if "@" in creds_host else creds_host
+        if ":" not in userinfo:
+            issues.append(
+                "Missing ':' before password. Wrong: postgres.PROJECT_REF.password@host — "
+                "Correct: postgres.PROJECT_REF:password@host (colon after project ref, not a dot)."
+            )
+        elif "." in userinfo.split(":", 1)[0] and userinfo.split(":", 1)[0].count(".") > 1:
+            issues.append(
+                "Username looks merged with password (dot instead of colon). "
+                "Use: postgresql+asyncpg://postgres.PROJECT_REF:ENCODED_PASSWORD@pooler...:6543/postgres"
+            )
         if creds_host.count("@") > 1:
             issues.append(
                 "Password contains '@' — the URL parser breaks. "
