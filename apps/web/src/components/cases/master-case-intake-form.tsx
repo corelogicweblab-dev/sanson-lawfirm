@@ -31,27 +31,13 @@ const SOURCE_TYPES = [
   { value: "LEGACY", label: "Legacy migration" },
 ];
 
-function Section({
-  title,
-  children,
-  defaultOpen = false,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Card className="sanson-panel">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
-        onClick={() => setOpen(!open)}
-      >
-        <span className="font-medium text-white">{title}</span>
-        <span className="text-pink-400">{open ? "−" : "+"}</span>
-      </button>
-      {open && <CardContent className="space-y-3 border-t border-white/10 p-4">{children}</CardContent>}
+    <Card className="sanson-panel border-pink-500/20 shadow-[0_8px_32px_rgba(255,79,163,0.12)]">
+      <div className="border-b border-white/10 bg-pink-500/10 px-4 py-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-100">{title}</h3>
+      </div>
+      <CardContent className="space-y-3 p-4">{children}</CardContent>
     </Card>
   );
 }
@@ -333,7 +319,7 @@ export function MasterCaseIntakeForm({
         </button>
       </div>
 
-      <Section title="Case information" defaultOpen>
+      <FormSection title="1 — Case information">
         <Field label="Case title *" value={caseInfo.title} onChange={(v) => setCaseInfo({ ...caseInfo, title: v })} />
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-zinc-400">
@@ -380,9 +366,9 @@ export function MasterCaseIntakeForm({
           </label>
         </div>
         <TextArea label="Case description" value={caseInfo.description} onChange={(v) => setCaseInfo({ ...caseInfo, description: v })} />
-      </Section>
+      </FormSection>
 
-      <Section title="Client information" defaultOpen>
+      <FormSection title="2 — Client information">
         {clientMode === "existing" && (
           <label className="block text-sm text-zinc-400">
             Select client (optional — or fill details below)
@@ -437,7 +423,7 @@ export function MasterCaseIntakeForm({
         </div>
         <Field label="Emergency contact" value={client.emergency_contact} onChange={(v) => setClient({ ...client, emergency_contact: v })} />
         <Field label="Emergency phone" value={client.emergency_phone} onChange={(v) => setClient({ ...client, emergency_phone: v })} />
-      </Section>
+      </FormSection>
 
       {directoryHint && clientMode === "existing" && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
@@ -445,7 +431,7 @@ export function MasterCaseIntakeForm({
         </p>
       )}
 
-      <Section title="Opposing party" defaultOpen>
+      <FormSection title="3 — Opposing party">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-zinc-400">
             Type
@@ -463,17 +449,17 @@ export function MasterCaseIntakeForm({
         <Field label="Contact" value={opposing.contact_phone} onChange={(v) => setOpposing({ ...opposing, contact_phone: v })} />
         <TextArea label="Address" value={opposing.address} onChange={(v) => setOpposing({ ...opposing, address: v })} rows={2} />
         <TextArea label="Notes" value={opposing.notes} onChange={(v) => setOpposing({ ...opposing, notes: v })} />
-      </Section>
+      </FormSection>
 
-      <Section title="Case details" defaultOpen>
+      <FormSection title="4 — Case details">
         <TextArea label="Statement of facts" value={caseInfo.statement_of_facts} onChange={(v) => setCaseInfo({ ...caseInfo, statement_of_facts: v })} rows={4} />
         <TextArea label="Legal issues" value={caseInfo.legal_issues} onChange={(v) => setCaseInfo({ ...caseInfo, legal_issues: v })} />
         <TextArea label="Client objectives" value={caseInfo.client_objectives} onChange={(v) => setCaseInfo({ ...caseInfo, client_objectives: v })} />
         <TextArea label="Requested legal action" value={caseInfo.requested_action} onChange={(v) => setCaseInfo({ ...caseInfo, requested_action: v })} />
         <TextArea label="Special instructions" value={caseInfo.special_instructions} onChange={(v) => setCaseInfo({ ...caseInfo, special_instructions: v })} />
-      </Section>
+      </FormSection>
 
-      <Section title="Assigned legal team">
+      <FormSection title="5 — Assigned legal team">
         <label className="block text-sm text-zinc-400">
           Lead lawyer
           <select
@@ -490,9 +476,9 @@ export function MasterCaseIntakeForm({
           </select>
         </label>
         <TextArea label="Internal remarks" value={team.internal_remarks} onChange={(v) => setTeam({ ...team, internal_remarks: v })} />
-      </Section>
+      </FormSection>
 
-      <Section title="Important dates">
+      <FormSection title="6 — Important dates">
         <div className="grid gap-3 sm:grid-cols-2">
           {Object.entries(dates).map(([key, val]) => (
             <Field
@@ -504,13 +490,13 @@ export function MasterCaseIntakeForm({
             />
           ))}
         </div>
-      </Section>
+      </FormSection>
 
-      <Section title="Documents & files (next step)">
+      <FormSection title="7 — Documents & files (next step)">
         <p className="text-sm text-zinc-400">
           PDF, DOC, images, video, audio, ZIP — upload after case is created in the Case Workspace Documents tab.
         </p>
-      </Section>
+      </FormSection>
 
       {error && (
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>

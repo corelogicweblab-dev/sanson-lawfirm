@@ -64,13 +64,55 @@ body {
   background: linear-gradient(
     145deg,
     var(--pink-soft) 0%,
-    var(--pink-luxury) 18%,
-    var(--pink-primary) 38%,
-    var(--pink-dark) 58%,
-    #9d174d 78%,
-    var(--charcoal) 94%,
+    var(--pink-luxury) 15%,
+    var(--pink-primary) 32%,
+    var(--pink-dark) 52%,
+    #9d174d 68%,
+    #831843 82%,
+    var(--charcoal) 96%,
     var(--black) 100%
   );
+}
+
+/* Blended mesh grid — luxury depth without flat single-color */
+.sanson-mesh-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 10% 0%, rgba(255, 79, 163, 0.45), transparent 50%),
+    radial-gradient(ellipse 90% 70% at 90% 10%, rgba(249, 168, 212, 0.4), transparent 45%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, rgba(190, 24, 93, 0.35), transparent 55%),
+    linear-gradient(
+      125deg,
+      rgba(244, 114, 182, 0.2) 0%,
+      transparent 40%,
+      rgba(236, 72, 153, 0.25) 60%,
+      transparent 80%
+    );
+  animation: sanson-mesh-blend 52s ease-in-out infinite alternate;
+  will-change: opacity, transform;
+}
+
+.sanson-ambient-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(180deg, rgba(249, 168, 212, 0.25) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+@keyframes sanson-mesh-blend {
+  0% {
+    opacity: 0.32;
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    opacity: 0.42;
+    transform: scale(1.03) translate(1%, -1%);
+  }
 }
 
 .sanson-app-bg::before {
@@ -132,6 +174,16 @@ body {
   left: 40%;
   background: radial-gradient(circle, var(--pink-soft) 0%, transparent 70%);
   animation: sanson-float-3 50s ease-in-out infinite;
+}
+
+.sanson-blob-4 {
+  width: min(40vw, 320px);
+  height: min(40vw, 320px);
+  top: 20%;
+  right: 15%;
+  background: radial-gradient(circle, rgba(255, 79, 163, 0.85) 0%, transparent 72%);
+  animation: sanson-float-2 48s ease-in-out infinite reverse;
+  opacity: 0.45;
 }
 
 .sanson-wave {
@@ -385,11 +437,21 @@ body {
 
 .auth-gradient {
   background: transparent;
+  position: relative;
+  isolation: isolate;
+}
+
+.sanson-auth-card {
+  box-shadow:
+    var(--glow-pink),
+    0 24px 64px rgba(190, 24, 93, 0.35);
+  border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
 [data-motion-tier="reduced"] .sanson-blob,
 [data-motion-tier="reduced"] .sanson-app-bg::before,
 [data-motion-tier="reduced"] .sanson-app-bg::after,
+[data-motion-tier="reduced"] .sanson-mesh-grid,
 [data-motion-tier="reduced"] .sanson-wave {
   animation: none !important;
 }
@@ -437,6 +499,7 @@ body {
   .sanson-blob,
   .sanson-app-bg::before,
   .sanson-app-bg::after,
+  .sanson-mesh-grid,
   .sanson-wave {
     animation: none !important;
   }
