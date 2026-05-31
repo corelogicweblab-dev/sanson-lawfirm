@@ -1,9 +1,12 @@
+import structlog
 from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User, UserProfile, UserRoleEnum, UserStatusEnum
+
+logger = structlog.get_logger()
 from app.repositories.user_repository import RoleRepository, UserProfileRepository, UserRepository
 from app.services.audit_service import AuditService
 
@@ -59,7 +62,7 @@ class AuthService:
                     existing.role_id = role.id
             await self.user_repo.update(existing)
             await self.db.refresh(existing, ["role", "profile"])
-            await self.audit.log(
+            await self._safe_audit(
                 action="user.login",
                 entity_type="users",
                 entity_id=existing.id,
@@ -72,6 +75,10 @@ class AuthService:
         role = await self.role_repo.get_by_name(role_name)
         if not role:
             role = await self.role_repo.get_by_name("CLIENT")
+        if not role:
+            raise RuntimeError(
+                "No roles in database. Run SQL migrations 001–002 (and 013–020) in Supabase."
+            )
 
         user = User(
             firebase_uid=firebase_uid,
@@ -94,7 +101,7 @@ class AuthService:
         await self.db.refresh(user, ["role"])
         user.profile = profile
 
-        await self.audit.log(
+        await self._safe_audit(
             action="user.register",
             entity_type="users",
             entity_id=user.id,
@@ -104,6 +111,12 @@ class AuthService:
             new_values={"email": email, "role": role_name},
         )
         return user, True
+
+    async def _safe_audit(self, **kwargs) -> None:
+        try:
+            await self.audit.log(**kwargs)
+        except Exception as exc:
+            logger.warning("audit_log_skipped", error=str(exc))
 
     async def logout(
         self,

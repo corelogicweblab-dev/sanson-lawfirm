@@ -60,24 +60,33 @@ async def sync_user(
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
+        await db.commit()
+
         user = await auth_service.user_repo.get_by_id(user.id)
+        if not user:
+            await db.rollback()
+            return error_response("User sync incomplete after commit.", code="SYNC_FAILED")
 
         try:
-            session_svc = SessionService(db)
-            await session_svc.create_session(
-                user_id=user.id,
-                token=token,
-                platform="WEB",
-                ip=get_client_ip(request),
-                ua=get_user_agent(request),
-                actor_role=user.role.name.value,
-            )
+            async with db.begin_nested():
+                session_svc = SessionService(db)
+                await session_svc.create_session(
+                    user_id=user.id,
+                    token=token,
+                    platform="WEB",
+                    ip=get_client_ip(request),
+                    ua=get_user_agent(request),
+                    actor_role=user.role.name.value,
+                )
         except Exception as session_exc:
             logger.warning("session_create_skipped", error=str(session_exc))
 
         try:
-            sec = SecurityService(db)
-            await sec.record_login_success(user.id, get_client_ip(request), get_user_agent(request))
+            async with db.begin_nested():
+                sec = SecurityService(db)
+                await sec.record_login_success(
+                    user.id, get_client_ip(request), get_user_agent(request)
+                )
         except Exception as sec_exc:
             logger.warning("security_event_skipped", error=str(sec_exc))
 
@@ -86,15 +95,21 @@ async def sync_user(
             "User synced successfully" if is_new else "User logged in",
         )
     except Exception as exc:
+        await db.rollback()
         logger.exception("auth_sync_failed", error=str(exc))
-        err = str(exc).split("\n")[0][:200]
-        if "role" in err.lower() and ("null" in err.lower() or "none" in err.lower()):
+        err = str(exc).split("\n")[0][:240]
+        root = str(getattr(exc, "__cause__", "") or "")[:240]
+        combined = f"{err} {root}".lower()
+        if "rolled back" in combined or "undefinedcolumn" in combined or "does not exist" in combined:
             msg = (
-                "Database tables/roles missing. Run SQL migrations 001–020 in Supabase SQL Editor."
+                "Database schema incomplete. Sa Supabase SQL Editor, i-run ang migrations "
+                "001–020 (lalo na 013_phase7_schema.sql) sunod-sunod, tapos subukan ulit ang login."
             )
-        elif "connect" in err.lower() or "auth" in err.lower() or "password" in err.lower():
+        elif "no roles in database" in combined:
+            msg = "Walang roles sa database. I-run ang 001_phase1_schema.sql at 002_phase1_seed.sql sa Supabase."
+        elif "connect" in combined or "password" in combined or "auth" in combined:
             msg = (
-                "Database login failed on Render. Use exact Supabase pooler URI + Manual Deploy. "
+                "Database login failed on Render. I-check ang DATABASE_URL at Manual Deploy. "
                 f"Detail: {err}"
             )
         else:
