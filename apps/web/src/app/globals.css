@@ -1,110 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050505;
-  --foreground: #fafafa;
-  --card: rgba(15, 15, 15, 0.8);
-  --card-border: rgba(236, 72, 153, 0.15);
-  --primary: #ec4899;
-  --primary-foreground: #ffffff;
-  --secondary: rgba(236, 72, 153, 0.1);
+  --background: #0a0a0a;
+  --foreground: #ffffff;
   --muted: #a1a1aa;
-  --accent: #f472b6;
-  --destructive: #ef4444;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --sidebar: rgba(8, 8, 8, 0.95);
-  --glass: rgba(255, 255, 255, 0.03);
-  --neon-glow: 0 0 20px rgba(236, 72, 153, 0.4);
+  --accent: #ec4899;
+  --accent-light: #f472b6;
+  --surface: rgba(255, 255, 255, 0.03);
+  --border: rgba(236, 72, 153, 0.15);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-accent: var(--accent);
   --color-muted: var(--muted);
-  --color-card: var(--card);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-* {
-  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
-  min-height: 100vh;
-}
-
-/* Premium glassmorphism */
-.glass {
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--card-border);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(15, 15, 15, 0.9) 0%, rgba(20, 10, 20, 0.6) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(236, 72, 153, 0.12);
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl;
 }
 
 .neon-text {
-  color: var(--primary);
-  text-shadow: var(--neon-glow);
+  text-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
 }
 
-.neon-border {
-  border-color: rgba(236, 72, 153, 0.5);
-  box-shadow: var(--neon-glow);
+.auth-gradient {
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
+    var(--background);
 }
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0a0a0a;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(236, 72, 153, 0.3);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(236, 72, 153, 0.6);
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulse-pink {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(236, 72, 153, 0); }
-}
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-.animate-pulse-pink {
-  animation: pulse-pink 2s infinite;
-}
-
-/* Typing indicator */
-@keyframes blink {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
-}
-.typing-dot {
-  animation: blink 1.4s infinite both;
-}
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }

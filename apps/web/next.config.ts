@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@sanson/types", "@sanson/shared", "@sanson/utils"],
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+  transpilePackages: ["@sanson/ui", "@sanson/shared", "@sanson/types", "@sanson/utils"],
 };
 
 export default nextConfig;

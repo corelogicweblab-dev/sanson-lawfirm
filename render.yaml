@@ -1,31 +1,18 @@
-# =============================================================================
-# RENDER = API ONLY (Docker). Do NOT deploy Next.js here — use Netlify for web.
-# =============================================================================
-# In Render Dashboard: delete old Node/static services; use Blueprint OR:
-#   Environment: Docker
-#   Dockerfile Path: backend/Dockerfile
-#   Docker Context: backend
-# =============================================================================
-
 services:
   - type: web
-    name: sansonlawfirm
+    name: sanson-api
     runtime: docker
-    region: singapore
-    plan: free
-    dockerfilePath: backend/Dockerfile
-    dockerContext: backend
-    healthCheckPath: /api/v1/health
+    dockerfilePath: ./apps/backend/Dockerfile
+    dockerContext: ./apps/backend
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: DATABASE_SSL
-        value: "true"
-      - key: SUPABASE_URL
-        value: "https://zoauzxvkjthgokjurkze.supabase.co"
-      - key: JWT_SECRET
-        generateValue: true
-      - key: CORS_ORIGINS
-        value: "https://sansonlawfirm.netlify.app,http://localhost:3100"
-      - key: OPENAI_API_KEY
+      - key: FIREBASE_PROJECT_ID
         sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    healthCheckPath: /api/v1/health/

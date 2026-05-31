@@ -2,22 +2,27 @@
   "name": "sanson-legal-os",
   "version": "1.0.0",
   "private": true,
-  "description": "SANSON Law Firm — AI-powered Legal Operating System",
   "workspaces": [
-    "apps/web",
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev:web",
-    "dev:web": "npm run dev --workspace=@sanson/web",
-    "dev:backend": "cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8100",
-    "build": "npm run build --workspace=@sanson/web",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@sanson/web",
+    "dev:backend": "cd apps/backend && python -m uvicorn app.main:app --reload --port 8100",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:migrate": "node scripts/run-migration.js",
+    "db:seed": "node scripts/run-seed.js",
     "build:web": "npm run build --workspace=@sanson/web",
-    "lint": "npm run lint --workspace=@sanson/web --if-present",
-    "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
-    "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down"
+    "deploy:hosting": "npm run build:web && firebase deploy --only hosting"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.0.0",
+    "turbo": "^2.5.4"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20"
   }
 }

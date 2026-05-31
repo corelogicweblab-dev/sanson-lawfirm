@@ -1,6 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Scale, MessageSquare, Shield, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, PoweredByCoreLogic } from "@sanson/ui";
 
 export default function HomePage() {
   return (
@@ -15,7 +17,10 @@ export default function HomePage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
             <Scale className="h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-bold">SANSON Legal OS</span>
+          <div>
+            <span className="text-lg font-bold">SANSON Legal OS</span>
+            <PoweredByCoreLogic className="mt-0.5" />
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/login">
@@ -63,7 +68,7 @@ export default function HomePage() {
             {
               icon: Shield,
               title: "Enterprise Security",
-              desc: "JWT authentication, RBAC, audit logging, and encrypted document storage.",
+              desc: "Firebase authentication, RBAC, audit logging, and encrypted document storage.",
             },
             {
               icon: Scale,
@@ -79,6 +84,10 @@ export default function HomePage() {
           ))}
         </div>
       </main>
+
+      <footer className="relative z-10 border-t border-white/10 py-6 text-center">
+        <PoweredByCoreLogic />
+      </footer>
     </div>
   );
 }

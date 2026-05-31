@@ -9,7 +9,7 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "SANSON Legal OS",
-  description: "AI-powered Legal Operating System for SANSON Law Firm",
+  description: "AI-Powered Legal Operating System for SANSON Law Firm",
 };
 
 export default function RootLayout({

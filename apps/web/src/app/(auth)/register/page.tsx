@@ -3,122 +3,165 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
 import { Scale } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Button,
+  Input,
+  PoweredByCoreLogic,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@sanson/ui";
+import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
-  const [form, setForm] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone: "",
-    password: "",
-  });
+  const { setUser, setToken, getDashboardPath } = useAuthStore();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    if (!isFirebaseConfigured()) {
+      setError("Firebase is not configured.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await api.register(form);
-      if (res.data) {
-        setAuth(res.data.user, res.data.tokens);
-        router.push("/dashboard/client/chat");
+      const auth = getFirebaseAuth();
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(credential.user, {
+        displayName: `${firstName} ${lastName}`.trim(),
+      });
+      const token = await credential.user.getIdToken();
+      setToken(token);
+      api.setToken(token);
+      const response = await api.syncUser({
+        first_name: firstName,
+        last_name: lastName,
+        role: "CLIENT",
+      });
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        router.push(getDashboardPath());
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleRegister = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const auth = getFirebaseAuth();
+      const credential = await signInWithPopup(auth, googleProvider);
+      const token = await credential.user.getIdToken();
+      const displayName = credential.user.displayName?.split(" ") ?? [];
+      setToken(token);
+      api.setToken(token);
+      const response = await api.syncUser({
+        first_name: displayName[0] || "User",
+        last_name: displayName.slice(1).join(" ") || "",
+        role: "CLIENT",
+      });
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        router.push(getDashboardPath());
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Google sign-up failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] p-4">
-      <div className="relative w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-600 to-pink-400">
-            <Scale className="h-7 w-7 text-white" />
+    <div className="auth-gradient flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
+            <Scale className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold">Create Account</h1>
-          <p className="text-sm text-[var(--muted)]">
-            Start your free AI legal consultation
-          </p>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Register</CardTitle>
-            <CardDescription>
-              Your first step is our AI intake — not a booking
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <CardTitle>Create Account</CardTitle>
+          <CardDescription>Join SANSON Legal OS — free AI consultation</CardDescription>
+          <PoweredByCoreLogic className="mt-2" />
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleRegister} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-sm text-[var(--muted)]">First Name</label>
-                <Input
-                  value={form.first_name}
-                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm text-[var(--muted)]">Last Name</label>
-                <Input
-                  value={form.last_name}
-                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm text-[var(--muted)]">Email</label>
               <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                label="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+              <Input
+                label="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 required
               />
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm text-[var(--muted)]">Phone (optional)</label>
-              <Input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm text-[var(--muted)]">Password</label>
-              <Input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-                minLength={8}
-              />
-            </div>
-            {error && (
-              <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
-            )}
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min. 6 characters"
+              required
+              minLength={6}
+            />
+            {error && <p className="text-sm text-red-400">{error}</p>}
             <Button type="submit" className="w-full" loading={loading}>
-              Create Account & Start AI Chat
+              Create Account
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-[var(--muted)]">
+
+          <div className="my-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-zinc-500">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <Button variant="secondary" className="w-full" onClick={handleGoogleRegister} loading={loading}>
+            Sign up with Google
+          </Button>
+
+          <p className="mt-6 text-center text-sm text-zinc-400">
             Already have an account?{" "}
             <Link href="/login" className="text-pink-400 hover:underline">
               Sign In
             </Link>
           </p>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

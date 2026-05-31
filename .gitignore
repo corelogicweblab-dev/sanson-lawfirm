@@ -6,25 +6,26 @@ node_modules/
 # Build
 .next/
 out/
+apps/web/out/
 dist/
 build/
 *.egg-info/
-__pycache__/
-*.py[cod]
-.venv/
-venv/
 
 # Environment
 .env
 .env.local
 .env.*.local
-!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
 
 # IDE
 .idea/
 .vscode/
 *.swp
-*.swo
 
 # OS
 .DS_Store
@@ -33,36 +34,17 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
-logs/
 
-# Testing
-coverage/
-.pytest_cache/
-htmlcov/
+# Firebase
+.firebase/
+firebase-debug.log
+serviceAccountKey.json
+
+# TypeScript
+*.tsbuildinfo
 
 # Turbo
 .turbo/
 
-# Python
-.mypy_cache/
-.ruff_cache/
-alembic/versions/*.pyc
-
-# Mobile
-mobile/.expo/
-mobile/dist/
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Docker volumes (local)
-postgres_data/
-redis_data/
-qdrant_data/
-
-# Uploads (local dev)
-uploads/
-
-/generated/prisma
+# Testing
+coverage/

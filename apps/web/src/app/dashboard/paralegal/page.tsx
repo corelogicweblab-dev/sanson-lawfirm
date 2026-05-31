@@ -1,33 +1,38 @@
-"use client";
+﻿"use client";
 
-import { ClipboardList, FolderOpen, CheckSquare, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ListTodo, FileClock, Briefcase } from "lucide-react";
+import { PageContainer, SectionHeader, StatCard } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { api } from "@/lib/api";
+import type { CaseItem, TaskItem } from "@sanson/types";
 
-export default function ParalegalDashboard() {
+export default function ParalegalDashboardPage() {
+  const [cases, setCases] = useState<CaseItem[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [c, t] = await Promise.all([api.listCases(), api.listTasks()]);
+      if (c.success && c.data) setCases(c.data);
+      if (t.success && t.data) setTasks(t.data);
+    })();
+  }, []);
+
   return (
-    <DashboardShell
-      role="paralegal"
-      title="Paralegal Dashboard"
-      subtitle="Intake review, evidence organization, and case preparation"
-    >
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Intake Queue" value={0} icon={ClipboardList} change="Awaiting review" />
-        <StatCard title="Active Cases" value={0} icon={FolderOpen} />
-        <StatCard title="Pending Tasks" value={0} icon={CheckSquare} />
-        <StatCard title="Lawyer Coordination" value={0} icon={Users} />
-      </div>
-
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Intake Review Queue</CardTitle>
-          <CardDescription>
-            Cases where clients have formally proceeded with legal services appear here
-            for intake review and evidence organization.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    </DashboardShell>
+    <AuthGuard allowedRoles={["PARALEGAL"]}>
+      <DashboardShell title="Paralegal Dashboard" breadcrumbs={[{ label: "Dashboard" }]}>
+        <PageContainer>
+          <SectionHeader title="Case Coordination" description="Support case preparation and coordination" />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard title="Assigned Tasks" value={tasks.length} icon={<ListTodo className="h-5 w-5" />} />
+            <StatCard title="Pending Documents" value={0} icon={<FileClock className="h-5 w-5" />} description="Placeholder for Phase 3 docs" />
+            <StatCard title="Preparation Queue" value={cases.length} icon={<Briefcase className="h-5 w-5" />} />
+          </div>
+        </PageContainer>
+      </DashboardShell>
+    </AuthGuard>
   );
 }
+

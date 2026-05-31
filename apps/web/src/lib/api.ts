@@ -1,101 +1,131 @@
-import type { APIResponse, AuthTokens, User } from "@sanson/types";
+﻿import type {
+  ApiResponse,
+  Appointment,
+  AuthSyncRequest,
+  CaseItem,
+  LegalRequest,
+  TaskItem,
+  TimelineEvent,
+  User,
+  WorkflowStats,
+} from "@sanson/types";
+import { API_BASE_PATH } from "@sanson/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8100";
-const API_VERSION = "v1";
 
-class ApiClient {
-  private baseUrl: string;
+export class ApiClient {
+  private token: string | null = null;
 
-  constructor() {
-    this.baseUrl = `${API_URL}/api/${API_VERSION}`;
-  }
-
-  private getToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("access_token");
+  setToken(token: string | null) {
+    this.token = token;
   }
 
   private async request<T>(
-    endpoint: string,
+    path: string,
     options: RequestInit = {}
-  ): Promise<APIResponse<T>> {
-    const token = this.getToken();
-    const headers: HeadersInit = {
+  ): Promise<ApiResponse<T>> {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${API_URL}${API_BASE_PATH}${path}`, {
       ...options,
       headers,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || data.message || "Request failed");
-    }
-
-    return data;
+    return response.json();
   }
 
-  async login(email: string, password: string) {
-    return this.request<{ user: User; tokens: AuthTokens }>("/auth/login", {
+  async syncUser(data: AuthSyncRequest): Promise<ApiResponse<{ user: User; is_new_user: boolean }>> {
+    return this.request("/auth/sync", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(data),
     });
   }
 
-  async register(payload: {
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-    phone?: string;
-  }) {
-    return this.request<{ user: User; tokens: AuthTokens }>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ ...payload, role: "client" }),
+  async getMe(): Promise<ApiResponse<User>> {
+    return this.request("/auth/me");
+  }
+
+  async logout(): Promise<ApiResponse<null>> {
+    return this.request("/auth/logout", { method: "POST" });
+  }
+
+  async getDashboardStats(): Promise<ApiResponse<{
+    total_users: number;
+    clients: number;
+    lawyers: number;
+    paralegals: number;
+    admins: number;
+  }>> {
+    return this.request("/users/stats");
+  }
+
+  async getWorkflowStats(): Promise<ApiResponse<WorkflowStats>> {
+    return this.request("/workflow/stats");
+  }
+
+  async listUsers(page = 1, role?: string): Promise<ApiResponse<User[]>> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (role) params.set("role", role);
+    return this.request(`/users/?${params}`);
+  }
+
+  async getRecentAudit(): Promise<ApiResponse<unknown[]>> {
+    return this.request("/audit/recent");
+  }
+
+  async updateProfile(
+    userId: string,
+    data: Record<string, string | undefined>
+  ): Promise<ApiResponse<unknown>> {
+    return this.request(`/users/${userId}/profile`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
     });
   }
 
-  async getMe() {
-    return this.request<User>("/auth/me");
+  async listMyRequests(): Promise<ApiResponse<LegalRequest[]>> {
+    return this.request("/legal-requests/");
   }
 
-  async refreshToken(refreshToken: string) {
-    return this.request<AuthTokens>("/auth/refresh", {
+  async createRequest(payload: {
+    case_category: string;
+    subject: string;
+    description: string;
+    priority: string;
+  }): Promise<ApiResponse<LegalRequest>> {
+    return this.request("/legal-requests/", {
       method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify(payload),
     });
   }
 
-  async getCases() {
-    return this.request<import("@sanson/types").Case[]>("/cases");
+  async listAppointments(): Promise<ApiResponse<Appointment[]>> {
+    return this.request("/appointments/");
   }
 
-  async proceedWithLegalAction(caseId: string) {
-    return this.request<import("@sanson/types").Case>("/cases/proceed", {
-      method: "POST",
-      body: JSON.stringify({ case_id: caseId }),
-    });
+  async listCases(): Promise<ApiResponse<CaseItem[]>> {
+    return this.request("/cases/");
   }
 
-  async getNotifications(unreadOnly = false) {
-    return this.request<import("@sanson/types").Notification[]>(
-      `/notifications?unread_only=${unreadOnly}`
-    );
+  async listTasks(): Promise<ApiResponse<TaskItem[]>> {
+    return this.request("/tasks/");
   }
 
-  async getAnalytics() {
-    return this.request<import("@sanson/types").DashboardStats>("/analytics/dashboard");
+  async listTimeline(caseId: string): Promise<ApiResponse<TimelineEvent[]>> {
+    return this.request(`/timelines/cases/${caseId}`);
   }
 
-  getWsUrl(token: string): string {
-    const wsBase = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8100";
-    return `${wsBase}/ws/${token}`;
+  async listComments(caseId: string): Promise<ApiResponse<unknown[]>> {
+    return this.request(`/comments/cases/${caseId}`);
   }
 }
 
 export const api = new ApiClient();
+

@@ -1,56 +1,81 @@
-"use client";
+﻿"use client";
 
-import { FolderOpen, MessageSquare, Bell, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FilePlus2, CalendarDays, Briefcase } from "lucide-react";
+import {
+  PageContainer,
+  SectionHeader,
+  StatCard,
+  Card,
+  CardContent,
+  CardTitle,
+  EmptyState,
+} from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { api } from "@/lib/api";
+import type { Appointment, CaseItem, LegalRequest } from "@sanson/types";
 
-export default function ClientDashboard() {
+export default function ClientDashboardPage() {
+  const [requests, setRequests] = useState<LegalRequest[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [cases, setCases] = useState<CaseItem[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [r, a, c] = await Promise.all([
+        api.listMyRequests(),
+        api.listAppointments(),
+        api.listCases(),
+      ]);
+      if (r.success && r.data) setRequests(r.data);
+      if (a.success && a.data) setAppointments(a.data);
+      if (c.success && c.data) setCases(c.data);
+    })();
+  }, []);
+
   return (
-    <DashboardShell
-      role="client"
-      title="Client Portal"
-      subtitle="Your AI-powered legal intake and case tracking"
-    >
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Active Cases" value={0} icon={FolderOpen} change="No cases yet" />
-        <StatCard title="AI Sessions" value={0} icon={MessageSquare} change="Start your first chat" />
-        <StatCard title="Documents" value={0} icon={FileText} />
-        <StatCard title="Notifications" value={0} icon={Bell} />
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Start AI Legal Consultation</CardTitle>
-            <CardDescription>
-              Our AI assistant is your first consultation layer — free and available 24/7.
-              Describe your legal concern and we&apos;ll organize everything for our team.
-            </CardDescription>
-          </CardHeader>
-          <Link href="/dashboard/client/chat">
-            <Button>
-              <MessageSquare className="h-4 w-4" />
-              Open AI Legal Chat
-            </Button>
-          </Link>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Proceed with Legal Action</CardTitle>
-            <CardDescription>
-              When you&apos;re ready to formally engage our legal services, you can proceed
-              from your case page. This is separate from the free AI consultation.
-            </CardDescription>
-          </CardHeader>
-          <Link href="/dashboard/client/cases">
-            <Button variant="secondary">View My Cases</Button>
-          </Link>
-        </Card>
-      </div>
-    </DashboardShell>
+    <AuthGuard allowedRoles={["CLIENT"]}>
+      <DashboardShell title="Client Dashboard" breadcrumbs={[{ label: "Dashboard" }]}>
+        <PageContainer>
+          <SectionHeader
+            title="My Legal Journey"
+            description="Track your representation requests and case progress"
+          />
+          <div className="mb-8 grid gap-4 md:grid-cols-3">
+            <StatCard title="My Requests" value={requests.length} icon={<FilePlus2 className="h-5 w-5" />} />
+            <StatCard
+              title="Upcoming Appointments"
+              value={appointments.filter((x) => ["PENDING", "CONFIRMED"].includes(x.status)).length}
+              icon={<CalendarDays className="h-5 w-5" />}
+            />
+            <StatCard
+              title="Active Cases"
+              value={cases.filter((x) => x.status && !x.status.is_terminal).length}
+              icon={<Briefcase className="h-5 w-5" />}
+            />
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <CardTitle className="mb-3 text-base">Recent Requests</CardTitle>
+              {requests.length === 0 ? (
+                <EmptyState title="No requests yet" description="Start by submitting a representation request." />
+              ) : (
+                <ul className="space-y-2">
+                  {requests.slice(0, 5).map((r) => (
+                    <li key={r.id} className="rounded-lg bg-white/[0.02] px-3 py-2 text-sm">
+                      <span className="text-zinc-300">{r.request_reference} - {r.subject}</span>
+                      <span className="ml-2 text-pink-400">{r.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </PageContainer>
+      </DashboardShell>
+    </AuthGuard>
   );
 }
+
+
