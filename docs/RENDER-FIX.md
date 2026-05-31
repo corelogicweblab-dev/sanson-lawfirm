@@ -42,10 +42,13 @@ Kung private ang repo: kailangan ng Render na may access sa org, o gawing public
 | **Build Command** | `pip install -r requirements.txt` |
 | **Start Command** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
 
-**Tanggalin / i-clear:**
-- Build: `npm install; npm run build`
-- Start: `npm run start:prod`
-- Docker settings (hindi required)
+**Kung Node pa rin ang runtime** (OK na gamitin ang default):
+- Build: `npm install; npm run build` → auto pip install sa Render
+- Start: `npm run start:prod` → uvicorn API
+
+**Mas mainam (Python):** Root Directory `apps/backend`, huwag npm.
+
+**Tanggalin** kung naka-Python ka na: duplicate/wrong start commands.
 
 **Health Check Path:** `/api/v1/health/`
 
