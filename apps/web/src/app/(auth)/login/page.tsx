@@ -8,11 +8,14 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { Scale } from "lucide-react";
+import { inferRoleFromEmail } from "@sanson/shared";
 import { Button, Input, PoweredByCoreLogic, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
 import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { formatFirebaseAuthError } from "@/lib/auth-errors";
 import { api } from "@/lib/api";
 import { getApiBaseUrl } from "@/lib/api-url";
+import { getDashboardPath as pathForRole } from "@sanson/utils";
+import type { UserRole } from "@sanson/types";
 import { useAuthStore } from "@/store/auth";
 
 export default function LoginPage() {
@@ -26,35 +29,49 @@ export default function LoginPage() {
 
   useEffect(() => {
     const base = getApiBaseUrl();
-    fetch(`${base}/api/v1/health/ready`)
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12_000);
+    fetch(`${base}/api/v1/health/ready`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((body: { data?: { database?: string } }) => {
+      .then((body: { success?: boolean; data?: { database?: string } }) => {
         if (body?.data?.database === "connected") {
           setApiStatus(null);
         } else {
           setApiStatus(
-            "API database is offline on Render. Login will fail until DATABASE_URL is fixed in Render → Environment."
+            "Database offline sa Render. Ayusin ang DATABASE_URL (Supabase pooler, i-encode ang @ sa password bilang %40)."
           );
         }
       })
       .catch(() => {
-        setApiStatus(`Cannot reach API at ${base}. Check Render service and redeploy web.`);
-      });
+        setApiStatus(`Hindi maabot ang API (${base}). Check Render service.`);
+      })
+      .finally(() => clearTimeout(timer));
   }, []);
 
-  const handleSyncAndRedirect = async (token: string) => {
+  const handleSyncAndRedirect = async (token: string, userEmail: string, profile?: {
+    first_name?: string;
+    last_name?: string;
+  }) => {
     setToken(token);
     api.setToken(token);
-    const response = await api.syncUser({ role: "CLIENT" });
-    if (response.success && response.data?.user) {
-      setUser(response.data.user);
-      router.push(getDashboardPath());
-    } else {
+    const response = await api.syncUser({
+      first_name: profile?.first_name,
+      last_name: profile?.last_name,
+      role: inferRoleFromEmail(userEmail),
+    });
+
+    if (!response.success || !response.data?.user) {
       setError(
         response.message ||
-          "Failed to sync user. If the database is offline, fix DATABASE_URL on Render (Supabase pooler URL)."
+          "Hindi ma-sync ang user. Karaniwang sanhi: database offline sa Render (tingnan /health/ready)."
       );
+      return;
     }
+
+    const user = response.data.user;
+    setUser(user);
+    const role = user.role?.name as UserRole | undefined;
+    router.push(role ? pathForRole(role) : getDashboardPath());
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -72,7 +89,7 @@ export default function LoginPage() {
       const auth = getFirebaseAuth();
       const credential = await signInWithEmailAndPassword(auth, email, password);
       const token = await credential.user.getIdToken();
-      await handleSyncAndRedirect(token);
+      await handleSyncAndRedirect(token, email);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : formatFirebaseAuthError(err));
     } finally {
@@ -95,23 +112,19 @@ export default function LoginPage() {
       const credential = await signInWithPopup(auth, googleProvider);
       const token = await credential.user.getIdToken();
       const displayName = credential.user.displayName?.split(" ") ?? [];
-      setToken(token);
-      api.setToken(token);
-      const response = await api.syncUser({
+      const userEmail = credential.user.email ?? "";
+      await handleSyncAndRedirect(token, userEmail, {
         first_name: displayName[0] || "User",
         last_name: displayName.slice(1).join(" ") || "",
-        role: "CLIENT",
       });
-      if (response.success && response.data) {
-        setUser(response.data.user);
-        router.push(getDashboardPath());
-      }
     } catch (err: unknown) {
       setError(formatFirebaseAuthError(err));
     } finally {
       setLoading(false);
     }
   };
+
+  const roleHint = email ? inferRoleFromEmail(email) : null;
 
   return (
     <div className="auth-gradient flex min-h-screen min-h-[100dvh] items-center justify-center p-4 safe-top safe-bottom">
@@ -131,8 +144,9 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="admin@sansonlaw.ph"
               required
+              autoComplete="email"
             />
             <Input
               label="Password"
@@ -141,7 +155,13 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              autoComplete="current-password"
             />
+            {roleHint && roleHint !== "CLIENT" && (
+              <p className="text-xs text-zinc-500">
+                Dashboard: <span className="text-pink-400">{roleHint}</span>
+              </p>
+            )}
             <div className="text-right">
               <Link href="/forgot-password" className="text-xs text-pink-400 hover:underline">
                 Forgot password?

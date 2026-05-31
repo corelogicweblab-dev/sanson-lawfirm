@@ -45,19 +45,40 @@ export class ApiClient {
     }
 
     const baseUrl = getApiBaseUrl();
+    const controller = new AbortController();
+    const timeoutMs = 25_000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     let response: Response;
     try {
       response = await fetch(`${baseUrl}${API_BASE_PATH}${path}`, {
         ...options,
         headers,
+        signal: controller.signal,
       });
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error(
+          `API request timed out after ${timeoutMs / 1000}s. Render may be waking up — try again, or check DATABASE_URL on Render.`
+        );
+      }
       throw new Error(
         `Cannot reach API at ${baseUrl}. Check that Render is running and CORS_ORIGINS includes ${typeof window !== "undefined" ? window.location.origin : "your site"}.`
       );
+    } finally {
+      clearTimeout(timer);
     }
 
-    return response.json();
+    const body = (await response.json()) as ApiResponse<T>;
+    if (!response.ok && body.success !== false) {
+      return {
+        success: false,
+        message: body.message || `Request failed (${response.status})`,
+        data: null,
+        errors: body.errors,
+      } as ApiResponse<T>;
+    }
+    return body;
   }
 
   async syncUser(data: AuthSyncRequest): Promise<ApiResponse<{ user: User; is_new_user: boolean }>> {

@@ -11,13 +11,14 @@ Passwords are set in **Firebase Console → Authentication → Users**, not in t
 | Paralegal | `paralegal@sansonlaw.ph` | `Paralegal@123456` |
 | Client | `client@sansonlaw.ph` | `Client@123456` |
 
-## Set roles (Supabase SQL, after first login)
+## Dashboard routing (automatic)
+
+Logging in with the emails above routes to the correct dashboard (`ADMIN` → `/dashboard/admin`, etc.). The API updates the role on each login for these known addresses.
+
+Optional manual SQL if you use a different email:
 
 ```sql
-UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'ADMIN') WHERE email = 'admin@sansonlaw.ph';
-UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'LAWYER') WHERE email = 'lawyer@sansonlaw.ph';
-UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'PARALEGAL') WHERE email = 'paralegal@sansonlaw.ph';
--- client@sansonlaw.ph stays CLIENT by default
+UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'ADMIN') WHERE email = 'your-admin@email.com';
 ```
 
 ## Production note

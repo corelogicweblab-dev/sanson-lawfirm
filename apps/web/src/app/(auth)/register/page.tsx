@@ -19,6 +19,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@sanson/ui";
+import { inferRoleFromEmail } from "@sanson/shared";
 import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -56,11 +57,13 @@ export default function RegisterPage() {
       const response = await api.syncUser({
         first_name: firstName,
         last_name: lastName,
-        role: "CLIENT",
+        role: inferRoleFromEmail(email),
       });
-      if (response.success && response.data) {
+      if (response.success && response.data?.user) {
         setUser(response.data.user);
         router.push(getDashboardPath());
+      } else {
+        setError(response.message || "Registration sync failed.");
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -79,14 +82,17 @@ export default function RegisterPage() {
       const displayName = credential.user.displayName?.split(" ") ?? [];
       setToken(token);
       api.setToken(token);
+      const userEmail = credential.user.email ?? "";
       const response = await api.syncUser({
         first_name: displayName[0] || "User",
         last_name: displayName.slice(1).join(" ") || "",
-        role: "CLIENT",
+        role: inferRoleFromEmail(userEmail),
       });
-      if (response.success && response.data) {
+      if (response.success && response.data?.user) {
         setUser(response.data.user);
         router.push(getDashboardPath());
+      } else {
+        setError(response.message || "Google sign-up sync failed.");
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Google sign-up failed");

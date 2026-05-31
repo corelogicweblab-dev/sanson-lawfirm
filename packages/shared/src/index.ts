@@ -24,6 +24,18 @@ export const ROLE_DASHBOARD_PATH: Record<UserRole, string> = {
   ADMIN: "/dashboard/admin",
 };
 
+/** Known firm test/production emails → dashboard role (also applied on backend sync). */
+export const EMAIL_ROLE_MAP: Record<string, UserRole> = {
+  "admin@sansonlaw.ph": "ADMIN",
+  "lawyer@sansonlaw.ph": "LAWYER",
+  "paralegal@sansonlaw.ph": "PARALEGAL",
+  "client@sansonlaw.ph": "CLIENT",
+};
+
+export function inferRoleFromEmail(email: string): UserRole {
+  return EMAIL_ROLE_MAP[email.trim().toLowerCase()] ?? "CLIENT";
+}
+
 export const PERMISSIONS = {
   USERS_READ: "users:read",
   USERS_WRITE: "users:write",

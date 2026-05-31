@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import check_database_connection, get_db
 from app.core.dependencies import get_client_ip, get_current_user, get_user_agent
 from app.core.firebase import is_firebase_configured, verify_firebase_token
-from app.core.responses import success_response
+from app.core.responses import error_response, success_response
 from app.domain.authenticated_user import AuthenticatedUser
 from app.schemas.mappers import to_user_response
 from app.schemas.user import AuthSyncRequest
@@ -27,13 +27,13 @@ async def sync_user(
     """Sync Firebase user to PostgreSQL after authentication."""
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
-        return success_response(None, "Authentication token required")
+        return error_response("Authentication token required", code="AUTH_REQUIRED")
 
     if not await check_database_connection():
         logger.error("auth_sync_db_unavailable")
-        return success_response(
-            None,
+        return error_response(
             "Database is unavailable. Fix DATABASE_URL on Render (Supabase connection pooler, SSL).",
+            code="DATABASE_UNAVAILABLE",
         )
 
     token = auth_header[7:]
@@ -43,7 +43,7 @@ async def sync_user(
         if is_firebase_configured():
             claims = verify_firebase_token(token)
             if not claims:
-                return success_response(None, "Invalid Firebase token")
+                return error_response("Invalid Firebase token", code="INVALID_TOKEN")
             firebase_uid = claims.get("uid") or claims.get("sub")
             email = claims.get("email", "")
         else:
@@ -62,17 +62,24 @@ async def sync_user(
         )
         user = await auth_service.user_repo.get_by_id(user.id)
 
-        session_svc = SessionService(db)
-        await session_svc.create_session(
-            user_id=user.id,
-            token=token,
-            platform="WEB",
-            ip=get_client_ip(request),
-            ua=get_user_agent(request),
-            actor_role=user.role.name.value,
-        )
-        sec = SecurityService(db)
-        await sec.record_login_success(user.id, get_client_ip(request), get_user_agent(request))
+        try:
+            session_svc = SessionService(db)
+            await session_svc.create_session(
+                user_id=user.id,
+                token=token,
+                platform="WEB",
+                ip=get_client_ip(request),
+                ua=get_user_agent(request),
+                actor_role=user.role.name.value,
+            )
+        except Exception as session_exc:
+            logger.warning("session_create_skipped", error=str(session_exc))
+
+        try:
+            sec = SecurityService(db)
+            await sec.record_login_success(user.id, get_client_ip(request), get_user_agent(request))
+        except Exception as sec_exc:
+            logger.warning("security_event_skipped", error=str(sec_exc))
 
         return success_response(
             {"user": to_user_response(user), "is_new_user": is_new},
@@ -80,9 +87,9 @@ async def sync_user(
         )
     except Exception as exc:
         logger.exception("auth_sync_failed", error=str(exc))
-        return success_response(
-            None,
+        return error_response(
             "Login sync failed. Check Render logs and Supabase DATABASE_URL.",
+            code="SYNC_FAILED",
         )
 
 

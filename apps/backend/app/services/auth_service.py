@@ -7,6 +7,14 @@ from app.models import User, UserProfile, UserRoleEnum, UserStatusEnum
 from app.repositories.user_repository import RoleRepository, UserProfileRepository, UserRepository
 from app.services.audit_service import AuditService
 
+# Maps known firm emails to roles (test accounts + first-login routing)
+EMAIL_ROLE_MAP: dict[str, str] = {
+    "admin@sansonlaw.ph": "ADMIN",
+    "lawyer@sansonlaw.ph": "LAWYER",
+    "paralegal@sansonlaw.ph": "PARALEGAL",
+    "client@sansonlaw.ph": "CLIENT",
+}
+
 
 class AuthService:
     def __init__(self, db: AsyncSession):
@@ -37,10 +45,20 @@ class AuthService:
         ip_address: str | None = None,
         user_agent: str | None = None,
     ) -> tuple[User, bool]:
+        email_key = (email or "").strip().lower()
+        mapped_role = EMAIL_ROLE_MAP.get(email_key)
+        if mapped_role:
+            role_name = mapped_role
+
         existing = await self.user_repo.get_by_firebase_uid(firebase_uid)
         if existing:
             existing.last_login_at = datetime.now(timezone.utc)
+            if mapped_role:
+                role = await self.role_repo.get_by_name(mapped_role)
+                if role and existing.role_id != role.id:
+                    existing.role_id = role.id
             await self.user_repo.update(existing)
+            await self.db.refresh(existing, ["role", "profile"])
             await self.audit.log(
                 action="user.login",
                 entity_type="users",
