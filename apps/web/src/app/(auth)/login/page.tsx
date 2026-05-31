@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState<string | null>(null);
+  const [apiOk, setApiOk] = useState<boolean | null>(null);
 
   useEffect(() => {
     const base = getApiBaseUrl();
@@ -47,9 +48,11 @@ export default function LoginPage() {
           };
         };
         if (body?.data?.database === "connected") {
+          setApiOk(true);
           setApiStatus(null);
           return;
         }
+        setApiOk(false);
         const issues = body?.data?.database_url_issues ?? [];
         if (issues.length > 0) {
           setApiStatus(
@@ -67,6 +70,7 @@ export default function LoginPage() {
           await new Promise((r) => setTimeout(r, 2000));
           return check(attempt + 1);
         }
+        setApiOk(false);
         setApiStatus(
           `Hindi maabot ang API (${base}). Kung bagong deploy, hintayin 1–2 minuto (Render cold start) tapos i-refresh.`
         );
@@ -197,6 +201,11 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
+            {apiOk === true && (
+              <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                API at database connected sa Render — puwede nang mag-sign in.
+              </p>
+            )}
             {apiStatus && (
               <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                 {apiStatus}
