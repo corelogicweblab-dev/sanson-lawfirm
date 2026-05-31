@@ -15,6 +15,10 @@ _session_factory = None
 
 def _connect_args() -> dict:
     args: dict = {"timeout": 15, "command_timeout": 15}
+    # Supabase transaction pooler (6543) — disable prepared statement cache
+    if "pooler.supabase.com" in settings.async_database_url:
+        args["statement_cache_size"] = 0
+        args["prepared_statement_cache_size"] = 0
     if settings.requires_database_ssl:
         ssl_ctx = ssl.create_default_context()
         ssl_ctx.check_hostname = False

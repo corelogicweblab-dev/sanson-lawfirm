@@ -87,10 +87,19 @@ async def sync_user(
         )
     except Exception as exc:
         logger.exception("auth_sync_failed", error=str(exc))
-        return error_response(
-            "Login sync failed. Check Render logs and Supabase DATABASE_URL.",
-            code="SYNC_FAILED",
-        )
+        err = str(exc).split("\n")[0][:200]
+        if "role" in err.lower() and ("null" in err.lower() or "none" in err.lower()):
+            msg = (
+                "Database tables/roles missing. Run SQL migrations 001–020 in Supabase SQL Editor."
+            )
+        elif "connect" in err.lower() or "auth" in err.lower() or "password" in err.lower():
+            msg = (
+                "Database login failed on Render. Use exact Supabase pooler URI + Manual Deploy. "
+                f"Detail: {err}"
+            )
+        else:
+            msg = f"Login sync failed: {err}"
+        return error_response(msg, code="SYNC_FAILED")
 
 
 @router.get("/me")
