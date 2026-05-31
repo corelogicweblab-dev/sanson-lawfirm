@@ -25,6 +25,9 @@ class CaseCategoryEnum(str, enum.Enum):
     PROPERTY = "PROPERTY"
     CONTRACT_DISPUTES = "CONTRACT_DISPUTES"
     CONSUMER_PROTECTION = "CONSUMER_PROTECTION"
+    IMMIGRATION = "IMMIGRATION"
+    ESTATE_PROBATE = "ESTATE_PROBATE"
+    TAX = "TAX"
     OTHER = "OTHER"
 
 
@@ -124,6 +127,13 @@ class LegalRequest(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
         default=PriorityLevelEnum.MEDIUM,
     )
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    chat_session_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("chat_sessions.id")
+    )
+    ai_summary_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ai_summaries.id")
+    )
+    ai_metadata: Mapped[dict | None] = mapped_column(JSONB, default=dict)
 
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="request")
     case: Mapped["Case | None"] = relationship(back_populates="request", uselist=False)

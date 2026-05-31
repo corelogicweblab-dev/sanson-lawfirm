@@ -1,11 +1,13 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 
 from app.api.v1 import (
+    ai,
     appointments,
     assignments,
     audit,
     auth,
     cases,
+    chat,
     comments,
     consultations,
     health,
@@ -36,4 +38,7 @@ api_router.include_router(comments.router, prefix="/comments", tags=["Comments"]
 api_router.include_router(consultations.router, prefix="/consultations", tags=["Consultations"])
 api_router.include_router(timelines.router, prefix="/timelines", tags=["Timelines"])
 api_router.include_router(workflow.router, prefix="/workflow", tags=["Workflow"])
+
+api_router.include_router(chat.router, prefix="/chat", tags=["AI Chat"])
+api_router.include_router(ai.router, prefix="/ai", tags=["AI Engine"])
 

@@ -1,4 +1,4 @@
-﻿import os
+import os
 from contextlib import asynccontextmanager
 
 import structlog
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
         "sanson_api_starting",
         port=port,
         env=os.environ.get("RENDER", "local"),
-        phase="1",
+        phase="3",
     )
     yield
 
@@ -42,7 +42,7 @@ app = FastAPI(
     lifespan=lifespan,
     title=settings.app_name,
     version=settings.app_version,
-    description="AI-powered Legal Operating System for SANSON Law Firm â€” Phase 1 Foundation",
+    description="AI-powered Legal Operating System for SANSON Law Firm — Phase 3 AI Legal Assistant",
     docs_url=f"/api/{settings.api_version}/docs",
     redoc_url=f"/api/{settings.api_version}/redoc",
     openapi_url=f"/api/{settings.api_version}/openapi.json",
@@ -68,7 +68,7 @@ async def root():
     return {
         "app": settings.app_name,
         "version": settings.app_version,
-        "phase": 1,
+        "phase": 3,
         "status": "operational",
         "powered_by": "CoreLogic",
         "docs": f"/api/{settings.api_version}/docs",

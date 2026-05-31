@@ -48,3 +48,5 @@ serviceAccountKey.json
 
 # Testing
 coverage/
+
+/generated/prisma

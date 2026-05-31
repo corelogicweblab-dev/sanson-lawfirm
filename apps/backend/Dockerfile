@@ -13,4 +13,7 @@ COPY . .
 ENV PORT=8100
 EXPOSE 8100
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8100"]
+RUN chmod +x start.sh
+
+# Render sets PORT (often 10000); start.sh reads ${PORT}
+CMD ["./start.sh"]

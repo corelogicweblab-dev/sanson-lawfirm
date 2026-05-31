@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,6 +20,7 @@ import {
   FilePlus2,
   Briefcase,
   ListTodo,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { Button, PoweredByCoreLogic } from "@sanson/ui";
@@ -38,6 +39,7 @@ interface NavItem {
 const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   CLIENT: [
     { label: "Dashboard", href: "/dashboard/client", icon: <LayoutDashboard className="h-4 w-4" /> },
+    { label: "AI Legal Assistant", href: "/dashboard/client/ai-assistant", icon: <Sparkles className="h-4 w-4" /> },
     { label: "My Requests", href: "/dashboard/client/requests", icon: <FilePlus2 className="h-4 w-4" /> },
     { label: "Request Representation", href: "/dashboard/client/request-representation", icon: <ClipboardList className="h-4 w-4" /> },
     { label: "Appointment History", href: "/dashboard/client/appointments", icon: <CalendarDays className="h-4 w-4" /> },

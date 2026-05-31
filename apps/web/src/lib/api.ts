@@ -1,9 +1,12 @@
-﻿import type {
+import type {
   ApiResponse,
   Appointment,
   AuthSyncRequest,
   CaseItem,
+  ChatMessage,
+  ChatSession,
   LegalRequest,
+  SessionInsights,
   TaskItem,
   TimelineEvent,
   User,
@@ -124,6 +127,112 @@ export class ApiClient {
 
   async listComments(caseId: string): Promise<ApiResponse<unknown[]>> {
     return this.request(`/comments/cases/${caseId}`);
+  }
+
+  async createChatSession(): Promise<ApiResponse<ChatSession>> {
+    return this.request("/chat/session", { method: "POST" });
+  }
+
+  async listChatSessions(page = 1): Promise<ApiResponse<ChatSession[]>> {
+    return this.request(`/chat/session?page=${page}`);
+  }
+
+  async getChatHistory(sessionId: string): Promise<ApiResponse<ChatMessage[]>> {
+    return this.request(`/chat/history?session_id=${sessionId}`);
+  }
+
+  async getSessionInsights(sessionId: string): Promise<ApiResponse<SessionInsights>> {
+    return this.request(`/chat/session/${sessionId}/insights`);
+  }
+
+  async sendChatMessage(
+    sessionId: string,
+    message: string
+  ): Promise<ApiResponse<{ userMessage: ChatMessage; aiMessage: ChatMessage }>> {
+    return this.request(`/chat/session/${sessionId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  async streamChatMessage(
+    sessionId: string,
+    message: string,
+    onDelta: (text: string) => void,
+    onDone: () => void,
+    onError: (err: string) => void
+  ): Promise<void> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(
+      `${API_URL}${API_BASE_PATH}/chat/session/${sessionId}/messages?stream=true`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ message }),
+      }
+    );
+
+    if (!response.ok || !response.body) {
+      onError("Failed to send message");
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const payload = JSON.parse(line.slice(6));
+          if (payload.error) onError(payload.error);
+          else if (payload.delta) onDelta(payload.delta);
+          else if (payload.done) onDone();
+        } catch {
+          /* skip malformed chunks */
+        }
+      }
+    }
+    onDone();
+  }
+
+  async submitChatDecision(
+    sessionId: string,
+    decision: string
+  ): Promise<
+    ApiResponse<{
+      decision: string;
+      legalRequestId: string | null;
+      requestReference?: string;
+    }>
+  > {
+    return this.request(`/chat/session/${sessionId}/decision`, {
+      method: "POST",
+      body: JSON.stringify({ decision }),
+    });
+  }
+
+  async getSuggestedQuestions(): Promise<ApiResponse<string[]>> {
+    return this.request("/chat/suggested-questions");
+  }
+
+  async generateAiSummary(sessionId: string): Promise<ApiResponse<unknown>> {
+    return this.request("/ai/summary", {
+      method: "POST",
+      body: JSON.stringify({ session_id: sessionId }),
+    });
   }
 }
 

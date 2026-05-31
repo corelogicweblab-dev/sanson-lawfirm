@@ -71,6 +71,8 @@ Firebase Console → **Hosting** → **Add custom domain** (e.g. `app.sansonlaw.
 
 ## Render (Backend API)
 
+**Important:** Use **Python 3** on Render (`apps/backend`) — not Node/npm. See [RENDER-FIX.md](RENDER-FIX.md) for exact build/start commands. Docker is optional and not required.
+
 **URL:** https://sanson-lawfirm.onrender.com  
 **Health:** https://sanson-lawfirm.onrender.com/api/v1/health/  
 **Docs:** https://sanson-lawfirm.onrender.com/api/v1/docs

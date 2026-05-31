@@ -1,7 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
-import { FilePlus2, CalendarDays, Briefcase } from "lucide-react";
+import Link from "next/link";
+import { FilePlus2, CalendarDays, Briefcase, Sparkles } from "lucide-react";
+import { Button } from "@sanson/ui";
 import {
   PageContainer,
   SectionHeader,
@@ -42,6 +44,22 @@ export default function ClientDashboardPage() {
             title="My Legal Journey"
             description="Track your representation requests and case progress"
           />
+          <Card className="mb-6 border-pink-500/20 bg-gradient-to-r from-pink-500/10 to-violet-500/5">
+            <CardContent className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Sparkles className="h-5 w-5 text-pink-400" />
+                  AI Legal Assistant
+                </CardTitle>
+                <p className="mt-1 text-sm text-zinc-400">
+                  Start with our AI intake — describe your concern before requesting representation.
+                </p>
+              </div>
+              <Link href="/dashboard/client/ai-assistant">
+                <Button>Open assistant</Button>
+              </Link>
+            </CardContent>
+          </Card>
           <div className="mb-8 grid gap-4 md:grid-cols-3">
             <StatCard title="My Requests" value={requests.length} icon={<FilePlus2 className="h-5 w-5" />} />
             <StatCard

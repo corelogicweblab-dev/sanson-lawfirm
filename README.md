@@ -80,6 +80,12 @@ npm run dev:web
 - **API docs:** https://sanson-lawfirm.onrender.com/api/v1/docs
 - **Firebase project:** `sansonlawfirm`
 
+## Phase 3 — AI Legal Assistant
+
+- Client route: `/dashboard/client/ai-assistant`
+- Docs: [docs/PHASE-3-SUMMARY.md](docs/PHASE-3-SUMMARY.md)
+- Requires `OPENAI_API_KEY` on the backend (Render)
+
 ## Deploy web to Firebase Hosting
 
 ```bash

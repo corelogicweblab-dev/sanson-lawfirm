@@ -1,4 +1,4 @@
-﻿export type UserRole = "CLIENT" | "LAWYER" | "PARALEGAL" | "ADMIN";
+export type UserRole = "CLIENT" | "LAWYER" | "PARALEGAL" | "ADMIN";
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "PENDING";
 export type PriorityLevel = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -13,7 +13,21 @@ export type CaseCategory =
   | "PROPERTY"
   | "CONTRACT_DISPUTES"
   | "CONSUMER_PROTECTION"
+  | "IMMIGRATION"
+  | "ESTATE_PROBATE"
+  | "TAX"
   | "OTHER";
+
+export type ChatSessionStatus = "ACTIVE" | "PAUSED" | "COMPLETED" | "ARCHIVED";
+export type ChatSenderType = "CLIENT" | "AI" | "SYSTEM";
+export type AiUrgencyLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type AiRecommendationType =
+  | "CONTINUE_CONVERSATION"
+  | "UPLOAD_DOCUMENTS"
+  | "GATHER_EVIDENCE"
+  | "REQUEST_REPRESENTATION"
+  | "SEEK_IMMEDIATE_ADVICE";
+export type SessionDecision = "CONTINUE_CHAT" | "RETURN_LATER" | "REQUEST_LEGAL_REPRESENTATION";
 
 export type LegalRequestStatus =
   | "NEW"
@@ -235,5 +249,77 @@ export interface WorkflowStats {
   active_cases: number;
   pending_tasks: number;
   case_status_distribution: Record<string, number>;
+}
+
+export interface ChatSession {
+  id: string;
+  clientId: string;
+  sessionReference: string;
+  status: ChatSessionStatus;
+  legalRequestId: string | null;
+  startedAt: string;
+  lastActivityAt: string;
+  endedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  senderType: ChatSenderType;
+  message: string;
+  messageType: string;
+  tokenUsage: number | null;
+  createdAt: string;
+}
+
+export interface AiClassification {
+  id: string;
+  sessionId: string;
+  category: CaseCategory | null;
+  subcategory: string | null;
+  priority: PriorityLevel | null;
+  urgency: AiUrgencyLevel | null;
+  confidenceScore: number | null;
+  potentialLegalArea: string | null;
+  createdAt: string;
+}
+
+export interface AiSummary {
+  id: string;
+  sessionId: string;
+  clientId: string;
+  summaryText: string;
+  keyFacts: string[];
+  partiesInvolved: string[];
+  relevantDates: string[];
+  evidenceMentioned: string[];
+  missingInformation: string[];
+  recommendedNextSteps: string[];
+  urgency: AiUrgencyLevel | null;
+  classificationId: string | null;
+  generatedAt: string;
+}
+
+export interface AiRecommendation {
+  id: string;
+  sessionId: string;
+  recommendationType: AiRecommendationType;
+  message: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface SessionInsights {
+  classification: AiClassification | null;
+  summary: AiSummary | null;
+  recommendations: AiRecommendation[];
+  intakeResponses: Array<{
+    id: string;
+    questionKey: string;
+    questionText: string;
+    answerText: string;
+  }>;
 }
 

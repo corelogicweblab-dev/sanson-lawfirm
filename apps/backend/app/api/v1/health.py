@@ -21,8 +21,14 @@ async def health_check():
 
 @router.get("/ready")
 async def readiness_check():
+    from app.core.database import check_database_connection
+
+    db_ok = await check_database_connection()
     return success_response(
-        {"status": "ready", "database": "configured"},
-        "Service is ready",
+        {
+            "status": "ready" if db_ok else "degraded",
+            "database": "connected" if db_ok else "unavailable",
+        },
+        "Service is ready" if db_ok else "Database connection failed",
     )
 

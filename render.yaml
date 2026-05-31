@@ -1,12 +1,18 @@
+# Render — Python API (no Docker required)
+# Web app deploys separately via Firebase Hosting (npm run deploy:hosting)
 services:
   - type: web
-    name: sanson-api
-    runtime: docker
-    dockerfilePath: ./apps/backend/Dockerfile
-    dockerContext: ./apps/backend
+    name: sanson-lawfirm
+    runtime: python
+    rootDir: apps/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health/
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_SSL
+        value: "true"
       - key: FIREBASE_PROJECT_ID
         sync: false
       - key: FIREBASE_CLIENT_EMAIL
@@ -14,5 +20,10 @@ services:
       - key: FIREBASE_PRIVATE_KEY
         sync: false
       - key: CORS_ORIGINS
+        value: http://localhost:3000,http://127.0.0.1:3000,https://sansonlawfirm.web.app,https://sansonlawfirm.firebaseapp.com
+      - key: OPENAI_API_KEY
         sync: false
-    healthCheckPath: /api/v1/health/
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"

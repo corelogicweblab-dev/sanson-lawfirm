@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     rate_limit_per_minute: int = 60
 
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    ai_rate_limit_per_minute: int = 30
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors(cls, v: str | List[str]) -> str:
@@ -56,6 +60,10 @@ class Settings(BaseSettings):
         if self.database_ssl:
             return True
         return "supabase.co" in self.async_database_url
+
+    @property
+    def openai_configured(self) -> bool:
+        return bool(self.openai_api_key.strip())
 
     @property
     def firebase_configured(self) -> bool:

@@ -1,4 +1,4 @@
-﻿import type { UserRole } from "@sanson/types";
+import type { UserRole } from "@sanson/types";
 
 export const APP_NAME = "SANSON Legal OS";
 export const POWERED_BY = "CoreLogic";
@@ -63,6 +63,12 @@ export const PERMISSIONS = {
 
   TIMELINES_READ: "timelines:read",
   TIMELINES_WRITE: "timelines:write",
+
+  CHAT_READ: "chat:read",
+  CHAT_WRITE: "chat:write",
+  CHAT_CREATE: "chat:create",
+  AI_READ: "ai:read",
+  AI_GENERATE: "ai:generate",
 } as const;
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -75,6 +81,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.APPOINTMENTS_READ,
     PERMISSIONS.CASES_READ,
     PERMISSIONS.TIMELINES_READ,
+    PERMISSIONS.CHAT_READ,
+    PERMISSIONS.CHAT_WRITE,
+    PERMISSIONS.CHAT_CREATE,
+    PERMISSIONS.AI_READ,
   ],
   LAWYER: [
     PERMISSIONS.PROFILE_READ,
@@ -96,6 +106,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.CONSULTATIONS_WRITE,
     PERMISSIONS.TIMELINES_READ,
     PERMISSIONS.TIMELINES_WRITE,
+    PERMISSIONS.CHAT_READ,
+    PERMISSIONS.AI_READ,
+    PERMISSIONS.AI_GENERATE,
   ],
   PARALEGAL: [
     PERMISSIONS.PROFILE_READ,
@@ -112,6 +125,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.CONSULTATIONS_READ,
     PERMISSIONS.TIMELINES_READ,
     PERMISSIONS.TIMELINES_WRITE,
+    PERMISSIONS.CHAT_READ,
+    PERMISSIONS.AI_READ,
   ],
   ADMIN: ["*"],
 };
@@ -141,6 +156,14 @@ export const AUDIT_ACTIONS = {
   CONSULTATION_NOTE: "consultation.note",
   CONSULTATION_OUTCOME: "consultation.outcome",
   TIMELINE_CREATE: "timeline.create",
+
+  CHAT_STARTED: "chat.started",
+  CHAT_ENDED: "chat.ended",
+  CHAT_PAUSED: "chat.paused",
+  AI_SUMMARY: "ai.summary_generated",
+  AI_CLASSIFICATION: "ai.classification_generated",
+  AI_RECOMMENDATION: "ai.recommendation_generated",
+  REPRESENTATION_FROM_CHAT: "chat.representation_requested",
 } as const;
 
 export const API_VERSION = "v1";
