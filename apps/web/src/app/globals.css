@@ -65,24 +65,45 @@ body {
   background: transparent;
 }
 
-/* Pink-dominant base — black only for depth */
+/* Pink-dominant animated canvas — whole app */
 .sanson-app-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  background-color: var(--pink-dark);
+}
+
+.sanson-bg-gradient-shift {
+  position: absolute;
+  inset: -50%;
   background: linear-gradient(
-    145deg,
+    125deg,
     var(--pink-soft) 0%,
-    var(--pink-luxury) 15%,
-    var(--pink-primary) 32%,
-    var(--pink-dark) 52%,
-    #9d174d 68%,
-    #831843 82%,
+    var(--pink-luxury) 18%,
+    var(--pink-primary) 36%,
+    var(--pink-dark) 54%,
+    #9d174d 70%,
+    #831843 84%,
     var(--charcoal) 96%,
     var(--black) 100%
   );
+  background-size: 220% 220%;
+  animation: sanson-bg-drift 42s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes sanson-bg-drift {
+  0% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  50% {
+    transform: translate(-8%, -6%) scale(1.04);
+  }
+  100% {
+    transform: translate(6%, 4%) scale(1.02);
+  }
 }
 
 /* Blended mesh grid — luxury depth without flat single-color */
@@ -207,6 +228,181 @@ body {
   background: radial-gradient(circle, rgba(255, 79, 163, 0.85) 0%, transparent 72%);
   animation: sanson-float-2 48s ease-in-out infinite reverse;
   opacity: 0.45;
+}
+
+.sanson-blob-5 {
+  width: min(28vw, 240px);
+  height: min(28vw, 240px);
+  bottom: 25%;
+  left: 8%;
+  background: radial-gradient(circle, rgba(190, 24, 93, 0.7) 0%, transparent 70%);
+  animation: sanson-float-3 44s ease-in-out infinite reverse;
+  opacity: 0.32;
+}
+
+/* Aurora ribbons — slow futuristic glow */
+.sanson-aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  will-change: transform, opacity;
+}
+
+.sanson-aurora-a {
+  width: min(90vw, 720px);
+  height: min(50vh, 400px);
+  top: -15%;
+  left: -20%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 79, 163, 0.5) 35%,
+    rgba(249, 168, 212, 0.35) 55%,
+    transparent 80%
+  );
+  animation: sanson-aurora-drift-a 56s ease-in-out infinite alternate;
+}
+
+.sanson-aurora-b {
+  width: min(80vw, 640px);
+  height: min(45vh, 360px);
+  bottom: -10%;
+  right: -25%;
+  background: linear-gradient(
+    280deg,
+    transparent 0%,
+    rgba(190, 24, 93, 0.45) 40%,
+    rgba(236, 72, 153, 0.3) 60%,
+    transparent 85%
+  );
+  animation: sanson-aurora-drift-b 62s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes sanson-aurora-drift-a {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.28;
+  }
+  100% {
+    transform: translate(12%, 8%) rotate(8deg);
+    opacity: 0.4;
+  }
+}
+
+@keyframes sanson-aurora-drift-b {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-10%, -6%) rotate(-6deg);
+    opacity: 0.42;
+  }
+}
+
+/* Subtle moving grid — enterprise tech feel */
+.sanson-grid-scan {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: sanson-grid-drift 40s linear infinite;
+  will-change: background-position;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 20%, transparent 75%);
+}
+
+@keyframes sanson-grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 48px 48px;
+  }
+}
+
+/* Floating pink waves */
+.sanson-floating-wave {
+  position: absolute;
+  width: 200%;
+  left: -50%;
+  border-radius: 42%;
+  opacity: 0.2;
+  will-change: transform;
+}
+
+.sanson-floating-wave-1 {
+  height: min(28vh, 220px);
+  top: 18%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(249, 168, 212, 0.35),
+    rgba(255, 79, 163, 0.25),
+    transparent
+  );
+  animation: sanson-wave-drift-1 36s ease-in-out infinite;
+}
+
+.sanson-floating-wave-2 {
+  height: min(22vh, 180px);
+  bottom: 22%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(190, 24, 93, 0.3),
+    rgba(244, 114, 182, 0.2),
+    transparent
+  );
+  animation: sanson-wave-drift-2 44s ease-in-out infinite reverse;
+}
+
+@keyframes sanson-wave-drift-1 {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(6%) translateY(-4%) rotate(3deg);
+  }
+}
+
+@keyframes sanson-wave-drift-2 {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0) rotate(2deg);
+  }
+  50% {
+    transform: translateX(-5%) translateY(3%) rotate(-2deg);
+  }
+}
+
+/* Soft light sweep across viewport */
+.sanson-light-sweep {
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.04) 48%,
+    rgba(255, 79, 163, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 52%,
+    transparent 58%
+  );
+  animation: sanson-light-sweep 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes sanson-light-sweep {
+  0% {
+    transform: translateX(-35%) translateY(-10%) rotate(12deg);
+  }
+  100% {
+    transform: translateX(35%) translateY(10%) rotate(12deg);
+  }
 }
 
 .sanson-wave {
@@ -590,15 +786,58 @@ body {
   border-color: var(--glass-border) !important;
 }
 
-[data-motion-tier="reduced"] .sanson-blob,
+[data-motion-tier="reduced"] .sanson-aurora,
+[data-motion-tier="reduced"] .sanson-grid-scan,
+[data-motion-tier="reduced"] .sanson-floating-wave,
+[data-motion-tier="reduced"] .sanson-light-sweep,
+[data-motion-tier="reduced"] .sanson-blob-4,
+[data-motion-tier="reduced"] .sanson-blob-5 {
+  display: none;
+}
+
+[data-motion-tier="reduced"] .sanson-bg-gradient-shift {
+  animation-duration: 72s;
+}
+
+[data-motion-tier="reduced"] .sanson-mesh-grid {
+  animation-duration: 80s;
+}
+
 [data-motion-tier="reduced"] .sanson-app-bg::before,
-[data-motion-tier="reduced"] .sanson-app-bg::after,
-[data-motion-tier="reduced"] .sanson-mesh-grid,
-[data-motion-tier="reduced"] .sanson-wave {
+[data-motion-tier="reduced"] .sanson-app-bg::after {
+  animation-duration: 70s;
+}
+
+[data-motion-tier="reduced"] .sanson-blob-1,
+[data-motion-tier="reduced"] .sanson-blob-2,
+[data-motion-tier="reduced"] .sanson-blob-3 {
+  animation-duration: 55s;
+  opacity: 0.28;
+}
+
+[data-motion-tier="minimal"] .sanson-bg-gradient-shift {
+  animation: none;
+  inset: 0;
+  background-size: 100% 100%;
+}
+
+[data-motion-tier="minimal"] .sanson-blob,
+[data-motion-tier="minimal"] .sanson-aurora,
+[data-motion-tier="minimal"] .sanson-grid-scan,
+[data-motion-tier="minimal"] .sanson-floating-wave,
+[data-motion-tier="minimal"] .sanson-light-sweep,
+[data-motion-tier="minimal"] .sanson-mesh-grid,
+[data-motion-tier="minimal"] .sanson-app-bg::before,
+[data-motion-tier="minimal"] .sanson-app-bg::after,
+[data-motion-tier="minimal"] .sanson-wave {
   animation: none !important;
 }
 
-[data-motion-tier="minimal"] .sanson-blob {
+[data-motion-tier="minimal"] .sanson-blob,
+[data-motion-tier="minimal"] .sanson-aurora,
+[data-motion-tier="minimal"] .sanson-grid-scan,
+[data-motion-tier="minimal"] .sanson-floating-wave,
+[data-motion-tier="minimal"] .sanson-light-sweep {
   display: none;
 }
 
@@ -638,12 +877,22 @@ body {
     scroll-behavior: auto;
   }
 
+  .sanson-bg-gradient-shift,
   .sanson-blob,
+  .sanson-aurora,
+  .sanson-grid-scan,
+  .sanson-floating-wave,
+  .sanson-light-sweep,
   .sanson-app-bg::before,
   .sanson-app-bg::after,
   .sanson-mesh-grid,
   .sanson-wave {
     animation: none !important;
+  }
+
+  .sanson-bg-gradient-shift {
+    inset: 0;
+    background-size: 100% 100%;
   }
 
   .sanson-enter,

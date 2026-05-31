@@ -1,2 +1,2 @@
 /** Bump when deploying UI — triggers one-time hard refresh for cached clients. */
-export const APP_BUILD_ID = "2026.05.31-text-contrast-v4";
+export const APP_BUILD_ID = "2026.05.31-futuristic-bg-v5";
