@@ -20,7 +20,7 @@ export default function ClientDocumentsPage() {
             title="Upload Center"
             description="Securely upload evidence and supporting documents for your legal matter."
           />
-          <DocumentCenter />
+          <DocumentCenter allowPrint={false} />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>

@@ -504,11 +504,33 @@ export function MasterCaseIntakeForm({
         </div>
       </FormSection>
 
+      {!createdCaseId && (
+        <div className="rounded-xl border border-pink-500/30 bg-pink-500/10 px-4 py-4">
+          <p className="mb-2 text-sm font-medium text-white">Step 1 — Save this case</p>
+          <p className="mb-3 text-xs text-zinc-400">
+            Create a draft case first so uploads in Section 7 are stored on this matter only.
+          </p>
+          <Button loading={loading} onClick={submit} className="w-full sm:w-auto">
+            Create draft case
+          </Button>
+        </div>
+      )}
+
+      {createdCaseId && (
+        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+          Case saved — you can upload files in Section 7 below.
+        </p>
+      )}
+
       <div id="case-documents-section">
         <FormSection title="7 — Documents & files (this case)">
+          <p className="mb-3 text-xs text-zinc-400">
+            Step 2 — PDF, Office, images, video, audio, and ZIP. Each file belongs to this case only.
+          </p>
           <DocumentCenter
             caseId={createdCaseId ?? undefined}
-            requireCase={!createdCaseId}
+            uploadDisabled={!createdCaseId}
+            uploadDisabledHint='Click "Create draft case" in Step 1 above to enable uploads.'
             showProcess
           />
         </FormSection>

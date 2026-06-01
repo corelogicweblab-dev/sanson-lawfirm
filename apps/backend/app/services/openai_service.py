@@ -14,6 +14,7 @@ from app.services.prompts import (
     SUMMARY_PROMPT,
     SYSTEM_ASSISTANT,
 )
+from app.utils.language_detect import detect_client_language, language_system_addon
 
 logger = structlog.get_logger()
 
@@ -46,7 +47,9 @@ def build_conversation_messages(
     history: list[dict[str, str]],
     user_message: str,
 ) -> list[dict[str, str]]:
-    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_ASSISTANT}]
+    lang = detect_client_language(user_message, history)
+    system = SYSTEM_ASSISTANT + language_system_addon(lang)
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
     for item in history[-20:]:
         role = "user" if item.get("role") == "user" else "assistant"
         messages.append({"role": role, "content": item.get("content", "")[:4000]})

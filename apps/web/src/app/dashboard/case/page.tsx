@@ -140,6 +140,7 @@ function CaseWorkspaceContent() {
                     caseId={caseId}
                     showProcess={role === "PARALEGAL"}
                     readOnly={role === "LAWYER"}
+                    allowPrint={role === "LAWYER" || role === "PARALEGAL"}
                   />
                 </div>
                 <Card className="sanson-panel">
@@ -203,6 +204,7 @@ function CaseWorkspaceContent() {
                 caseId={caseId}
                 showProcess={role === "PARALEGAL"}
                 readOnly={role === "LAWYER"}
+                allowPrint={role === "LAWYER" || role === "PARALEGAL"}
               />
             )}
 

@@ -229,6 +229,9 @@ export function AiAssistantChat() {
             <Sparkles className="h-5 w-5 text-pink-400" />
             <h2 className="font-semibold text-white">AI Legal Assistant</h2>
           </div>
+          <p className="mt-1 text-xs text-zinc-400">
+            Magsulat sa English, Filipino, Cebuano, o anumang wika — tutugon ang assistant sa parehong wika.
+          </p>
           {activeSession && (
             <p className="mt-1 font-mono text-xs text-zinc-500">{activeSession.sessionReference}</p>
           )}
@@ -238,7 +241,10 @@ export function AiAssistantChat() {
           {!activeSession && (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
               <Bot className="h-16 w-16 text-pink-400/50" />
-              <p className="text-zinc-400">Start a conversation to describe your legal concern.</p>
+              <p className="text-zinc-400">
+                Start a conversation to describe your legal concern. You may write in English,
+                Filipino (Tagalog), Cebuano, or your preferred language.
+              </p>
               <Button onClick={startNewSession}>Begin intake</Button>
             </div>
           )}
@@ -297,7 +303,7 @@ export function AiAssistantChat() {
                       sendMessage();
                     }
                   }}
-                  placeholder="Describe your legal concern…"
+                  placeholder="Ilahad ang legal concern (English, Filipino, Cebuano, atbp.)…"
                   rows={2}
                   className="flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-pink-500/50 focus:outline-none"
                   disabled={sending || activeSession.status !== "ACTIVE"}

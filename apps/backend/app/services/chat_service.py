@@ -53,13 +53,9 @@ class ChatService:
         self.db.add(session)
         await self.db.flush()
 
-        welcome = (
-            "Welcome to the SANSON Law Firm AI Legal Assistant. "
-            "I'm here to help gather information about your legal concern "
-            "before our attorneys review your matter.\n\n"
-            "Please describe your situation, and I'll ask follow-up questions "
-            "to better understand your case."
-        )
+        from app.services.prompts import WELCOME_ASSISTANT
+
+        welcome = WELCOME_ASSISTANT
         await self._add_message(
             session.id,
             ChatSenderTypeEnum.AI,

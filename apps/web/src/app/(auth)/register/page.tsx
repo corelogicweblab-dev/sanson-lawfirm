@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   createUserWithEmailAndPassword,
-  signInWithPopup,
   updateProfile,
 } from "firebase/auth";
 import { Scale } from "lucide-react";
@@ -19,9 +18,16 @@ import {
   CardDescription,
 } from "@sanson/ui";
 import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
-import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/google-auth";
+import {
+  firebaseAuthErrorMessage,
+  syncFirebaseUser,
+  syncFromGoogleCredential,
+} from "@/lib/firebase-auth-flow";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { useGoogleAuthRedirect } from "@/hooks/use-google-auth-redirect";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -33,13 +39,33 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const finishAuth = useCallback(
+    (user: import("@sanson/types").User, token: string, redirectPath?: string) => {
+      setToken(token);
+      api.setToken(token);
+      setUser(user);
+      router.push(redirectPath ?? getDashboardPath());
+    },
+    [getDashboardPath, router, setToken, setUser]
+  );
+
+  useGoogleAuthRedirect({
+    setLoading,
+    onError: setError,
+    onSuccess: async ({ user, redirectPath }) => {
+      const auth = getFirebaseAuth();
+      const token = await auth.currentUser?.getIdToken();
+      if (token) finishAuth(user, token, redirectPath);
+    },
+  });
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     if (!isFirebaseConfigured()) {
-      setError("Firebase is not configured.");
+      setError("Registration is temporarily unavailable. Please contact SANSON Law Firm.");
       setLoading(false);
       return;
     }
@@ -51,24 +77,23 @@ export default function RegisterPage() {
         displayName: `${firstName} ${lastName}`.trim(),
       });
       const token = await credential.user.getIdToken();
-      setToken(token);
-      api.setToken(token);
       const names = resolveSyncProfileNames(email, {
         first_name: firstName,
         last_name: lastName,
       });
+      setToken(token);
+      api.setToken(token);
       const response = await api.syncUser({
         ...names,
         role: inferRoleFromEmail(email),
       });
       if (response.success && response.data?.user) {
-        setUser(response.data.user);
-        router.push(getDashboardPath());
+        finishAuth(response.data.user, token);
       } else {
-        setError(response.message || "Registration sync failed.");
+        setError("Registration could not be completed. Please try again.");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(firebaseAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -77,30 +102,29 @@ export default function RegisterPage() {
   const handleGoogleRegister = async () => {
     setError("");
     setLoading(true);
+
+    if (!isFirebaseConfigured()) {
+      setError("Registration is temporarily unavailable. Please contact SANSON Law Firm.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const auth = getFirebaseAuth();
-      const credential = await signInWithPopup(auth, googleProvider);
+      const credential = await signInWithGoogle();
       const token = await credential.user.getIdToken();
-      const parts = credential.user.displayName?.split(" ") ?? [];
-      setToken(token);
-      api.setToken(token);
-      const userEmail = credential.user.email ?? "";
-      const names = resolveSyncProfileNames(userEmail, {
-        first_name: parts[0],
-        last_name: parts.slice(1).join(" "),
-      });
-      const response = await api.syncUser({
-        ...names,
-        role: inferRoleFromEmail(userEmail),
-      });
-      if (response.success && response.data?.user) {
-        setUser(response.data.user);
-        router.push(getDashboardPath());
+      const result = await syncFromGoogleCredential(credential);
+      if (result.ok) {
+        finishAuth(result.user, token, result.redirectPath);
       } else {
-        setError(response.message || "Google sign-up sync failed.");
+        setError(result.message);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Google sign-up failed");
+      const msg = firebaseAuthErrorMessage(err);
+      if (msg.includes("Redirecting to Google")) {
+        setError("");
+        return;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -148,7 +172,11 @@ export default function RegisterPage() {
               required
               minLength={6}
             />
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                {error}
+              </p>
+            )}
             <Button type="submit" className="w-full" loading={loading}>
               Create Account
             </Button>
@@ -160,7 +188,14 @@ export default function RegisterPage() {
             <div className="h-px flex-1 bg-white/10" />
           </div>
 
-          <Button variant="secondary" className="w-full" onClick={handleGoogleRegister} loading={loading}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={handleGoogleRegister}
+            loading={loading}
+            disabled={!isFirebaseConfigured()}
+          >
             Sign up with Google
           </Button>
 

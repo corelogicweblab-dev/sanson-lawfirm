@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@sanson/ui";
-import { PrintButton } from "@/components/print/print-button";
 import { AppHeaderBrand } from "@/components/layout/app-header-brand";
 import { cn } from "@/lib/utils";
 import { LANDING_PATH } from "@/lib/logout";
@@ -54,7 +53,6 @@ export function MarketingHeader({ variant = "landing" }: MarketingHeaderProps) {
         <AppHeaderBrand onNavigate={() => setMenuOpen(false)} />
 
         <nav className="hidden items-center gap-1 md:flex">
-          <PrintButton className="!h-9 !w-9" />
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -114,7 +112,6 @@ export function MarketingHeader({ variant = "landing" }: MarketingHeaderProps) {
                   {link.label}
                 </Link>
               ))}
-              <PrintButton showLabel size="sm" variant="outline" className="mt-1 w-full !flex" />
               {variant === "landing" && (
                 <>
                   <Link href="/login" onClick={() => setMenuOpen(false)}>

@@ -1,21 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
-import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
-import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
-import { formatFirebaseAuthError } from "@/lib/auth-errors";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/google-auth";
+import {
+  firebaseAuthErrorMessage,
+  syncFirebaseUser,
+  syncFromGoogleCredential,
+} from "@/lib/firebase-auth-flow";
 import { api } from "@/lib/api";
-import { getDashboardPath as pathForRole } from "@sanson/utils";
-import { friendlySyncError } from "@/lib/user-messages";
-import type { UserRole } from "@sanson/types";
 import { useAuthStore } from "@/store/auth";
+import { useGoogleAuthRedirect } from "@/hooks/use-google-auth-redirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,28 +24,25 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSyncAndRedirect = async (token: string, userEmail: string, profile?: {
-    first_name?: string;
-    last_name?: string;
-  }) => {
-    setToken(token);
-    api.setToken(token);
-    const names = resolveSyncProfileNames(userEmail, profile);
-    const response = await api.syncUser({
-      ...names,
-      role: inferRoleFromEmail(userEmail),
-    });
+  const finishAuth = useCallback(
+    (user: import("@sanson/types").User, token: string, redirectPath?: string) => {
+      setToken(token);
+      api.setToken(token);
+      setUser(user);
+      router.push(redirectPath ?? getDashboardPath());
+    },
+    [getDashboardPath, router, setToken, setUser]
+  );
 
-    if (!response.success || !response.data?.user) {
-      setError(friendlySyncError());
-      return;
-    }
-
-    const user = response.data.user;
-    setUser(user);
-    const role = user.role?.name as UserRole | undefined;
-    router.push(role ? pathForRole(role) : getDashboardPath());
-  };
+  useGoogleAuthRedirect({
+    setLoading,
+    onError: setError,
+    onSuccess: async ({ user, redirectPath }) => {
+      const auth = getFirebaseAuth();
+      const token = await auth.currentUser?.getIdToken();
+      if (token) finishAuth(user, token, redirectPath);
+    },
+  });
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,9 +59,14 @@ export default function LoginPage() {
       const auth = getFirebaseAuth();
       const credential = await signInWithEmailAndPassword(auth, email, password);
       const token = await credential.user.getIdToken();
-      await handleSyncAndRedirect(token, email);
+      const result = await syncFirebaseUser(credential.user);
+      if (result.ok) {
+        finishAuth(result.user, token, result.redirectPath);
+      } else {
+        setError(result.message);
+      }
     } catch (err: unknown) {
-      setError(formatFirebaseAuthError(err));
+      setError(firebaseAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -82,17 +83,21 @@ export default function LoginPage() {
     }
 
     try {
-      const auth = getFirebaseAuth();
-      const credential = await signInWithPopup(auth, googleProvider);
+      const credential = await signInWithGoogle();
       const token = await credential.user.getIdToken();
-      const displayName = credential.user.displayName?.split(" ") ?? [];
-      const userEmail = credential.user.email ?? "";
-      await handleSyncAndRedirect(token, userEmail, {
-        first_name: displayName[0] || "User",
-        last_name: displayName.slice(1).join(" ") || "",
-      });
+      const result = await syncFromGoogleCredential(credential);
+      if (result.ok) {
+        finishAuth(result.user, token, result.redirectPath);
+      } else {
+        setError(result.message);
+      }
     } catch (err: unknown) {
-      setError(formatFirebaseAuthError(err));
+      const msg = firebaseAuthErrorMessage(err);
+      if (msg.includes("Redirecting to Google")) {
+        setError("");
+        return;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -146,7 +151,14 @@ export default function LoginPage() {
             <div className="h-px flex-1 bg-white/10" />
           </div>
 
-          <Button variant="secondary" className="w-full" onClick={handleGoogleLogin} loading={loading}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={handleGoogleLogin}
+            loading={loading}
+            disabled={!isFirebaseConfigured()}
+          >
             Continue with Google
           </Button>
 

@@ -43,7 +43,6 @@ import { useEffect, useState } from "react";
 import { loadProfilePhotoUrl } from "@/lib/profile-photo";
 import { Button } from "@sanson/ui";
 import { SearchModal } from "@/components/search/global-search";
-import { PrintButton } from "@/components/print/print-button";
 import { AppHeaderBrand } from "@/components/layout/app-header-brand";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
@@ -344,7 +343,6 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
-            <PrintButton />
             <Button
               variant="ghost"
               size="icon"

@@ -25,15 +25,20 @@ interface DocumentCenterProps {
   caseId?: string;
   /** Lawyers: view/download only — no uploads (paralegal-centric file authority). */
   readOnly?: boolean;
-  /** Show placeholder until case exists (intake form). */
-  requireCase?: boolean;
+  /** Print per file — lawyer & paralegal only (not clients or public pages). */
+  allowPrint?: boolean;
+  /** Intake form: show upload UI but block until case is saved. */
+  uploadDisabled?: boolean;
+  uploadDisabledHint?: string;
 }
 
 export function DocumentCenter({
   showProcess = false,
   caseId,
   readOnly = false,
-  requireCase = false,
+  allowPrint = true,
+  uploadDisabled = false,
+  uploadDisabledHint = "Click “Create draft case” above to enable uploads for this matter.",
 }: DocumentCenterProps) {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [categories, setCategories] = useState<DocumentCategory[]>([]);
@@ -57,13 +62,18 @@ export function DocumentCenter({
   }, [caseId]);
 
   useEffect(() => {
+    if (!caseId && uploadDisabled) {
+      setLoading(false);
+      setDocuments([]);
+      return;
+    }
     load();
-  }, [load]);
+  }, [load, caseId, uploadDisabled]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    if (requireCase && !caseId) {
-      window.alert("Create or open a case first — documents are stored per case.");
+    if (uploadDisabled || !caseId) {
+      setUploadError(uploadDisabledHint);
       return;
     }
     setUploadError(null);
@@ -97,16 +107,9 @@ export function DocumentCenter({
     return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  if (requireCase && !caseId) {
-    return (
-      <p className="rounded-lg border border-pink-500/25 bg-black/40 px-4 py-3 text-sm text-zinc-300">
-        Save the case first — then upload PDF, DOC, images, video, audio, and ZIP files here. Each file
-        belongs to this case only.
-      </p>
-    );
-  }
+  const uploadsLocked = uploadDisabled || !caseId;
 
-  if (loading) {
+  if (loading && caseId) {
     return (
       <div className="flex h-48 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-pink-400" />
@@ -119,17 +122,25 @@ export function DocumentCenter({
       {!readOnly && (
       <Card className="border-dashed border-white/20 bg-white/5 backdrop-blur-md">
         <CardContent className="p-6">
+          {uploadsLocked && (
+            <p className="mb-4 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-100">
+              {uploadDisabledHint}
+            </p>
+          )}
           <div
             className={cn(
               "flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition",
-              dragOver ? "border-pink-400 bg-pink-500/10" : "border-white/15"
+              uploadsLocked && "opacity-75",
+              dragOver && !uploadsLocked ? "border-pink-400 bg-pink-500/10" : "border-white/15"
             )}
             onDragOver={(e) => {
+              if (uploadsLocked) return;
               e.preventDefault();
               setDragOver(true);
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => {
+              if (uploadsLocked) return;
               e.preventDefault();
               setDragOver(false);
               handleFiles(e.dataTransfer.files);
@@ -159,11 +170,13 @@ export function DocumentCenter({
                 ))}
               </select>
               <input
+                id="sanson-file-upload"
                 ref={fileInputRef}
                 type="file"
                 multiple
                 className="sr-only"
                 accept={UPLOAD_ACCEPT}
+                disabled={uploadsLocked || uploading}
                 onChange={(e) => {
                   handleFiles(e.target.files);
                   e.target.value = "";
@@ -172,7 +185,13 @@ export function DocumentCenter({
               <Button
                 type="button"
                 disabled={uploading}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (uploadsLocked) {
+                    setUploadError(uploadDisabledHint);
+                    return;
+                  }
+                  fileInputRef.current?.click();
+                }}
               >
                 {uploading ? "Uploading…" : "Browse files"}
               </Button>
@@ -215,14 +234,16 @@ export function DocumentCenter({
                           Download
                         </Button>
                       </a>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => printDocument(doc.fileName, doc.downloadUrl)}
-                      >
-                        <Printer className="mr-1 h-3 w-3" />
-                        Print
-                      </Button>
+                      {allowPrint && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => printDocument(doc.fileName, doc.downloadUrl)}
+                        >
+                          <Printer className="mr-1 h-3 w-3" />
+                          Print
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <span className="text-xs text-zinc-500">Preview unavailable</span>
