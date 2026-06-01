@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
 
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.0-flash"
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
 
     ai_rate_limit_per_minute: int = 30

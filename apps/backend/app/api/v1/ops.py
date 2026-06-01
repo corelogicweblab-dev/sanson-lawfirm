@@ -38,6 +38,31 @@ async def operations_dashboard(
     return success_response(data, "Operations dashboard")
 
 
+@router.get("/ai-status")
+async def ai_provider_status():
+    """Public-safe: confirms which AI provider is selected (not a live API test)."""
+    provider = (
+        "gemini"
+        if settings.gemini_configured
+        else "openai"
+        if settings.openai_configured
+        else "none"
+    )
+    return success_response(
+        {
+            "provider": provider,
+            "gemini_key_set": settings.gemini_configured,
+            "openai_key_set": settings.openai_configured,
+            "gemini_model": settings.gemini_model if settings.gemini_configured else None,
+            "note": (
+                "gemini_key_set only means GEMINI_API_KEY exists. "
+                "After deploy, start a new chat to test a live reply."
+            ),
+        },
+        "AI provider status",
+    )
+
+
 @router.get("/environment")
 async def environment_status():
     """Public-safe environment summary (no secrets)."""

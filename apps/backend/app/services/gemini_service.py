@@ -29,6 +29,14 @@ STREAM_FALLBACK = (
     "I apologize — I'm temporarily unable to respond. Please try again shortly."
 )
 
+# Models to try if the configured id returns 404 (Google renames often).
+MODEL_FALLBACK_CHAIN = (
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-flash",
+    "gemini-1.5-flash-8b",
+)
+
 
 def _openai_messages_to_gemini(
     messages: list[dict[str, str]],
@@ -47,6 +55,8 @@ def _openai_messages_to_gemini(
             contents[-1]["parts"][0]["text"] = f"{prev}\n{text}"
         else:
             contents.append({"role": gemini_role, "parts": [{"text": text}]})
+    if not contents:
+        contents.append({"role": "user", "parts": [{"text": "Hello"}]})
     system_instruction = None
     if system_chunks:
         system_instruction = {"parts": [{"text": "\n\n".join(system_chunks)}]}
@@ -57,27 +67,56 @@ class GeminiService:
     def __init__(self) -> None:
         settings = get_settings()
         self.api_key = settings.gemini_api_key.strip()
-        self.model = settings.gemini_model.strip() or "gemini-1.5-flash"
+        self.model = settings.gemini_model.strip() or "gemini-2.0-flash"
         base = (
             settings.gemini_base_url.strip().rstrip("/")
             or "https://generativelanguage.googleapis.com/v1beta"
         )
+        if "/v1" in base and "/v1beta" not in base:
+            base = "https://generativelanguage.googleapis.com/v1beta"
         self.base_url = base
         self.enabled = bool(self.api_key)
 
     def _auth(self) -> tuple[dict[str, str], dict[str, str]]:
-        """Support Google AI Studio keys (x-goog-api-key) and Bearer-style tokens."""
-        headers = {"Content-Type": "application/json"}
-        params: dict[str, str] = {}
-        if self.api_key.startswith("AQ.") or self.api_key.startswith("ya29."):
-            headers["Authorization"] = f"Bearer {self.api_key}"
-        else:
-            headers["x-goog-api-key"] = self.api_key
-            params["key"] = self.api_key
-        return headers, params
+        """Google AI Studio keys (including AQ.*) use x-goog-api-key — not Bearer."""
+        return (
+            {
+                "Content-Type": "application/json",
+                "x-goog-api-key": self.api_key,
+            },
+            {"key": self.api_key},
+        )
 
-    def _url(self, action: str) -> str:
-        return f"{self.base_url}/models/{self.model}:{action}"
+    def _models_to_try(self) -> list[str]:
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for name in (self.model, *MODEL_FALLBACK_CHAIN):
+            if name and name not in seen:
+                seen.add(name)
+                ordered.append(name)
+        return ordered
+
+    def _url(self, model: str, action: str) -> str:
+        return f"{self.base_url}/models/{model}:{action}"
+
+    async def _post_generate(
+        self,
+        client: httpx.AsyncClient,
+        model: str,
+        body: dict[str, Any],
+        headers: dict[str, str],
+        params: dict[str, str],
+    ) -> dict[str, Any]:
+        response = await client.post(
+            self._url(model, "generateContent"),
+            headers=headers,
+            params=params,
+            json=body,
+        )
+        if response.status_code >= 400:
+            detail = response.text[:500]
+            raise RuntimeError(f"HTTP {response.status_code}: {detail}")
+        return response.json()
 
     async def _generate(
         self,
@@ -101,31 +140,28 @@ class GeminiService:
             body["generationConfig"]["responseMimeType"] = "application/json"
 
         headers, params = self._auth()
+        last_error = "unknown"
         async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                self._url("generateContent"),
-                headers=headers,
-                params=params,
-                json=body,
-            )
-            if response.status_code == 404 and "/v1/" in self.base_url:
-                fallback_url = self.base_url.replace("/v1", "/v1beta", 1)
-                response = await client.post(
-                    f"{fallback_url}/models/{self.model}:generateContent",
-                    headers=headers,
-                    params=params,
-                    json=body,
-                )
-            response.raise_for_status()
-            data = response.json()
-
-        candidates = data.get("candidates") or []
-        if not candidates:
-            raise RuntimeError("Gemini returned no candidates")
-        parts = (candidates[0].get("content") or {}).get("parts") or []
-        text = "".join(p.get("text", "") for p in parts)
-        usage = (data.get("usageMetadata") or {}).get("totalTokenCount")
-        return text, usage
+            for model in self._models_to_try():
+                try:
+                    data = await self._post_generate(client, model, body, headers, params)
+                    candidates = data.get("candidates") or []
+                    if not candidates:
+                        block = (data.get("promptFeedback") or {}).get("blockReason")
+                        raise RuntimeError(f"No candidates (block={block})")
+                    parts = (candidates[0].get("content") or {}).get("parts") or []
+                    text = "".join(p.get("text", "") for p in parts)
+                    if not text.strip():
+                        raise RuntimeError("Empty model text")
+                    usage = (data.get("usageMetadata") or {}).get("totalTokenCount")
+                    if model != self.model:
+                        logger.info("gemini_model_fallback", configured=self.model, used=model)
+                    return text, usage
+                except Exception as exc:
+                    last_error = str(exc)
+                    logger.warning("gemini_model_try_failed", model=model, error=last_error)
+                    continue
+        raise RuntimeError(last_error)
 
     async def chat_completion(
         self,
@@ -154,12 +190,54 @@ class GeminiService:
             logger.error("gemini_chat_failed", error=str(exc), model=self.model)
             return FALLBACK_REPLY, None
 
+    async def _stream_generate(
+        self,
+        model: str,
+        body: dict[str, Any],
+        headers: dict[str, str],
+        params: dict[str, str],
+    ) -> str:
+        """Collect streamed text; returns full reply."""
+        params = {**params, "alt": "sse"}
+        pieces: list[str] = []
+        last_full = ""
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream(
+                "POST",
+                self._url(model, "streamGenerateContent"),
+                headers=headers,
+                params=params,
+                json=body,
+            ) as response:
+                if response.status_code >= 400:
+                    detail = (await response.aread()).decode("utf-8", errors="replace")[:500]
+                    raise RuntimeError(f"HTTP {response.status_code}: {detail}")
+                async for line in response.aiter_lines():
+                    chunk = _parse_sse_text(line)
+                    if not chunk:
+                        continue
+                    if chunk.startswith(last_full):
+                        delta = chunk[len(last_full) :]
+                        last_full = chunk
+                    else:
+                        delta = chunk
+                        last_full = last_full + chunk if last_full else chunk
+                    if delta:
+                        pieces.append(delta)
+
+        return "".join(pieces) if pieces else last_full
+
     async def stream_chat(
         self,
         history: list[dict[str, str]],
         user_message: str,
     ) -> AsyncIterator[str]:
         if not self.enabled:
+            yield STREAM_FALLBACK
+            return
+        if not openai_breaker.allow_request():
+            logger.warning("gemini_circuit_open")
             yield STREAM_FALLBACK
             return
 
@@ -173,44 +251,32 @@ class GeminiService:
             body["systemInstruction"] = system_instruction
 
         headers, params = self._auth()
-        params = {**params, "alt": "sse"}
-
-        async def _iter_stream(stream_url: str) -> AsyncIterator[str]:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                async with client.stream(
-                    "POST",
-                    stream_url,
-                    headers=headers,
-                    params=params,
-                    json=body,
-                ) as response:
-                    if response.status_code >= 400:
-                        body_text = await response.aread()
-                        raise RuntimeError(
-                            f"Gemini stream HTTP {response.status_code}: {body_text[:300]}"
-                        )
-                    async for line in response.aiter_lines():
-                        chunk = _parse_sse_text(line)
-                        if chunk:
-                            yield chunk
+        last_error = "unknown"
 
         try:
-            url = self._url("streamGenerateContent")
-            try:
-                async for chunk in _iter_stream(url):
-                    yield chunk
-            except Exception as first_exc:
-                if "/v1/" in self.base_url and "404" in str(first_exc):
-                    fallback = self.base_url.replace("/v1", "/v1beta", 1)
-                    url = f"{fallback}/models/{self.model}:streamGenerateContent"
-                    async for chunk in _iter_stream(url):
-                        yield chunk
-                else:
-                    raise
+            for model in self._models_to_try():
+                try:
+                    full_text = await self._stream_generate(model, body, headers, params)
+                    if full_text.strip():
+                        openai_breaker.record_success()
+                        yield sanitize_ai_output(full_text)
+                        return
+                    raise RuntimeError("Empty stream")
+                except Exception as exc:
+                    last_error = str(exc)
+                    logger.warning("gemini_stream_try_failed", model=model, error=last_error)
+
+            text, _ = await self._generate(
+                contents,
+                system_instruction,
+                temperature=0.4,
+                max_output_tokens=1200,
+            )
             openai_breaker.record_success()
+            yield sanitize_ai_output(text)
         except Exception as exc:
             openai_breaker.record_failure()
-            logger.error("gemini_stream_failed", error=str(exc), model=self.model)
+            logger.error("gemini_stream_failed", error=str(exc), last=last_error, model=self.model)
             yield STREAM_FALLBACK
 
     async def structured_json(
@@ -266,15 +332,22 @@ class GeminiService:
 
 def _parse_sse_text(line: str) -> str:
     line = line.strip()
-    if not line.startswith("data:"):
+    if not line:
         return ""
-    payload = line[5:].strip()
+    if line.startswith("data:"):
+        payload = line[5:].strip()
+    elif line.startswith("{"):
+        payload = line
+    else:
+        return ""
     if not payload or payload == "[DONE]":
         return ""
     try:
         data = json.loads(payload)
     except json.JSONDecodeError:
         return ""
+    if isinstance(data, list) and data:
+        data = data[0]
     candidates = data.get("candidates") or []
     if not candidates:
         return ""
