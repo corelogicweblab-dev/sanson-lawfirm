@@ -1519,6 +1519,43 @@ h4,
 
 .sanson-workflow-panel {
   border-color: rgba(255, 79, 163, 0.4) !important;
+  overflow: visible !important;
+}
+
+.sanson-workflow-steps {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 480px) {
+  .sanson-workflow-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .sanson-workflow-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .sanson-workflow-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .sanson-workflow-steps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .sanson-workflow-steps {
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  }
 }
 
 .sanson-metrics-grid {
