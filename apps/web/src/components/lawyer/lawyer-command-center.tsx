@@ -65,8 +65,8 @@ export function LawyerCommandCenter() {
       try {
         const [dash, d, e] = await Promise.all([
           api.getLawyerDashboard(),
-          api.listDocuments(300),
-          api.listEvidence(300),
+          api.listDocuments(undefined, 300),
+          api.listEvidence(undefined, 300),
         ]);
         if (cancelled) return;
 
