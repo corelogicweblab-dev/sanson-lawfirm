@@ -16,8 +16,8 @@ function isSlowConnection(): boolean {
 }
 
 export function detectMotionTier(): MotionTier {
-  if (prefersReducedMotion()) return "minimal";
-  // Only reduce motion on very slow networks — avoid false positives on office laptops.
+  // Background holographics still animate in "reduced"; only UI micro-motion eases off.
+  if (prefersReducedMotion()) return "reduced";
   if (isSlowConnection()) return "reduced";
   return "full";
 }

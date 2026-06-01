@@ -24,24 +24,20 @@
   --surface-sidebar: rgba(6, 6, 10, 0.9);
   --surface-header: rgba(10, 8, 12, 0.88);
   --border: rgba(236, 72, 153, 0.28);
-  /* Holographic glass — dark magenta ~70% opacity, neon rim */
+  /* True glassmorphism — dark pink ~70% transparent (background MUST show through) */
   --glass-bg: linear-gradient(
-    155deg,
-    rgba(48, 12, 36, 0.72) 0%,
-    rgba(14, 6, 12, 0.78) 45%,
-    rgba(28, 8, 22, 0.7) 100%
+    145deg,
+    rgba(136, 19, 55, 0.42) 0%,
+    rgba(60, 10, 38, 0.38) 50%,
+    rgba(100, 16, 50, 0.4) 100%
   );
-  --glass-bg-flat: rgba(18, 6, 14, 0.75);
+  --glass-bg-flat: rgba(100, 18, 55, 0.4);
   --glass-bg-elevated: linear-gradient(
     180deg,
-    rgba(8, 8, 10, 0.94) 0%,
-    rgba(12, 8, 14, 0.9) 100%
+    rgba(12, 6, 10, 0.58) 0%,
+    rgba(20, 8, 16, 0.52) 100%
   );
-  --glass-bg-chip: linear-gradient(
-    145deg,
-    rgba(16, 10, 14, 0.75) 0%,
-    rgba(8, 6, 10, 0.7) 100%
-  );
+  --glass-bg-chip: rgba(120, 20, 65, 0.35);
   --glass-border: rgba(255, 79, 163, 0.28);
   --glass-border-strong: rgba(255, 79, 163, 0.5);
   --glass-rim: rgba(255, 79, 163, 0.12);
@@ -49,10 +45,10 @@
   --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --glow-pink: 0 0 48px rgba(255, 79, 163, 0.28);
   --shadow-card:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 0 0 1px rgba(255, 79, 163, 0.08) inset,
-    0 16px 48px rgba(0, 0, 0, 0.42),
-    0 8px 24px rgba(190, 24, 93, 0.12);
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 0 0 1px rgba(255, 79, 163, 0.15) inset,
+    0 8px 32px rgba(190, 24, 93, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.25);
 
   /* Readable text pairing on dark glass + pink atmosphere */
   --text-primary: #ffffff;
@@ -199,7 +195,7 @@ h4,
 .sanson-mesh-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.24;
+  opacity: 0.38;
   background-image:
     radial-gradient(ellipse 120% 80% at 10% 0%, rgba(255, 79, 163, 0.45), transparent 50%),
     radial-gradient(ellipse 90% 70% at 90% 10%, rgba(249, 168, 212, 0.4), transparent 45%),
@@ -404,7 +400,8 @@ h4,
 .sanson-grid-scan {
   position: absolute;
   inset: 0;
-  opacity: 0.28;
+  opacity: 0.4;
+  z-index: 2;
   background-image:
     linear-gradient(rgba(255, 79, 163, 0.12) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 79, 163, 0.12) 1px, transparent 1px);
@@ -473,18 +470,19 @@ h4,
   position: absolute;
   left: -20%;
   right: -20%;
-  height: 2px;
+  height: 3px;
   top: 0;
+  z-index: 3;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 79, 163, 0.2) 20%,
-    rgba(255, 255, 255, 0.35) 50%,
-    rgba(255, 79, 163, 0.2) 80%,
+    rgba(255, 79, 163, 0.35) 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 79, 163, 0.35) 80%,
     transparent
   );
-  box-shadow: 0 0 24px rgba(255, 79, 163, 0.45);
-  animation: sanson-scan-beam 8s ease-in-out infinite;
+  box-shadow: 0 0 32px rgba(255, 79, 163, 0.65);
+  animation: sanson-scan-beam 6s ease-in-out infinite;
   will-change: top, opacity;
 }
 
@@ -667,7 +665,8 @@ h4,
   right: -50%;
   bottom: -8%;
   height: 62%;
-  opacity: 0.55;
+  opacity: 0.72;
+  z-index: 1;
   transform: perspective(520px) rotateX(72deg) scale(1.15);
   transform-origin: 50% 100%;
   background-image:
@@ -1379,10 +1378,10 @@ h4,
 .sanson-glass {
   position: relative;
   overflow: hidden;
-  background: var(--glass-bg);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  border: 1px solid var(--glass-border);
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(20px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
+  border: 1px solid var(--glass-border-strong);
   border-radius: 1rem;
   box-shadow: var(--shadow-card);
 }
@@ -1395,10 +1394,9 @@ h4,
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    var(--glass-rim) 0%,
-    transparent 28%,
-    transparent 72%,
-    rgba(0, 0, 0, 0.15) 100%
+    rgba(255, 79, 163, 0.14) 0%,
+    transparent 35%,
+    transparent 100%
   );
 }
 
@@ -1420,9 +1418,9 @@ h4,
 .sanson-panel {
   position: relative;
   overflow: hidden;
-  background: var(--glass-bg);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(20px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
   border: 1px solid var(--glass-border-strong);
   border-radius: 1rem;
   box-shadow: var(--shadow-card);
@@ -1460,9 +1458,9 @@ h4,
 
 /* Workflow steps & small tiles inside panels */
 .sanson-glass-chip {
-  background: var(--glass-bg-chip);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--glass-bg-chip) !important;
+  backdrop-filter: blur(14px) saturate(1.25) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.25) !important;
   border: 1px solid rgba(255, 79, 163, 0.25);
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.32),
@@ -1536,11 +1534,13 @@ h4,
 .sanson-dashboard-topbar {
   background: linear-gradient(
     135deg,
-    rgba(8, 8, 10, 0.92) 0%,
-    rgba(12, 8, 12, 0.88) 60%,
-    rgba(30, 10, 22, 0.55) 100%
+    rgba(12, 6, 10, 0.55) 0%,
+    rgba(20, 8, 14, 0.48) 60%,
+    rgba(80, 16, 48, 0.35) 100%
   );
-  border-bottom: 1px solid rgba(244, 114, 182, 0.15);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-bottom: 1px solid rgba(255, 79, 163, 0.22);
 }
 
 .sanson-topbar-icon-btn {
@@ -1814,37 +1814,60 @@ h4,
   animation-duration: 28s;
 }
 
-[data-motion-tier="minimal"] .sanson-bg-gradient-shift,
+[data-motion-tier="minimal"] .sanson-bg-gradient-shift {
+  animation-duration: 32s;
+}
+
 [data-motion-tier="minimal"] .sanson-bg-gradient-flow {
-  animation: none;
-  inset: 0;
-  background-size: 100% 100%;
+  animation-duration: 40s;
 }
 
 [data-motion-tier="minimal"] .sanson-blob,
 [data-motion-tier="minimal"] .sanson-aurora,
-[data-motion-tier="minimal"] .sanson-grid-scan,
 [data-motion-tier="minimal"] .sanson-floating-wave,
 [data-motion-tier="minimal"] .sanson-light-sweep,
-[data-motion-tier="minimal"] .sanson-mesh-grid,
-[data-motion-tier="minimal"] .sanson-app-bg::before,
-[data-motion-tier="minimal"] .sanson-app-bg::after,
 [data-motion-tier="minimal"] .sanson-wave,
-[data-motion-tier="minimal"] .sanson-conic-glow,
-[data-motion-tier="minimal"] .sanson-particle-field,
-[data-motion-tier="minimal"] .sanson-scan-beam {
+[data-motion-tier="minimal"] .sanson-conic-glow {
   animation: none !important;
 }
 
+/* Core holographic layers always move (slower when minimal) */
+[data-motion-tier="minimal"] .sanson-holo-floor {
+  animation-duration: 24s !important;
+  opacity: 0.55 !important;
+}
+
+[data-motion-tier="minimal"] .sanson-grid-scan,
+[data-motion-tier="minimal"] .sanson-grid-scan-2 {
+  animation-duration: 20s !important;
+  opacity: 0.35 !important;
+}
+
+[data-motion-tier="minimal"] .sanson-scan-beam {
+  animation-duration: 10s !important;
+}
+
+[data-motion-tier="minimal"] .sanson-particle-field,
+[data-motion-tier="minimal"] .sanson-particle-field-b {
+  animation-duration: 18s !important;
+  opacity: 0.4 !important;
+}
+
+[data-motion-tier="minimal"] .sanson-hex-mesh {
+  animation-duration: 28s !important;
+  opacity: 0.2 !important;
+}
+
+[data-motion-tier="minimal"] .sanson-mesh-grid {
+  animation-duration: 36s !important;
+}
+
 [data-motion-tier="minimal"] .sanson-blob,
 [data-motion-tier="minimal"] .sanson-aurora,
-[data-motion-tier="minimal"] .sanson-grid-scan,
 [data-motion-tier="minimal"] .sanson-floating-wave,
 [data-motion-tier="minimal"] .sanson-light-sweep,
-[data-motion-tier="minimal"] .sanson-bg-gradient-flow,
 [data-motion-tier="minimal"] .sanson-conic-glow,
-[data-motion-tier="minimal"] .sanson-particle-field,
-[data-motion-tier="minimal"] .sanson-scan-beam {
+[data-motion-tier="minimal"] .sanson-orbit-ring {
   display: none;
 }
 
@@ -1871,12 +1894,15 @@ h4,
   box-shadow: none;
 }
 
+/* NEVER strip backdrop-filter — required for glassmorphism */
 [data-motion-tier="minimal"] .sanson-glass,
 [data-motion-tier="reduced"] .sanson-glass,
+[data-motion-tier="minimal"] .sanson-panel,
+[data-motion-tier="reduced"] .sanson-panel,
 [data-motion-tier="minimal"] .sanson-glass-header,
 [data-motion-tier="minimal"] .sanson-glass-sidebar {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  backdrop-filter: blur(16px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1884,28 +1910,16 @@ h4,
     scroll-behavior: auto;
   }
 
-  html:not([data-motion-tier="full"]) .sanson-bg-gradient-shift,
-  html:not([data-motion-tier="full"]) .sanson-bg-gradient-flow,
+  /* Only disable heavy decorative FX — keep holographic core moving */
   html:not([data-motion-tier="full"]) .sanson-blob,
   html:not([data-motion-tier="full"]) .sanson-aurora,
-  html:not([data-motion-tier="full"]) .sanson-grid-scan,
   html:not([data-motion-tier="full"]) .sanson-floating-wave,
   html:not([data-motion-tier="full"]) .sanson-light-sweep,
-  html:not([data-motion-tier="full"]) .sanson-app-bg::before,
-  html:not([data-motion-tier="full"]) .sanson-app-bg::after,
-  html:not([data-motion-tier="full"]) .sanson-mesh-grid,
   html:not([data-motion-tier="full"]) .sanson-wave,
   html:not([data-motion-tier="full"]) .sanson-conic-glow,
-  html:not([data-motion-tier="full"]) .sanson-particle-field,
-  html:not([data-motion-tier="full"]) .sanson-scan-beam,
-  html:not([data-motion-tier="full"]) .sanson-bg-fx,
-  html:not([data-motion-tier="full"]) .sanson-bg-fx * {
+  html:not([data-motion-tier="full"]) .sanson-orbit-ring,
+  html:not([data-motion-tier="full"]) .sanson-energy-pulse {
     animation: none !important;
-  }
-
-  html:not([data-motion-tier="full"]) .sanson-bg-gradient-shift {
-    inset: 0;
-    background-size: 100% 100%;
   }
 
   .sanson-enter,

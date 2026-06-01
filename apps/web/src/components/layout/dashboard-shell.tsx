@@ -262,7 +262,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
                 "sanson-sidebar-link flex items-center gap-2.5 rounded-xl border border-transparent py-2 text-sm font-medium",
                 sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3",
                 pathname === item.href
-                  ? "border-pink-400/50 bg-gradient-to-r from-pink-600/30 to-black/50 text-white shadow-[0_0_24px_rgba(255,79,163,0.22)]"
+                  ? "border-pink-400/55 bg-pink-900/25 text-white shadow-[0_0_28px_rgba(255,79,163,0.3)] backdrop-blur-md"
                   : "text-zinc-300"
               )}
             >
