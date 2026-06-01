@@ -18,56 +18,84 @@ import {
   BookOpen,
   BarChart3,
   Shield,
+  Loader2,
 } from "lucide-react";
 import { StatCard, Button, Badge } from "@sanson/ui";
-import {
-  isCasePendingLawyerReview,
-  countOverdueTasks,
-} from "@sanson/shared";
-import type { CaseItem, TaskItem, Appointment, DocumentItem, EvidenceItemRecord } from "@sanson/types";
+import type {
+  CaseItem,
+  DocumentItem,
+  EvidenceItemRecord,
+  LawyerDashboardStats,
+} from "@sanson/types";
 import { api } from "@/lib/api";
 import { CaseIntelligenceCard } from "./case-intelligence-card";
 import { LawyerWorkflowStrip } from "./lawyer-workflow-strip";
 
+const EMPTY_STATS: LawyerDashboardStats = {
+  active_cases: 0,
+  pending_review: 0,
+  urgent_high: 0,
+  pending_approvals: 0,
+  open_tasks: 0,
+  overdue_tasks: 0,
+  appointments_pending: 0,
+  todays_consultations: 0,
+  documents_total: 0,
+  documents_pending_review: 0,
+  evidence_total: 0,
+  evidence_pending_validation: 0,
+  pending_requests: 0,
+  ai_analyses_today: 0,
+  notifications_unread: 0,
+};
+
 export function LawyerCommandCenter() {
-  const [cases, setCases] = useState<CaseItem[]>([]);
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [stats, setStats] = useState<LawyerDashboardStats>(EMPTY_STATS);
+  const [previewCases, setPreviewCases] = useState<CaseItem[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItemRecord[]>([]);
-  const [requests, setRequests] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const [c, t, a, d, e, req] = await Promise.all([
-        api.listCases(),
-        api.listTasks(),
-        api.listAppointments(),
-        api.listDocuments(),
-        api.listEvidence(),
-        api.listMyRequests(),
-      ]);
-      if (c.success && c.data) setCases(c.data);
-      if (t.success && t.data) setTasks(t.data);
-      if (a.success && a.data) setAppointments(a.data);
-      if (d.success && d.data) setDocuments(d.data);
-      if (e.success && e.data) setEvidence(e.data);
-      if (req.success && req.data) setRequests(req.data.length);
-    })();
-  }, []);
+      setLoading(true);
+      setError(null);
+      try {
+        const [dash, d, e] = await Promise.all([
+          api.getLawyerDashboard(),
+          api.listDocuments(300),
+          api.listEvidence(300),
+        ]);
+        if (cancelled) return;
 
-  const pendingReview = cases.filter(isCasePendingLawyerReview);
-  const activeCases = cases.filter(
-    (c) => c.status?.name !== "CLOSED" && c.status?.name !== "ARCHIVED"
-  );
-  const urgent = cases.filter((c) => c.priority === "URGENT" || c.priority === "HIGH");
-  const overdueTasks = countOverdueTasks(tasks);
-  const pendingAppts = appointments.filter((a) => a.status === "PENDING").length;
+        if (!dash.success || !dash.data) {
+          setError(dash.message || "Could not load lawyer dashboard from API.");
+          return;
+        }
+
+        setStats(dash.data.stats);
+        setPreviewCases(dash.data.preview_cases ?? []);
+        if (d.success && d.data) setDocuments(d.data);
+        if (e.success && e.data) setEvidence(e.data);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load dashboard.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const docsByCase = useMemo(() => {
     const m: Record<string, number> = {};
-    documents.forEach((d) => {
-      if (d.caseId) m[d.caseId] = (m[d.caseId] ?? 0) + 1;
+    documents.forEach((doc) => {
+      if (doc.caseId) m[doc.caseId] = (m[doc.caseId] ?? 0) + 1;
     });
     return m;
   }, [documents]);
@@ -80,77 +108,108 @@ export function LawyerCommandCenter() {
     return m;
   }, [evidence]);
 
-  const intelligencePreview = pendingReview.slice(0, 3);
-
   const workQueue = [
     {
       label: "Cases awaiting review",
-      count: pendingReview.length,
+      count: stats.pending_review,
       href: "/dashboard/lawyer/approvals",
       icon: Scale,
     },
     {
       label: "Cases awaiting approval",
-      count: pendingReview.length,
+      count: stats.pending_approvals,
       href: "/dashboard/lawyer/approvals",
       icon: CheckCircle2,
     },
     {
       label: "Urgent matters",
-      count: urgent.length,
+      count: stats.urgent_high,
       href: "/dashboard/lawyer/cases?filter=URGENT",
       icon: AlertCircle,
     },
     {
       label: "Documents pending review",
-      count: documents.length,
+      count: stats.documents_pending_review,
       href: "/dashboard/lawyer/documents",
       icon: FileText,
     },
     {
       label: "Evidence pending validation",
-      count: evidence.length,
+      count: stats.evidence_pending_validation,
       href: "/dashboard/lawyer/evidence",
       icon: Shield,
     },
     {
       label: "Appointment requests",
-      count: pendingAppts,
+      count: stats.appointments_pending,
       href: "/dashboard/lawyer/appointments",
       icon: CalendarDays,
     },
     {
       label: "Overdue tasks",
-      count: overdueTasks,
+      count: stats.overdue_tasks,
       href: "/dashboard/lawyer/tasks",
       icon: ListTodo,
     },
     {
       label: "Intake / proceed requests",
-      count: requests,
+      count: stats.pending_requests,
       href: "/dashboard/lawyer/requests",
       icon: Users,
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[240px] items-center justify-center gap-2 text-sm text-zinc-400">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Loading firm metrics…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="sanson-panel space-y-3 p-6 text-sm">
+        <p className="text-rose-300">{error}</p>
+        <p className="text-zinc-400">
+          If Render was sleeping, wait a moment and refresh. Ensure you are signed in as a lawyer.
+        </p>
+        <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       <LawyerWorkflowStrip />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard title="Active cases" value={activeCases.length} icon={<Briefcase className="h-5 w-5" />} />
-        <StatCard title="Pending review" value={pendingReview.length} icon={<Scale className="h-5 w-5" />} />
-        <StatCard title="Urgent / high" value={urgent.length} icon={<AlertCircle className="h-5 w-5" />} />
-        <StatCard title="Pending approvals" value={pendingReview.length} icon={<Gavel className="h-5 w-5" />} />
-        <StatCard title="Open tasks" value={tasks.filter((t) => t.status !== "COMPLETED").length} icon={<ListTodo className="h-5 w-5" />} />
+        <StatCard title="Active cases" value={stats.active_cases} icon={<Briefcase className="h-5 w-5" />} />
+        <StatCard title="Pending review" value={stats.pending_review} icon={<Scale className="h-5 w-5" />} />
+        <StatCard title="Urgent / high" value={stats.urgent_high} icon={<AlertCircle className="h-5 w-5" />} />
+        <StatCard title="Pending approvals" value={stats.pending_approvals} icon={<Gavel className="h-5 w-5" />} />
+        <StatCard title="Open tasks" value={stats.open_tasks} icon={<ListTodo className="h-5 w-5" />} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard title="Appointments pending" value={pendingAppts} icon={<CalendarDays className="h-5 w-5" />} />
-        <StatCard title="Documents in system" value={documents.length} icon={<FileText className="h-5 w-5" />} />
-        <StatCard title="Evidence items" value={evidence.length} icon={<Shield className="h-5 w-5" />} />
-        <StatCard title="AI analyses today" value="—" icon={<Sparkles className="h-5 w-5" />} description="Open AI Center" />
-        <StatCard title="Notifications" value="—" icon={<Bell className="h-5 w-5" />} description="Realtime feed" />
+        <StatCard title="Appointments pending" value={stats.appointments_pending} icon={<CalendarDays className="h-5 w-5" />} />
+        <StatCard title="Documents in system" value={stats.documents_total} icon={<FileText className="h-5 w-5" />} />
+        <StatCard title="Evidence items" value={stats.evidence_total} icon={<Shield className="h-5 w-5" />} />
+        <StatCard
+          title="AI analyses today"
+          value={stats.ai_analyses_today}
+          icon={<Sparkles className="h-5 w-5" />}
+          description="Open AI Center"
+        />
+        <StatCard
+          title="Notifications"
+          value={stats.notifications_unread}
+          icon={<Bell className="h-5 w-5" />}
+          description="Unread"
+        />
       </div>
 
       <section>
@@ -179,13 +238,13 @@ export function LawyerCommandCenter() {
             </Button>
           </Link>
         </div>
-        {intelligencePreview.length === 0 ? (
+        {previewCases.length === 0 ? (
           <p className="sanson-panel p-4 text-sm text-zinc-400">
             No cases awaiting lawyer review. Paralegals prepare matters; you approve and set strategy.
           </p>
         ) : (
           <div className="space-y-3">
-            {intelligencePreview.map((c) => (
+            {previewCases.map((c) => (
               <CaseIntelligenceCard
                 key={c.id}
                 caseItem={c}

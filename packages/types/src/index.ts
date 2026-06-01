@@ -214,6 +214,29 @@ export type CaseSourceType =
   | "PHONE_INQUIRY"
   | "EMAIL_INQUIRY";
 
+export interface LawyerDashboardStats {
+  active_cases: number;
+  pending_review: number;
+  urgent_high: number;
+  pending_approvals: number;
+  open_tasks: number;
+  overdue_tasks: number;
+  appointments_pending: number;
+  todays_consultations: number;
+  documents_total: number;
+  documents_pending_review: number;
+  evidence_total: number;
+  evidence_pending_validation: number;
+  pending_requests: number;
+  ai_analyses_today: number;
+  notifications_unread: number;
+}
+
+export interface LawyerDashboardPayload {
+  stats: LawyerDashboardStats;
+  preview_cases: CaseItem[];
+}
+
 export interface CaseItem {
   id: string;
   case_number: string;

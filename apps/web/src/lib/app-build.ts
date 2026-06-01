@@ -1,2 +1,2 @@
 /** Bump when deploying UI — triggers one-time hard refresh for cached clients. */
-export const APP_BUILD_ID = "2026.06.01-glass-70-v22";
+export const APP_BUILD_ID = "2026.06.01-lawyer-dash-v23";

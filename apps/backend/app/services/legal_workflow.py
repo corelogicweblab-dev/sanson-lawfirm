@@ -2,6 +2,13 @@
 from uuid import UUID
 
 from sqlalchemy import func, select
+from app.models.documents import (
+    Document,
+    DocumentAnalysis,
+    DocumentReviewStatusEnum,
+    EvidenceItem,
+    EvidenceStatusEnum,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -730,6 +737,169 @@ class LegalWorkflowService:
             performed_by=performed_by,
         )
         self.db.add(act)
+
+    LAWYER_PENDING_STATUS_NAMES = ("UNDER_REVIEW", "OPEN", "WAITING_DOCUMENTS", "DRAFT")
+
+    async def get_lawyer_dashboard_stats(self, user_id: UUID) -> dict:
+        """Firm-wide aggregates for the lawyer command center (not scoped to assigned_lawyer_id)."""
+        now = datetime.now(timezone.utc)
+        today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+
+        active_cases = (
+            await self.db.execute(
+                select(func.count(Case.id))
+                .join(CaseStatus, Case.status_id == CaseStatus.id)
+                .where(Case.deleted_at.is_(None), CaseStatus.is_terminal.is_(False))
+            )
+        ).scalar() or 0
+
+        pending_review = (
+            await self.db.execute(
+                select(func.count(Case.id))
+                .join(CaseStatus, Case.status_id == CaseStatus.id)
+                .where(
+                    Case.deleted_at.is_(None),
+                    CaseStatus.name.in_(self.LAWYER_PENDING_STATUS_NAMES),
+                )
+            )
+        ).scalar() or 0
+
+        urgent_high = (
+            await self.db.execute(
+                select(func.count(Case.id))
+                .join(CaseStatus, Case.status_id == CaseStatus.id)
+                .where(
+                    Case.deleted_at.is_(None),
+                    CaseStatus.is_terminal.is_(False),
+                    Case.priority.in_([PriorityLevelEnum.URGENT, PriorityLevelEnum.HIGH]),
+                )
+            )
+        ).scalar() or 0
+
+        open_tasks = (
+            await self.db.execute(
+                select(func.count(Task.id)).where(
+                    Task.deleted_at.is_(None),
+                    Task.status.in_([TaskStatusEnum.PENDING, TaskStatusEnum.IN_PROGRESS]),
+                )
+            )
+        ).scalar() or 0
+
+        overdue_tasks = (
+            await self.db.execute(
+                select(func.count(Task.id)).where(
+                    Task.deleted_at.is_(None),
+                    Task.status.in_([TaskStatusEnum.PENDING, TaskStatusEnum.IN_PROGRESS]),
+                    Task.due_date.isnot(None),
+                    Task.due_date < now,
+                )
+            )
+        ).scalar() or 0
+
+        appointments_pending = (
+            await self.db.execute(
+                select(func.count(Appointment.id)).where(
+                    Appointment.deleted_at.is_(None),
+                    Appointment.status == AppointmentStatusEnum.PENDING,
+                )
+            )
+        ).scalar() or 0
+
+        documents_total = (
+            await self.db.execute(
+                select(func.count(Document.id)).where(Document.deleted_at.is_(None))
+            )
+        ).scalar() or 0
+
+        documents_pending_review = (
+            await self.db.execute(
+                select(func.count(Document.id)).where(
+                    Document.deleted_at.is_(None),
+                    Document.review_status == DocumentReviewStatusEnum.PENDING,
+                )
+            )
+        ).scalar() or 0
+
+        evidence_total = (
+            await self.db.execute(
+                select(func.count(EvidenceItem.id)).where(EvidenceItem.deleted_at.is_(None))
+            )
+        ).scalar() or 0
+
+        evidence_pending_validation = (
+            await self.db.execute(
+                select(func.count(EvidenceItem.id)).where(
+                    EvidenceItem.deleted_at.is_(None),
+                    EvidenceItem.status.in_([
+                        EvidenceStatusEnum.UPLOADED,
+                        EvidenceStatusEnum.PROCESSING,
+                        EvidenceStatusEnum.FLAGGED,
+                    ]),
+                )
+            )
+        ).scalar() or 0
+
+        pending_requests = (
+            await self.db.execute(
+                select(func.count(LegalRequest.id)).where(
+                    LegalRequest.deleted_at.is_(None),
+                    LegalRequest.status.in_([
+                        LegalRequestStatusEnum.NEW,
+                        LegalRequestStatusEnum.UNDER_REVIEW,
+                        LegalRequestStatusEnum.WAITING_FOR_SCHEDULE,
+                    ]),
+                )
+            )
+        ).scalar() or 0
+
+        ai_analyses_today = (
+            await self.db.execute(
+                select(func.count(DocumentAnalysis.id)).where(
+                    DocumentAnalysis.created_at >= today_start
+                )
+            )
+        ).scalar() or 0
+
+        todays_consultations = (
+            await self.db.execute(
+                select(func.count(Appointment.id)).where(
+                    Appointment.deleted_at.is_(None),
+                    Appointment.lawyer_id == user_id,
+                    Appointment.appointment_date == now.date(),
+                )
+            )
+        ).scalar() or 0
+
+        return {
+            "active_cases": active_cases,
+            "pending_review": pending_review,
+            "urgent_high": urgent_high,
+            "pending_approvals": pending_review,
+            "open_tasks": open_tasks,
+            "overdue_tasks": overdue_tasks,
+            "appointments_pending": appointments_pending,
+            "todays_consultations": todays_consultations,
+            "documents_total": documents_total,
+            "documents_pending_review": documents_pending_review,
+            "evidence_total": evidence_total,
+            "evidence_pending_validation": evidence_pending_validation,
+            "pending_requests": pending_requests,
+            "ai_analyses_today": ai_analyses_today,
+        }
+
+    async def list_cases_pending_lawyer_review(self, limit: int = 5) -> list[Case]:
+        result = await self.db.execute(
+            select(Case)
+            .options(selectinload(Case.status))
+            .join(CaseStatus, Case.status_id == CaseStatus.id)
+            .where(
+                Case.deleted_at.is_(None),
+                CaseStatus.name.in_(self.LAWYER_PENDING_STATUS_NAMES),
+            )
+            .order_by(Case.updated_at.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
 
     async def get_workflow_stats(self) -> dict:
         req_count = (await self.db.execute(

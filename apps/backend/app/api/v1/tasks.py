@@ -46,7 +46,8 @@ async def list_tasks(
     db: AsyncSession = Depends(get_db),
 ):
     service = LegalWorkflowService(db)
-    assigned_to = current_user.id if current_user.role_name in ("LAWYER", "PARALEGAL") else None
+    # Paralegals see their assigned tasks; lawyers see all firm tasks for oversight
+    assigned_to = current_user.id if current_user.role_name == "PARALEGAL" else None
     data, total = await service.list_tasks(
         offset=pagination.offset,
         limit=pagination.page_size,

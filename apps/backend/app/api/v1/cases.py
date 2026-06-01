@@ -100,8 +100,8 @@ async def list_cases(
 ):
     service = LegalWorkflowService(db)
     client_id = current_user.id if current_user.role_name == "CLIENT" else None
-    lawyer_id = current_user.id if current_user.role_name == "LAWYER" else None
-    # Paralegals operate the centralized case repository (all cases)
+    # Lawyers and paralegals see the firm-wide case repository (managing partner reviews all matters)
+    lawyer_id = None
     paralegal_id = None
     data, total = await service.list_cases(
         offset=pagination.offset,

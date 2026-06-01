@@ -57,8 +57,8 @@ async def list_appointments(
 ):
     service = LegalWorkflowService(db)
     client_id = current_user.id if current_user.role_name == "CLIENT" else None
-    lawyer_id = current_user.id if current_user.role_name == "LAWYER" else None
-    # Paralegals see all firm appointments (calendar management)
+    # Staff see all firm appointments (lawyer command center + paralegal calendar)
+    lawyer_id = None
     data, total = await service.list_appointments(
         offset=pagination.offset,
         limit=pagination.page_size,

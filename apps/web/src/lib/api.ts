@@ -13,6 +13,7 @@ import type {
   KnowledgeArticleItem,
   KnowledgeCategoryItem,
   LegalRequest,
+  LawyerDashboardPayload,
   SearchHistoryItem,
   SearchResultItem,
   SessionInsights,
@@ -191,8 +192,12 @@ export class ApiClient {
     return this.request(`/assignments/cases/${caseId}`);
   }
 
-  async listCases(): Promise<ApiResponse<CaseItem[]>> {
-    return this.request("/cases/");
+  async listCases(pageSize = 200): Promise<ApiResponse<CaseItem[]>> {
+    return this.request(`/cases/?page_size=${pageSize}`);
+  }
+
+  async getLawyerDashboard(): Promise<ApiResponse<LawyerDashboardPayload>> {
+    return this.request("/workflow/lawyer-dashboard");
   }
 
   async listUserDirectory(role?: string): Promise<ApiResponse<Record<string, unknown>[]>> {
@@ -377,9 +382,10 @@ export class ApiClient {
     return this.request("/documents/categories");
   }
 
-  async listDocuments(caseId?: string): Promise<ApiResponse<DocumentItem[]>> {
-    const path = caseId ? `/documents/?case_id=${caseId}` : "/documents/";
-    return this.request(path);
+  async listDocuments(caseId?: string, pageSize = 200): Promise<ApiResponse<DocumentItem[]>> {
+    const params = new URLSearchParams({ page_size: String(pageSize) });
+    if (caseId) params.set("case_id", caseId);
+    return this.request(`/documents/?${params}`);
   }
 
   async uploadDocument(
@@ -415,9 +421,10 @@ export class ApiClient {
     return this.request(`/document-analysis/${id}`);
   }
 
-  async listEvidence(caseId?: string): Promise<ApiResponse<EvidenceItemRecord[]>> {
-    const path = caseId ? `/evidence/?case_id=${caseId}` : "/evidence/";
-    return this.request(path);
+  async listEvidence(caseId?: string, pageSize = 200): Promise<ApiResponse<EvidenceItemRecord[]>> {
+    const params = new URLSearchParams({ page_size: String(pageSize) });
+    if (caseId) params.set("case_id", caseId);
+    return this.request(`/evidence/?${params}`);
   }
 
   async listEvidenceTimelines(params?: {

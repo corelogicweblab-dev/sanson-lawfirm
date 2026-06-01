@@ -65,7 +65,7 @@ async def list_legal_requests(
         limit=pagination.page_size,
         client_id=client_id,
         status=status,
-        lawyer_view=staff_view,
+        lawyer_view=lawyer_view,
     )
     meta = PaginationMeta(
         page=pagination.page,
