@@ -25,6 +25,8 @@ import type {
   WorkflowStats,
 } from "@sanson/types";
 import { API_BASE_PATH } from "@sanson/shared";
+import { extractApiErrorMessage } from "@/lib/api-error";
+import { fetchWithRetry, isProductionHosting } from "@/lib/api-request";
 import { getApiBaseUrl } from "@/lib/api-url";
 
 export class ApiClient {
@@ -48,31 +50,41 @@ export class ApiClient {
     }
 
     const baseUrl = getApiBaseUrl();
-    const controller = new AbortController();
-    const timeoutMs = 25_000;
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     let response: Response;
     try {
-      response = await fetch(`${baseUrl}${API_BASE_PATH}${path}`, {
+      response = await fetchWithRetry(`${baseUrl}${API_BASE_PATH}${path}`, {
         ...options,
         headers,
-        signal: controller.signal,
       });
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        throw new Error("The request took too long. Please try again.");
+      if (err instanceof Error) {
+        throw err;
       }
-      throw new Error("Cannot reach the server. Check your connection and try again.");
-    } finally {
-      clearTimeout(timer);
+      throw new Error(
+        isProductionHosting()
+          ? "Cannot reach the API server. It may be starting up on Render — wait 30 seconds and tap Retry."
+          : "Cannot reach the server. Check your connection and try again."
+      );
     }
 
-    const body = (await response.json()) as ApiResponse<T>;
+    let body: ApiResponse<T>;
+    try {
+      body = (await response.json()) as ApiResponse<T>;
+    } catch {
+      throw new Error(
+        response.ok
+          ? "Invalid response from server."
+          : `Server error (${response.status}). The API may still be starting — wait and tap Retry.`
+      );
+    }
     if (!response.ok && body.success !== false) {
       return {
         success: false,
-        message: body.message || `Request failed (${response.status})`,
+        message: extractApiErrorMessage(
+          body as unknown as Record<string, unknown>,
+          `Request failed (${response.status})`
+        ),
         data: null,
         errors: body.errors,
       } as ApiResponse<T>;
@@ -417,11 +429,24 @@ export class ApiClient {
         body: form,
         signal: controller.signal,
       });
-      const body = (await response.json()) as ApiResponse<DocumentItem>;
+      let body: ApiResponse<DocumentItem> & Record<string, unknown>;
+      try {
+        body = (await response.json()) as ApiResponse<DocumentItem> & Record<string, unknown>;
+      } catch {
+        return {
+          success: false,
+          message: response.ok
+            ? "Upload response was invalid."
+            : `Upload failed (${response.status}). Try again or use a smaller file.`,
+          data: null,
+          meta: null,
+          errors: null,
+        };
+      }
       if (!response.ok && body.success !== false) {
         return {
           success: false,
-          message: body.message || "Upload failed",
+          message: extractApiErrorMessage(body, `Upload failed (${response.status})`),
           data: null,
           meta: body.meta ?? null,
           errors: body.errors ?? null,

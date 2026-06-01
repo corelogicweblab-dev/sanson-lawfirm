@@ -14,6 +14,15 @@ from app.services.document_service import DocumentService
 router = APIRouter()
 
 
+def _optional_uuid(value: str | None, field: str) -> UUID | None:
+    if not value or not value.strip():
+        return None
+    try:
+        return UUID(value.strip())
+    except ValueError as exc:
+        raise HTTPException(400, f"Invalid {field}") from exc
+
+
 def _is_staff(user: AuthenticatedUser) -> bool:
     return user.role_name in ("LAWYER", "PARALEGAL", "ADMIN")
 
@@ -77,6 +86,8 @@ async def upload_document(
             detail="Lawyers review documents only. Paralegals manage case file uploads.",
         )
     data = await file.read()
+    if not data:
+        raise HTTPException(400, "Empty file")
     svc = DocumentService(db)
     try:
         doc = await svc.create_document_from_upload(
@@ -84,15 +95,15 @@ async def upload_document(
             filename=file.filename or "upload",
             mime_type=file.content_type or "application/octet-stream",
             file_data=data,
-            category_id=UUID(category_id) if category_id else None,
-            case_id=UUID(case_id) if case_id else None,
-            legal_request_id=UUID(legal_request_id) if legal_request_id else None,
+            category_id=_optional_uuid(category_id, "category_id"),
+            case_id=_optional_uuid(case_id, "case_id"),
+            legal_request_id=_optional_uuid(legal_request_id, "legal_request_id"),
             visibility=visibility,
             ip=ip,
             ua=ua,
         )
     except ValueError as exc:
-        raise HTTPException(400, str(exc))
+        raise HTTPException(400, str(exc)) from exc
     return success_response(to_document(doc), "Document uploaded")
 
 

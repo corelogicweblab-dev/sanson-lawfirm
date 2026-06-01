@@ -19,4 +19,4 @@ fi
 PORT="${PORT:-8100}"
 echo "Starting SANSON API on 0.0.0.0:${PORT} (${PYTHON_BIN})" >&2
 
-exec "$PYTHON_BIN" -m uvicorn app.main:app --host 0.0.0.0 --port "$PORT"
+exec "$PYTHON_BIN" -m uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --timeout-keep-alive 75

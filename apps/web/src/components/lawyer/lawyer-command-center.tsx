@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Scale,
@@ -21,12 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { StatCard, Button, Badge } from "@sanson/ui";
-import type {
-  CaseItem,
-  DocumentItem,
-  EvidenceItemRecord,
-  LawyerDashboardStats,
-} from "@sanson/types";
+import type { CaseItem, LawyerDashboardStats } from "@sanson/types";
 import { api } from "@/lib/api";
 import { CaseIntelligenceCard } from "./case-intelligence-card";
 import { LawyerWorkflowStrip } from "./lawyer-workflow-strip";
@@ -52,10 +47,9 @@ const EMPTY_STATS: LawyerDashboardStats = {
 export function LawyerCommandCenter() {
   const [stats, setStats] = useState<LawyerDashboardStats>(EMPTY_STATS);
   const [previewCases, setPreviewCases] = useState<CaseItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [evidence, setEvidence] = useState<EvidenceItemRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,11 +57,7 @@ export function LawyerCommandCenter() {
       setLoading(true);
       setError(null);
       try {
-        const [dash, d, e] = await Promise.all([
-          api.getLawyerDashboard(),
-          api.listDocuments(undefined, 300),
-          api.listEvidence(undefined, 300),
-        ]);
+        const dash = await api.getLawyerDashboard();
         if (cancelled) return;
 
         if (!dash.success || !dash.data) {
@@ -77,8 +67,6 @@ export function LawyerCommandCenter() {
 
         setStats(dash.data.stats);
         setPreviewCases(dash.data.preview_cases ?? []);
-        if (d.success && d.data) setDocuments(d.data);
-        if (e.success && e.data) setEvidence(e.data);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to load dashboard.");
@@ -90,23 +78,7 @@ export function LawyerCommandCenter() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  const docsByCase = useMemo(() => {
-    const m: Record<string, number> = {};
-    documents.forEach((doc) => {
-      if (doc.caseId) m[doc.caseId] = (m[doc.caseId] ?? 0) + 1;
-    });
-    return m;
-  }, [documents]);
-
-  const evidenceByCase = useMemo(() => {
-    const m: Record<string, number> = {};
-    evidence.forEach((ev) => {
-      if (ev.caseId) m[ev.caseId] = (m[ev.caseId] ?? 0) + 1;
-    });
-    return m;
-  }, [evidence]);
+  }, [reloadKey]);
 
   const workQueue = [
     {
@@ -171,9 +143,13 @@ export function LawyerCommandCenter() {
   if (error) {
     return (
       <div className="sanson-panel space-y-3 p-6 text-sm">
+        <p className="font-medium text-rose-200">Dashboard could not load</p>
         <p className="text-rose-300">{error}</p>
-        <p className="text-zinc-400">Please refresh the page or sign in again.</p>
-        <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+        <p className="text-zinc-400">
+          The live API runs on Render and may need 30–60 seconds to wake after idle time. This is not
+          a broken app — tap Retry once or twice. If it keeps failing, sign out and sign in again.
+        </p>
+        <Button size="sm" variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
           Retry
         </Button>
       </div>
@@ -234,12 +210,7 @@ export function LawyerCommandCenter() {
         ) : (
           <div className="space-y-3">
             {previewCases.map((c) => (
-              <CaseIntelligenceCard
-                key={c.id}
-                caseItem={c}
-                docCount={docsByCase[c.id] ?? 0}
-                evidenceCount={evidenceByCase[c.id] ?? 0}
-              />
+              <CaseIntelligenceCard key={c.id} caseItem={c} />
             ))}
           </div>
         )}

@@ -5,6 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
+import { pingApiHealth } from "@/lib/api-request";
 import { useAuthStore } from "@/store/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          const token = await firebaseUser.getIdToken();
+          const [token] = await Promise.all([
+            firebaseUser.getIdToken(),
+            pingApiHealth(),
+          ]);
           setToken(token);
           api.setToken(token);
 

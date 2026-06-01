@@ -93,9 +93,12 @@ class R2StorageService:
         )
 
     def validate_file(self, filename: str, mime_type: str, size: int) -> None:
+        if size <= 0:
+            raise ValueError("Empty file")
         ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         if ext not in ALLOWED_EXTENSIONS:
             raise ValueError(f"File type not allowed: {ext or 'unknown'}")
+        mime_type = (mime_type or "").strip()
         if mime_type and mime_type not in ALLOWED_MIME_TYPES:
             allowed_prefix = mime_type.startswith(("image/", "video/", "audio/", "application/"))
             if not allowed_prefix:
@@ -110,12 +113,19 @@ class R2StorageService:
 
     def upload_bytes(self, storage_path: str, data: bytes, mime_type: str) -> str:
         client = self._client()
-        client.put_object(
-            Bucket=self.settings.r2_bucket_name,
-            Key=storage_path,
-            Body=data,
-            ContentType=mime_type,
-        )
+        try:
+            client.put_object(
+                Bucket=self.settings.r2_bucket_name,
+                Key=storage_path,
+                Body=data,
+                ContentType=mime_type,
+            )
+        except ClientError as exc:
+            code = exc.response.get("Error", {}).get("Code", "ClientError")
+            raise ValueError(
+                f"Document storage upload failed ({code}). "
+                "Verify Cloudflare R2 bucket name, endpoint, and API keys on the server."
+            ) from exc
         return storage_path
 
     def download_bytes(self, storage_path: str) -> bytes:

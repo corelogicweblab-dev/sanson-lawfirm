@@ -41,6 +41,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${montserrat.variable} ${lato.variable} h-full`}>
+      <head>
+        <link rel="preconnect" href="https://sanson-lawfirm.onrender.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://sanson-lawfirm.onrender.com" />
+      </head>
       <body className="min-h-full antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
