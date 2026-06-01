@@ -14,7 +14,7 @@
     "build": "node scripts/render-build.js",
     "build:render": "bash apps/backend/build.sh",
     "build:local": "turbo run build",
-    "start:prod": "bash apps/backend/start.sh",
+    "start:prod": "bash apps/backend/render-start.sh",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "db:migrate": "node scripts/run-migration.js",

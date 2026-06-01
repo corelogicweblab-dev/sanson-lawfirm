@@ -5,8 +5,8 @@ services:
     name: sanson-lawfirm
     runtime: python
     rootDir: apps/backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt && pip show email-validator >/dev/null
+    startCommand: bash start.sh
     healthCheckPath: /api/v1/health/ready
     envVars:
       - key: ENVIRONMENT
