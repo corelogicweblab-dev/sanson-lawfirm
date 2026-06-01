@@ -334,3 +334,6 @@ export const SUPABASE_REALTIME_CHANNELS = {
 export const API_VERSION = "v1";
 export const API_BASE_PATH = `/api/${API_VERSION}`;
 
+export * from "./lawyer-operations";
+export * from "./firm-users";
+

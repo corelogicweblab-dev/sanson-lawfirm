@@ -1,61 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { Scale, MessageSquare, Shield, Zap, Menu, X } from "lucide-react";
-import { Button, PoweredByCoreLogic } from "@sanson/ui";
+import { MessageSquare, Shield, Scale, Zap } from "lucide-react";
+import { Button } from "@sanson/ui";
+import { MarketingHeader } from "@/components/layout/marketing-header";
 
 export default function HomePage() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const el = document.querySelector("[data-print-title]");
+    if (el) el.textContent = "SANSON Legal OS — Home";
+  }, []);
 
   return (
     <div className="relative min-h-screen min-h-[100dvh] overflow-x-hidden">
-      <nav className="sanson-glass-header safe-top relative z-20 mx-3 mt-3 flex items-center justify-between rounded-2xl px-4 py-4 sm:mx-6 sm:px-8 sm:py-5">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
-            <Scale className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-          </div>
-          <div className="min-w-0">
-            <span className="block truncate text-base font-bold text-white sm:text-lg">SANSON Legal OS</span>
-            <PoweredByCoreLogic className="mt-0.5" />
-          </div>
-        </div>
+      <MarketingHeader variant="landing" />
 
-        <div className="hidden items-center gap-3 sm:flex">
-          <Link href="/login">
-            <Button variant="ghost">Sign In</Button>
-          </Link>
-          <Link href="/register">
-            <Button>Get Started</Button>
-          </Link>
-        </div>
-
-        <button
-          type="button"
-          className="rounded-lg p-2 sm:hidden"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          {menuOpen ? <X className="h-6 w-6 text-zinc-200" /> : <Menu className="h-6 w-6 text-zinc-200" />}
-        </button>
-      </nav>
-
-      {menuOpen && (
-        <div className="sanson-panel relative z-20 mx-3 mt-2 px-4 py-4 sm:hidden">
-          <div className="flex flex-col gap-2">
-            <Link href="/login" onClick={() => setMenuOpen(false)}>
-              <Button variant="secondary" className="w-full">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register" onClick={() => setMenuOpen(false)}>
-              <Button className="w-full">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <main className="relative z-10 mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12 md:py-16">
         <div className="sanson-hero-panel text-center">
           <div className="sanson-marketing-badge mb-4 inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs sm:mb-6 sm:px-4 sm:text-sm">
             <Zap className="h-4 w-4 shrink-0" />
@@ -83,7 +44,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:mt-16 sm:gap-6 md:grid-cols-3">
+        <div
+          id="features"
+          className="mt-12 scroll-mt-24 grid gap-4 sm:mt-16 sm:gap-6 md:grid-cols-3"
+        >
           {[
             {
               icon: MessageSquare,
@@ -104,15 +68,11 @@ export default function HomePage() {
             <div key={feature.title} className="sanson-panel p-5 text-left sm:p-6">
               <feature.icon className="mb-3 h-7 w-7 text-pink-300 sm:mb-4 sm:h-8 sm:w-8" />
               <h3 className="mb-2 text-base font-semibold text-white sm:text-lg">{feature.title}</h3>
-              <p className="text-sm text-zinc-300">{feature.desc}</p>
+              <p className="text-sm text-zinc-200">{feature.desc}</p>
             </div>
           ))}
         </div>
       </main>
-
-      <footer className="safe-bottom relative z-10 border-t border-white/10 py-6 text-center">
-        <PoweredByCoreLogic />
-      </footer>
     </div>
   );
 }

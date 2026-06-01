@@ -3,7 +3,7 @@ import { cn } from "../lib/cn";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="relative w-full overflow-x-auto overscroll-x-contain rounded-xl border border-white/15 bg-white/[0.06] backdrop-blur-md [-webkit-overflow-scrolling:touch]">
+    <div className="relative w-full overflow-x-auto overscroll-x-contain rounded-xl border border-white/20 bg-black/55 backdrop-blur-md [-webkit-overflow-scrolling:touch]">
       <table className={cn("w-full min-w-[32rem] caption-bottom text-sm", className)} {...props} />
     </div>
   );
@@ -33,7 +33,7 @@ export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTa
   return (
     <th
       className={cn(
-        "h-11 px-4 text-left align-middle text-xs font-medium uppercase tracking-wider text-zinc-300",
+        "h-11 px-4 text-left align-middle text-xs font-medium uppercase tracking-wider text-zinc-200",
         className
       )}
       {...props}
@@ -43,6 +43,6 @@ export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTa
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn("px-3 py-2.5 align-middle text-zinc-100 sm:px-4 sm:py-3", className)} {...props} />
+    <td className={cn("px-3 py-2.5 align-middle text-zinc-50 sm:px-4 sm:py-3", className)} {...props} />
   );
 }

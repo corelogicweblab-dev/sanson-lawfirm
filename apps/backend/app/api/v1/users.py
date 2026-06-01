@@ -1,6 +1,6 @@
 ﻿from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -13,8 +13,13 @@ from app.core.dependencies import (
 )
 from app.core.responses import PaginationMeta, PaginationParams, success_response
 from app.domain.authenticated_user import AuthenticatedUser
-from app.schemas.mappers import to_user_response
-from app.schemas.user import ProfileUpdateRequest, RoleUpdateRequest, UserStatusUpdateRequest
+from app.schemas.mappers import to_profile_response, to_user_response
+from app.schemas.user import (
+    EmailUpdateRequest,
+    ProfileUpdateRequest,
+    RoleUpdateRequest,
+    UserStatusUpdateRequest,
+)
 from app.services.user_service import UserService
 
 router = APIRouter()
@@ -103,6 +108,12 @@ async def get_user(
     return success_response(to_user_response(user))
 
 
+def _profile_payload(service: UserService, profile) -> dict:
+    data = to_profile_response(profile)
+    data["profile_photo_url"] = service.resolve_profile_photo_url(profile.profile_photo)
+    return data
+
+
 @router.patch("/{user_id}/profile")
 async def update_profile(
     user_id: UUID,
@@ -114,30 +125,120 @@ async def update_profile(
     if str(current_user.id) != str(user_id) and not current_user.has_permission("users:write"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
+    clear_middle = body.middle_name == ""
+    clear_nick = body.nickname == ""
+
     service = UserService(db)
-    profile = await service.update_profile(
-        user_id=user_id,
-        performed_by=current_user.id,
-        first_name=body.first_name,
-        middle_name=body.middle_name,
-        last_name=body.last_name,
-        suffix=body.suffix,
-        phone=body.phone,
-        address=body.address,
-        profile_photo=body.profile_photo,
-        ip_address=get_client_ip(request),
-        user_agent=get_user_agent(request),
-    )
+    try:
+        profile = await service.update_profile(
+            user_id=user_id,
+            performed_by=current_user.id,
+            first_name=body.first_name,
+            middle_name=None if clear_middle else body.middle_name,
+            last_name=body.last_name,
+            suffix=body.suffix,
+            phone=body.phone,
+            address=body.address,
+            nickname=None if clear_nick else body.nickname,
+            date_of_birth=body.date_of_birth,
+            profile_photo=body.profile_photo,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+            clear_middle_name=clear_middle,
+            clear_nickname=clear_nick,
+            clear_date_of_birth="date_of_birth" in body.model_fields_set and body.date_of_birth is None,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    await db.commit()
+    user = await service.get_user(user_id)
     return success_response(
-        {
-            "id": str(profile.id),
-            "first_name": profile.first_name,
-            "last_name": profile.last_name,
-        },
+        {"profile": _profile_payload(service, profile), "user": to_user_response(user) if user else None},
         "Profile updated",
     )
+
+
+@router.patch("/{user_id}/email")
+async def update_email(
+    user_id: UUID,
+    body: EmailUpdateRequest,
+    request: Request,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if str(current_user.id) != str(user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    service = UserService(db)
+    try:
+        user = await service.update_email(
+            user_id=user_id,
+            email=str(body.email),
+            performed_by=current_user.id,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    await db.commit()
+    user = await service.get_user(user_id)
+    return success_response(to_user_response(user), "Email updated")
+
+
+@router.post("/{user_id}/profile/avatar")
+async def upload_profile_avatar(
+    user_id: UUID,
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if str(current_user.id) != str(user_id) and not current_user.has_permission("users:write"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    data = await file.read()
+    service = UserService(db)
+    try:
+        profile = await service.upload_profile_avatar(
+            user_id=user_id,
+            file_data=data,
+            mime_type=file.content_type or "image/jpeg",
+            filename=file.filename or "avatar.jpg",
+            performed_by=current_user.id,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    await db.commit()
+    user = await service.get_user(user_id)
+    return success_response(
+        {"profile": _profile_payload(service, profile), "user": to_user_response(user) if user else None},
+        "Profile photo updated",
+    )
+
+
+@router.get("/{user_id}/profile/avatar-url")
+async def get_profile_avatar_url(
+    user_id: UUID,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if str(current_user.id) != str(user_id) and not current_user.has_permission("users:read"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    service = UserService(db)
+    user = await service.get_user(user_id)
+    if not user or not user.profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    url = service.resolve_profile_photo_url(user.profile.profile_photo)
+    return success_response({"url": url}, "Avatar URL retrieved")
 
 
 @router.patch("/{user_id}/role")

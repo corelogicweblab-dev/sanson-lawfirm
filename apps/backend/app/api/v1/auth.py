@@ -55,6 +55,7 @@ async def sync_user(
             email=email,
             first_name=body.first_name,
             last_name=body.last_name,
+            middle_name=body.middle_name,
             phone=body.phone,
             role_name=body.role,
             ip_address=get_client_ip(request),

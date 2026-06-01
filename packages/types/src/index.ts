@@ -81,9 +81,23 @@ export interface UserProfile {
   suffix: string | null;
   phone: string | null;
   address: string | null;
+  nickname: string | null;
+  date_of_birth: string | null;
   profile_photo: string | null;
+  profile_photo_url?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProfileUpdatePayload {
+  first_name?: string;
+  middle_name?: string | null;
+  last_name?: string;
+  suffix?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  nickname?: string | null;
+  date_of_birth?: string | null;
 }
 
 export interface User {
@@ -136,6 +150,7 @@ export interface AuditLog {
 
 export interface AuthSyncRequest {
   first_name?: string;
+  middle_name?: string;
   last_name?: string;
   phone?: string;
   role?: UserRole;

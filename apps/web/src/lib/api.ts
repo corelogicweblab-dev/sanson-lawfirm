@@ -18,7 +18,9 @@ import type {
   SessionInsights,
   TaskItem,
   TimelineEvent,
+  ProfileUpdatePayload,
   User,
+  UserProfile,
   WorkflowStats,
 } from "@sanson/types";
 import { API_BASE_PATH } from "@sanson/shared";
@@ -122,12 +124,43 @@ export class ApiClient {
 
   async updateProfile(
     userId: string,
-    data: Record<string, string | undefined>
-  ): Promise<ApiResponse<unknown>> {
+    data: ProfileUpdatePayload
+  ): Promise<ApiResponse<{ profile: UserProfile; user: User | null }>> {
     return this.request(`/users/${userId}/profile`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
+  }
+
+  async updateUserEmail(
+    userId: string,
+    email: string
+  ): Promise<ApiResponse<User>> {
+    return this.request(`/users/${userId}/email`, {
+      method: "PATCH",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async uploadProfileAvatar(
+    userId: string,
+    file: File
+  ): Promise<ApiResponse<{ profile: UserProfile; user: User | null }>> {
+    const form = new FormData();
+    form.append("file", file);
+    const headers: Record<string, string> = {};
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}${API_BASE_PATH}/users/${userId}/profile/avatar`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+    return (await response.json()) as ApiResponse<{ profile: UserProfile; user: User | null }>;
+  }
+
+  async getProfileAvatarUrl(userId: string): Promise<ApiResponse<{ url: string | null }>> {
+    return this.request(`/users/${userId}/profile/avatar-url`);
   }
 
   async listMyRequests(): Promise<ApiResponse<LegalRequest[]>> {

@@ -42,13 +42,13 @@ export function InstallAppPrompt() {
   if (installed) return null;
 
   return (
-    <Card className={cn("sanson-stagger-item sanson-panel")} interactive>
+    <Card className={cn("sanson-stagger-item sanson-panel sanson-no-print")} interactive>
       <CardContent className="p-4 sm:p-5">
         <div className="mb-3 flex items-center gap-2">
           <Download className="h-5 w-5 text-pink-400" />
           <h3 className="font-semibold text-white">Install SANSON Legal OS</h3>
         </div>
-        <p className="mb-4 text-sm text-zinc-400">
+        <p className="mb-4 text-sm text-zinc-200">
           Install on your device for faster access, home-screen launch, and a native app experience.
         </p>
         <div className="grid gap-2 sm:grid-cols-3">

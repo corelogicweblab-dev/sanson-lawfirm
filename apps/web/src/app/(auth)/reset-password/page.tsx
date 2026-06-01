@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Scale, CheckCircle } from "lucide-react";
 import {
   Button,
-  PoweredByCoreLogic,
   Card,
   CardContent,
   CardHeader,
@@ -14,7 +13,7 @@ import {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="auth-gradient flex min-h-screen min-h-[100dvh] items-center justify-center p-4 safe-top safe-bottom">
+    <div className="auth-gradient flex flex-1 items-center justify-center p-4 py-8 safe-bottom">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
@@ -22,7 +21,6 @@ export default function ResetPasswordPage() {
           </div>
           <CardTitle>Reset Password</CardTitle>
           <CardDescription>Complete your password reset</CardDescription>
-          <PoweredByCoreLogic className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-4 text-center">
           <CheckCircle className="mx-auto h-12 w-12 text-emerald-400" />

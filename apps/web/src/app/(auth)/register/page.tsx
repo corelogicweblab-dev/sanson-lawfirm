@@ -12,14 +12,13 @@ import { Scale } from "lucide-react";
 import {
   Button,
   Input,
-  PoweredByCoreLogic,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@sanson/ui";
-import { inferRoleFromEmail } from "@sanson/shared";
+import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
 import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -54,9 +53,12 @@ export default function RegisterPage() {
       const token = await credential.user.getIdToken();
       setToken(token);
       api.setToken(token);
-      const response = await api.syncUser({
+      const names = resolveSyncProfileNames(email, {
         first_name: firstName,
         last_name: lastName,
+      });
+      const response = await api.syncUser({
+        ...names,
         role: inferRoleFromEmail(email),
       });
       if (response.success && response.data?.user) {
@@ -79,13 +81,16 @@ export default function RegisterPage() {
       const auth = getFirebaseAuth();
       const credential = await signInWithPopup(auth, googleProvider);
       const token = await credential.user.getIdToken();
-      const displayName = credential.user.displayName?.split(" ") ?? [];
+      const parts = credential.user.displayName?.split(" ") ?? [];
       setToken(token);
       api.setToken(token);
       const userEmail = credential.user.email ?? "";
+      const names = resolveSyncProfileNames(userEmail, {
+        first_name: parts[0],
+        last_name: parts.slice(1).join(" "),
+      });
       const response = await api.syncUser({
-        first_name: displayName[0] || "User",
-        last_name: displayName.slice(1).join(" ") || "",
+        ...names,
         role: inferRoleFromEmail(userEmail),
       });
       if (response.success && response.data?.user) {
@@ -102,7 +107,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="auth-gradient flex min-h-screen min-h-[100dvh] items-center justify-center p-4 safe-top safe-bottom">
+    <div className="auth-gradient flex flex-1 items-center justify-center p-4 py-8 safe-bottom">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
@@ -110,7 +115,6 @@ export default function RegisterPage() {
           </div>
           <CardTitle>Create Account</CardTitle>
           <CardDescription>Join SANSON Legal OS — free AI consultation</CardDescription>
-          <PoweredByCoreLogic className="mt-2" />
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">

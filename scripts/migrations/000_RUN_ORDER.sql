@@ -31,6 +31,9 @@
 --   019_case_source_schema.sql
 --   020_operations_model_rbac.sql
 --   021_paralegal_file_authority.sql
+--   022_case_master_intake.sql
+--   023_firm_user_profiles.sql
+--   024_user_profile_extended.sql
 --
 -- Verify after 002:
 --   SELECT name FROM roles;

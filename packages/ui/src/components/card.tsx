@@ -11,7 +11,7 @@ export function Card({ className, interactive = false, ...props }: CardProps) {
     <div
       className={cn(
         glassSurface(),
-        "shadow-[0_8px_32px_rgba(190,24,93,0.18)]",
+        "shadow-[0_8px_32px_rgba(190,24,93,0.25)]",
         interactive && motionCard(),
         className
       )}
@@ -31,7 +31,7 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
 }
 
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-zinc-300", className)} {...props} />;
+  return <p className={cn("text-sm text-zinc-200", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

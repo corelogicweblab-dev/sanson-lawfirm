@@ -18,6 +18,27 @@ EMAIL_ROLE_MAP: dict[str, str] = {
     "client@sansonlaw.ph": "CLIENT",
 }
 
+# Official firm directory — applied on every login sync (fixes placeholder "User User")
+EMAIL_PROFILE_MAP: dict[str, dict[str, str | None]] = {
+    "lawyer@sansonlaw.ph": {
+        "first_name": "Rosebelle",
+        "middle_name": "L.",
+        "last_name": "Sanson",
+    },
+    "admin@sansonlaw.ph": {
+        "first_name": "SANSON",
+        "last_name": "Administrator",
+    },
+    "paralegal@sansonlaw.ph": {
+        "first_name": "SANSON",
+        "last_name": "Paralegal",
+    },
+    "client@sansonlaw.ph": {
+        "first_name": "Demo",
+        "last_name": "Client",
+    },
+}
+
 
 class AuthService:
     def __init__(self, db: AsyncSession):
@@ -37,12 +58,60 @@ class AuthService:
             return await self.user_repo.get_by_email(email)
         return None
 
+    def _resolve_profile_names(
+        self, email_key: str, first_name: str, last_name: str
+    ) -> tuple[str, str | None, str]:
+        firm = EMAIL_PROFILE_MAP.get(email_key)
+        if firm:
+            return (
+                firm["first_name"],
+                firm.get("middle_name"),
+                firm["last_name"],
+            )
+        return first_name, None, last_name or "User"
+
+    async def _apply_firm_profile(
+        self,
+        user: User,
+        email_key: str,
+        first_name: str,
+        last_name: str,
+        phone: str | None = None,
+    ) -> None:
+        fn, mn, ln = self._resolve_profile_names(email_key, first_name, last_name)
+        profile = await self.profile_repo.get_by_user_id(user.id)
+        if not profile:
+            profile = UserProfile(
+                user_id=user.id,
+                first_name=fn,
+                middle_name=mn,
+                last_name=ln,
+                phone=phone,
+            )
+            await self.profile_repo.create(profile)
+            user.profile = profile
+            return
+
+        should_update = email_key in EMAIL_PROFILE_MAP or (
+            profile.first_name.strip().lower() == "user"
+            and profile.last_name.strip().lower() in ("user", "")
+        )
+        if should_update:
+            profile.first_name = fn
+            profile.middle_name = mn
+            profile.last_name = ln
+            if phone:
+                profile.phone = phone
+            await self.profile_repo.update(profile)
+        user.profile = profile
+
     async def sync_user(
         self,
         firebase_uid: str,
         email: str,
         first_name: str = "User",
         last_name: str = "",
+        middle_name: str | None = None,
         phone: str | None = None,
         role_name: str = "CLIENT",
         ip_address: str | None = None,
@@ -53,6 +122,8 @@ class AuthService:
         if mapped_role:
             role_name = mapped_role
 
+        fn, mn, ln = self._resolve_profile_names(email_key, first_name, last_name)
+
         existing = await self.user_repo.get_by_firebase_uid(firebase_uid)
         if existing:
             existing.last_login_at = datetime.now(timezone.utc)
@@ -61,6 +132,9 @@ class AuthService:
                 if role and existing.role_id != role.id:
                     existing.role_id = role.id
             await self.user_repo.update(existing)
+            await self._apply_firm_profile(
+                existing, email_key, first_name, last_name, phone
+            )
             await self.db.refresh(existing, ["role", "profile"])
             await self._safe_audit(
                 action="user.login",
@@ -92,8 +166,9 @@ class AuthService:
 
         profile = UserProfile(
             user_id=user.id,
-            first_name=first_name,
-            last_name=last_name or "User",
+            first_name=fn,
+            middle_name=mn,
+            last_name=ln,
             phone=phone,
         )
         await self.profile_repo.create(profile)

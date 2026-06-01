@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+import base64
+from datetime import date, datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, UserProfile, UserStatusEnum
 from app.repositories.user_repository import RoleRepository, UserProfileRepository, UserRepository
 from app.services.audit_service import AuditService
+from app.services.r2_storage import R2StorageService
+
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_MIME = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
 
 
 class UserService:
@@ -83,6 +88,21 @@ class UserService:
         offset = (page - 1) * page_size
         return await self.user_repo.list_users(offset, page_size, role_name)
 
+    def resolve_profile_photo_url(self, profile_photo: str | None) -> str | None:
+        if not profile_photo:
+            return None
+        if profile_photo.startswith(("http://", "https://", "data:")):
+            return profile_photo
+        if profile_photo.startswith("r2:"):
+            storage_path = profile_photo[3:]
+            storage = R2StorageService()
+            if storage.configured:
+                try:
+                    return storage.generate_presigned_download_url(storage_path)
+                except Exception:
+                    return None
+        return profile_photo
+
     async def update_profile(
         self,
         user_id: UUID,
@@ -93,9 +113,15 @@ class UserService:
         suffix: str | None = None,
         phone: str | None = None,
         address: str | None = None,
+        nickname: str | None = None,
+        date_of_birth: date | None = None,
         profile_photo: str | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
+        *,
+        clear_middle_name: bool = False,
+        clear_nickname: bool = False,
+        clear_date_of_birth: bool = False,
     ) -> UserProfile | None:
         profile = await self.profile_repo.get_by_user_id(user_id)
         if not profile:
@@ -109,8 +135,10 @@ class UserService:
 
         if first_name is not None:
             profile.first_name = first_name
-        if middle_name is not None:
-            profile.middle_name = middle_name
+        if clear_middle_name:
+            profile.middle_name = None
+        elif middle_name is not None:
+            profile.middle_name = middle_name.strip() or None
         if last_name is not None:
             profile.last_name = last_name
         if suffix is not None:
@@ -119,6 +147,14 @@ class UserService:
             profile.phone = phone
         if address is not None:
             profile.address = address
+        if clear_nickname:
+            profile.nickname = None
+        elif nickname is not None:
+            profile.nickname = nickname.strip() or None
+        if clear_date_of_birth:
+            profile.date_of_birth = None
+        elif date_of_birth is not None:
+            profile.date_of_birth = date_of_birth
         if profile_photo is not None:
             profile.profile_photo = profile_photo
 
@@ -137,6 +173,84 @@ class UserService:
                 "last_name": profile.last_name,
                 "phone": profile.phone,
             },
+        )
+        return profile
+
+    async def update_email(
+        self,
+        user_id: UUID,
+        email: str,
+        performed_by: UUID,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> User | None:
+        email_norm = email.strip().lower()
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            return None
+        existing = await self.user_repo.get_by_email(email_norm)
+        if existing and existing.id != user_id:
+            raise ValueError("Email is already in use")
+        old_email = user.email
+        user.email = email_norm
+        await self.user_repo.update(user)
+        await self.audit.log(
+            action="profile.email_change",
+            entity_type="users",
+            entity_id=user.id,
+            performed_by=performed_by,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            old_values={"email": old_email},
+            new_values={"email": email_norm},
+        )
+        return user
+
+    async def upload_profile_avatar(
+        self,
+        user_id: UUID,
+        file_data: bytes,
+        mime_type: str,
+        filename: str,
+        performed_by: UUID,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> UserProfile | None:
+        if len(file_data) > AVATAR_MAX_BYTES:
+            raise ValueError("Profile photo must be 2MB or smaller")
+        mime = (mime_type or "").lower()
+        if mime not in AVATAR_MIME:
+            raise ValueError("Only PNG, JPEG, or WebP images are allowed")
+
+        profile = await self.profile_repo.get_by_user_id(user_id)
+        if not profile:
+            return None
+
+        ext = ".jpg"
+        if "png" in mime:
+            ext = ".png"
+        elif "webp" in mime:
+            ext = ".webp"
+
+        storage = R2StorageService()
+        storage_ref: str
+        if storage.configured:
+            storage_path = f"profiles/{user_id}/avatar{ext}"
+            storage.upload_bytes(storage_path, file_data, mime)
+            storage_ref = f"r2:{storage_path}"
+        else:
+            b64 = base64.b64encode(file_data).decode("ascii")
+            storage_ref = f"data:{mime};base64,{b64}"
+
+        profile.profile_photo = storage_ref
+        await self.profile_repo.update(profile)
+        await self.audit.log(
+            action="profile.avatar_upload",
+            entity_type="user_profiles",
+            entity_id=profile.id,
+            performed_by=performed_by,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
         return profile
 

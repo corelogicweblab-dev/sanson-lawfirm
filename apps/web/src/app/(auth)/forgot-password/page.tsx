@@ -7,7 +7,6 @@ import { Scale, ArrowLeft } from "lucide-react";
 import {
   Button,
   Input,
-  PoweredByCoreLogic,
   Card,
   CardContent,
   CardHeader,
@@ -45,7 +44,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="auth-gradient flex min-h-screen min-h-[100dvh] items-center justify-center p-4 safe-top safe-bottom">
+    <div className="auth-gradient flex flex-1 items-center justify-center p-4 py-8 safe-bottom">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
@@ -53,7 +52,6 @@ export default function ForgotPasswordPage() {
           </div>
           <CardTitle>Forgot Password</CardTitle>
           <CardDescription>We&apos;ll send you a reset link</CardDescription>
-          <PoweredByCoreLogic className="mt-2" />
         </CardHeader>
         <CardContent>
           {success ? (

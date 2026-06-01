@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { inferRoleFromEmail } from "@sanson/shared";
+import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -25,10 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           api.setToken(token);
 
           const email = firebaseUser.email ?? "";
-          const displayName = firebaseUser.displayName?.split(" ") ?? [];
+          const parts = firebaseUser.displayName?.split(" ") ?? [];
+          const names = resolveSyncProfileNames(email, {
+            first_name: parts[0],
+            last_name: parts.slice(1).join(" "),
+          });
           const response = await api.syncUser({
-            first_name: displayName[0] || "User",
-            last_name: displayName.slice(1).join(" ") || "",
+            ...names,
             role: inferRoleFromEmail(email),
           });
 

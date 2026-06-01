@@ -32,6 +32,20 @@ export function hasPermission(
   return requiredList.some((p) => userPermissions.includes(p));
 }
 
+/** Age in full years from ISO date (YYYY-MM-DD). */
+export function calculateAge(dateOfBirth: string | Date | null | undefined): number | null {
+  if (!dateOfBirth) return null;
+  const dob = typeof dateOfBirth === "string" ? new Date(dateOfBirth + "T12:00:00") : dateOfBirth;
+  if (Number.isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age -= 1;
+  }
+  return age >= 0 ? age : null;
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat("en-PH", {
     year: "numeric",

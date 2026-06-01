@@ -7,7 +7,7 @@ Passwords are set in **Firebase Console → Authentication → Users**, not in t
 | Role | Email | Suggested password |
 |------|--------|-------------------|
 | Admin | `admin@sansonlaw.ph` | `Admin@123456` |
-| Lawyer | `lawyer@sansonlaw.ph` | `Lawyer@123456` |
+| Lawyer (Managing Partner / CEO) | `lawyer@sansonlaw.ph` — **Rosebelle L. Sanson** | `Lawyer@123456` |
 | Paralegal | `paralegal@sansonlaw.ph` | `Paralegal@123456` |
 | Client | `client@sansonlaw.ph` | `Client@123456` |
 

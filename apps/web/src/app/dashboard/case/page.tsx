@@ -27,6 +27,8 @@ import {
 import { DocumentCenter } from "@/components/documents/document-center";
 import { CaseWorkspaceOps } from "@/components/operations/case-workspace-ops";
 import { ParalegalWorkflowStrip } from "@/components/operations/paralegal-workflow-strip";
+import { LawyerWorkflowStrip } from "@/components/lawyer/lawyer-workflow-strip";
+import { LegalNotebookFloat } from "@/components/lawyer/legal-notebook-float";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -106,11 +108,15 @@ function CaseWorkspaceContent() {
               <Badge variant="outline">{caseItem.priority}</Badge>
             </div>
 
-            {(role === "PARALEGAL" || role === "LAWYER") && (
-              <ParalegalWorkflowStrip className="mb-6" />
-            )}
+            {role === "PARALEGAL" && <ParalegalWorkflowStrip className="mb-6" />}
+            {role === "LAWYER" && <LawyerWorkflowStrip className="mb-6" />}
 
-            <CaseWorkspaceTabs active={tab} onChange={setTab} modules={modules} />
+            <CaseWorkspaceTabs
+              active={tab}
+              onChange={setTab}
+              modules={modules}
+              lawyerMode={role === "LAWYER"}
+            />
 
             {tab === "overview" && (
               <div className="space-y-6">
@@ -209,6 +215,60 @@ function CaseWorkspaceContent() {
               <p className="text-sm text-zinc-400">
                 Tasks for this case — use Tasks in the sidebar or add via intake.
               </p>
+            )}
+
+            {tab === "evidence" && role === "LAWYER" && (
+              <Card className="sanson-panel p-4">
+                <p className="text-sm text-zinc-300">
+                  Evidence review — validate, reject, or request more from the{" "}
+                  <a href="/dashboard/lawyer/evidence" className="text-pink-400 underline">
+                    Evidence Review Center
+                  </a>
+                  .
+                </p>
+              </Card>
+            )}
+
+            {tab === "calendar" && role === "LAWYER" && (
+              <Card className="sanson-panel p-4">
+                <CaseDataPanel title="Important dates" data={dates} />
+                <p className="mt-4 text-xs text-zinc-500">
+                  Full legal calendar in sidebar → Calendar.
+                </p>
+              </Card>
+            )}
+
+            {tab === "activities" && role === "LAWYER" && (
+              <Card className="sanson-panel p-4">
+                <p className="text-sm text-zinc-400">
+                  Recent case activities appear in Case Intelligence on the lawyer dashboard and in
+                  team collaboration feeds.
+                </p>
+              </Card>
+            )}
+
+            {tab === "ai" && role === "LAWYER" && (
+              <Card className="sanson-panel p-4">
+                <p className="mb-3 text-sm text-zinc-300">
+                  AI case summary, risk assessment, missing requirements, and draft generators.
+                </p>
+                <a href="/dashboard/lawyer/ai-center" className="text-sm text-pink-400 underline">
+                  Open AI Legal Intelligence Center →
+                </a>
+              </Card>
+            )}
+
+            {tab === "audit" && role === "LAWYER" && (
+              <Card className="sanson-panel p-4">
+                <p className="text-sm text-zinc-400">
+                  Immutable audit trail for case access, uploads, approvals, and status changes —
+                  full logs in Admin → Audit.
+                </p>
+              </Card>
+            )}
+
+            {role === "LAWYER" && caseId && (
+              <LegalNotebookFloat caseId={caseId} caseNumber={caseItem.case_number} />
             )}
 
             {role === "ADMIN" && (

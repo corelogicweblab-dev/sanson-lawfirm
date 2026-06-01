@@ -1,9 +1,9 @@
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -99,6 +99,8 @@ class UserProfile(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     suffix: Mapped[str | None] = mapped_column(String(20))
     phone: Mapped[str | None] = mapped_column(String(30))
     address: Mapped[str | None] = mapped_column(Text)
+    nickname: Mapped[str | None] = mapped_column(String(80))
+    date_of_birth: Mapped[date | None] = mapped_column(Date)
     profile_photo: Mapped[str | None] = mapped_column(Text)
     client_details: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 

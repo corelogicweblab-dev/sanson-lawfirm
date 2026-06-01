@@ -8,8 +8,8 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { Scale } from "lucide-react";
-import { inferRoleFromEmail } from "@sanson/shared";
-import { Button, Input, PoweredByCoreLogic, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
+import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
+import { Button, Input, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
 import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { formatFirebaseAuthError } from "@/lib/auth-errors";
 import { api } from "@/lib/api";
@@ -88,9 +88,9 @@ export default function LoginPage() {
   }) => {
     setToken(token);
     api.setToken(token);
+    const names = resolveSyncProfileNames(userEmail, profile);
     const response = await api.syncUser({
-      first_name: profile?.first_name,
-      last_name: profile?.last_name,
+      ...names,
       role: inferRoleFromEmail(userEmail),
     });
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
   const roleHint = email ? inferRoleFromEmail(email) : null;
 
   return (
-    <div className="auth-gradient flex min-h-screen min-h-[100dvh] items-center justify-center p-4 safe-top safe-bottom">
+    <div className="auth-gradient flex flex-1 items-center justify-center p-4 py-8 safe-bottom">
       <Card className="sanson-auth-card w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
@@ -169,7 +169,6 @@ export default function LoginPage() {
           </div>
           <CardTitle>Sign In</CardTitle>
           <CardDescription>Access your SANSON Legal OS portal</CardDescription>
-          <PoweredByCoreLogic className="mt-2" />
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailLogin} className="space-y-4">

@@ -34,6 +34,8 @@ def to_profile_response(profile: UserProfile) -> dict:
         "suffix": profile.suffix,
         "phone": profile.phone,
         "address": profile.address,
+        "nickname": profile.nickname,
+        "date_of_birth": profile.date_of_birth.isoformat() if profile.date_of_birth else None,
         "profile_photo": profile.profile_photo,
         "created_at": profile.created_at.isoformat(),
         "updated_at": profile.updated_at.isoformat(),

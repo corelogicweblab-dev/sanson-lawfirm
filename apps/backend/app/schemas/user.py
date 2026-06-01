@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -13,6 +13,8 @@ class ProfileResponse(BaseModel):
     suffix: str | None = None
     phone: str | None = None
     address: str | None = None
+    nickname: str | None = None
+    date_of_birth: date | None = None
     profile_photo: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -62,6 +64,7 @@ class UserResponse(BaseModel):
 class AuthSyncRequest(BaseModel):
     first_name: str = Field(default="User", min_length=1, max_length=100)
     last_name: str = Field(default="", max_length=100)
+    middle_name: str | None = Field(default=None, max_length=100)
     phone: str | None = Field(default=None, max_length=30)
     role: str = Field(default="CLIENT")
 
@@ -78,7 +81,13 @@ class ProfileUpdateRequest(BaseModel):
     suffix: str | None = Field(default=None, max_length=20)
     phone: str | None = Field(default=None, max_length=30)
     address: str | None = None
+    nickname: str | None = Field(default=None, max_length=80)
+    date_of_birth: date | None = None
     profile_photo: str | None = None
+
+
+class EmailUpdateRequest(BaseModel):
+    email: EmailStr
 
 
 class RoleUpdateRequest(BaseModel):
