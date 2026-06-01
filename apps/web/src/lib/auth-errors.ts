@@ -32,6 +32,10 @@ export function formatFirebaseAuthError(err: unknown): string {
     "auth/account-exists-with-different-credential":
       "This email is already registered with a password. Sign in with email and password instead.",
     "auth/email-already-in-use": "This email already has an account. Sign in instead of registering again.",
+    "auth/api-key-not-valid":
+      "Invalid Firebase API key on this site. In Netlify, set NEXT_PUBLIC_FIREBASE_API_KEY from Firebase Console (Project settings → Your apps → Web app), then Clear cache and redeploy. Also add your Netlify URL under Firebase Authentication → Authorized domains.",
+    "auth/invalid-api-key":
+      "Invalid Firebase API key on this site. In Netlify, set NEXT_PUBLIC_FIREBASE_API_KEY from Firebase Console (Project settings → Your apps → Web app), then Clear cache and redeploy. Also add your Netlify URL under Firebase Authentication → Authorized domains.",
   };
 
   if (code && messages[code]) return messages[code];

@@ -62,9 +62,21 @@ Kung may lumang link na `sansonlawfirm.web.app`, puwede mong i-ignore o i-redire
 
 ---
 
+## Login error: `auth/api-key-not-valid`
+
+Ang Netlify build ay may **maling o blank** na `NEXT_PUBLIC_FIREBASE_API_KEY`.
+
+1. Firebase → Project settings → Your apps → Web → copy **apiKey** (`AIzaSy...`)
+2. Netlify → Environment variables → `NEXT_PUBLIC_FIREBASE_API_KEY` = exact copy
+3. **Clear cache and redeploy** (required — key is baked into JS at build time)
+4. Authorized domains: add `sanson-lawfirm.netlify.app`
+
+Hindi ito Render/API issue — Firebase Auth client config lang.
+
 ## Quick checklist
 
 - [ ] Web: Netlify build **Published**
+- [ ] `NEXT_PUBLIC_FIREBASE_API_KEY` starts with `AIza` (from Firebase Web app)
 - [ ] Firebase **Authentication** authorized domain = Netlify URL
 - [ ] Firebase **Hosting** custom domain: **walang** `*.netlify.app`
 - [ ] Login test sa `https://sanson-lawfirm.netlify.app/login/`

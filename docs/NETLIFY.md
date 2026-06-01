@@ -54,6 +54,21 @@ Then **Clear cache and deploy** again.
 
 Copy values from `apps/web/.env.local` or Firebase project settings.
 
+### Get the correct `NEXT_PUBLIC_FIREBASE_API_KEY` (fixes `auth/api-key-not-valid`)
+
+1. [Firebase Console](https://console.firebase.google.com/) → project **sansonlawfirm**
+2. **Project settings** (gear) → **General** → **Your apps** → Web app (`</>`)
+3. Copy **apiKey** — must look like `AIzaSy...` (about 39 characters)
+4. Netlify → **Environment variables** → set `NEXT_PUBLIC_FIREBASE_API_KEY` to that value (no quotes, no spaces)
+5. **Deploys** → **Trigger deploy** → **Clear cache and deploy site**
+
+If login still fails after a valid key:
+
+- **Authentication** → **Settings** → **Authorized domains** → add `sanson-lawfirm.netlify.app`
+- [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Credentials** → your Browser API key → **Application restrictions** → HTTP referrers → add:
+  - `https://sanson-lawfirm.netlify.app/*`
+  - `https://*.netlify.app/*`
+
 ## 3. Firebase authorized domains
 
 Firebase Console → **Authentication** → **Settings** → **Authorized domains** → add:

@@ -49,4 +49,27 @@ if (missing.length) {
   process.exit(1);
 }
 
+const apiKey = String(process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").trim();
+const placeholders = new Set([
+  "",
+  "your-api-key",
+  "AIza...",
+  "changeme",
+  "xxx",
+]);
+if (
+  placeholders.has(apiKey) ||
+  !apiKey.startsWith("AIza") ||
+  apiKey.length < 30
+) {
+  console.error("\n[build] NEXT_PUBLIC_FIREBASE_API_KEY is missing or invalid.\n");
+  console.error(
+    "Copy the real Web API key from Firebase Console → Project settings → Your apps → Web app."
+  );
+  console.error(
+    "It must start with AIza and be ~39 characters. Then redeploy on Netlify.\n"
+  );
+  process.exit(1);
+}
+
 console.log("[build] Firebase client environment OK");
