@@ -28,10 +28,11 @@
       }
     ],
     "cleanUrls": true,
-    "rewrites": [
+    "redirects": [
       {
-        "source": "/api/**",
-        "function": "apiProxy"
+        "source": "/**",
+        "destination": "https://sanson-lawfirm.onrender.com/**",
+        "type": 301
       }
     ]
   }

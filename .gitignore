@@ -7,6 +7,7 @@ node_modules/
 .next/
 out/
 apps/web/out/
+apps/backend/static_web/
 dist/
 build/
 *.egg-info/

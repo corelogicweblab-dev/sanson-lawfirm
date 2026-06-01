@@ -10,6 +10,7 @@ from slowapi.util import get_remote_address
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.static_web import mount_static_web
 from app.middleware.correlation import CorrelationMiddleware
 from app.middleware.maintenance import MaintenanceModeMiddleware
 from app.middleware.metrics import RequestMetricsMiddleware
@@ -108,16 +109,14 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=f"/api/{settings.api_version}")
 
+mount_static_web(app)
 
-@app.get("/")
-async def root():
+
+@app.get("/api", include_in_schema=False)
+async def api_index():
     return {
         "app": settings.app_name,
         "version": settings.app_version,
-        "phase": 8,
-        "environment": settings.environment,
-        "status": "operational",
-        "powered_by": "CoreLogic",
         "docs": f"/api/{settings.api_version}/docs",
     }
 

@@ -146,8 +146,14 @@ export function LawyerCommandCenter() {
         <p className="font-medium text-rose-200">Dashboard could not load</p>
         <p className="text-rose-300">{error}</p>
         <p className="text-zinc-400">
-          If you see “NetworkError”, hard-refresh (Ctrl+Shift+R) so the app uses the same-site API
-          proxy. Disable ad blockers for sansonlawfirm.web.app, then tap Retry.
+          Open{" "}
+          <a
+            href="https://sanson-lawfirm.onrender.com/dashboard/lawyer/"
+            className="text-pink-300 underline"
+          >
+            sanson-lawfirm.onrender.com
+          </a>{" "}
+          (same-site API, no NetworkError). Hard-refresh with Ctrl+Shift+R, then Retry.
         </p>
         <Button size="sm" variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
           Retry

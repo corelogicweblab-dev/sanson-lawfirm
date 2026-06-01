@@ -5,7 +5,7 @@ services:
     name: sanson-lawfirm
     runtime: python
     rootDir: apps/backend
-    buildCommand: pip install -r requirements.txt && pip show email-validator >/dev/null
+    buildCommand: bash build-render.sh
     startCommand: bash start.sh
     healthCheckPath: /api/v1/health/ready
     envVars:
@@ -22,9 +22,9 @@ services:
       - key: FIREBASE_PRIVATE_KEY
         sync: false
       - key: CORS_ORIGINS
-        value: http://localhost:3000,http://127.0.0.1:3000,https://sansonlawfirm.web.app,https://sansonlawfirm.firebaseapp.com
+        value: http://localhost:3000,http://127.0.0.1:3000,https://sansonlawfirm.web.app,https://sansonlawfirm.firebaseapp.com,https://sanson-lawfirm.onrender.com
       - key: FRONTEND_URL
-        value: https://sansonlawfirm.web.app
+        value: https://sanson-lawfirm.onrender.com
       - key: FIELD_ENCRYPTION_KEY
         sync: false
       - key: SENTRY_DSN
