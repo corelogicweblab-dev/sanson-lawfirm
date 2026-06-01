@@ -414,8 +414,8 @@ export class ApiClient {
           success: false,
           message: body.message || "Upload failed",
           data: null,
-          meta: body.meta,
-          errors: body.errors,
+          meta: body.meta ?? null,
+          errors: body.errors ?? null,
         };
       }
       return body;
@@ -425,12 +425,16 @@ export class ApiClient {
           success: false,
           message: "Upload timed out. Try a smaller file or check your connection.",
           data: null,
+          meta: null,
+          errors: null,
         };
       }
       return {
         success: false,
         message: "Upload failed. Check your connection and try again.",
         data: null,
+        meta: null,
+        errors: null,
       };
     } finally {
       clearTimeout(timer);
