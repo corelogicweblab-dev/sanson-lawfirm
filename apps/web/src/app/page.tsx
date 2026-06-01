@@ -69,8 +69,8 @@ export default function HomePage() {
               <div className="mx-auto w-full max-w-md lg:max-w-none">
                 <div className="sanson-hero-portrait aspect-[4/5] max-h-[min(70vh,520px)] sm:aspect-[3/4] lg:max-h-[480px]">
                   <Image
-                    src="/attybelle.png"
-                    alt="Attorney representing SANSON Law Firm"
+                    src="/attyrosebellesanson.png"
+                    alt="Atty. Rosebelle Sanson — SANSON Law Firm"
                     width={640}
                     height={800}
                     priority
@@ -78,8 +78,8 @@ export default function HomePage() {
                   />
                 </div>
                 <div className="mt-4 border-t border-white/10 pt-4 text-center lg:text-left">
-                  <p className="text-sm font-semibold tracking-wide text-white">Atty. Belle</p>
-                  <p className="mt-0.5 text-xs text-zinc-400">SANSON Law Firm</p>
+                  <p className="text-sm font-semibold tracking-wide text-white">Atty. Rosebelle L. Sanson</p>
+                  <p className="mt-0.5 text-xs text-zinc-400">Managing Partner · SANSON Law Firm</p>
                 </div>
               </div>
             </div>
