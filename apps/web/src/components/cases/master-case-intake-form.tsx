@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, CardContent, Input } from "@sanson/ui";
+import Link from "next/link";
+import { Button, Card, CardContent } from "@sanson/ui";
+import { DocumentCenter } from "@/components/documents/document-center";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
@@ -115,6 +117,8 @@ export function MasterCaseIntakeForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [directoryHint, setDirectoryHint] = useState("");
+  const [createdCaseId, setCreatedCaseId] = useState<string | null>(null);
+  const [createdCaseNumber, setCreatedCaseNumber] = useState<string | null>(null);
 
   const [caseInfo, setCaseInfo] = useState({
     title: "",
@@ -281,16 +285,24 @@ export function MasterCaseIntakeForm({
       setError(r.message || "Failed to create case");
       return;
     }
-    const id = (r.data as { id: string }).id;
-    router.push(`/dashboard/case?id=${id}&tab=documents`);
+    const data = r.data as { id: string; case_number?: string };
+    setCreatedCaseId(data.id);
+    setCreatedCaseNumber(data.case_number ?? null);
+    document.getElementById("case-documents-section")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <div className="sanson-form-scroll space-y-4">
       <p className="rounded-lg border border-pink-500/30 bg-black/55 px-4 py-3 text-sm text-zinc-200">
         Case number is auto-generated (e.g. <strong className="text-white">SLF-2026-001</strong>).
-        After create, upload documents inside the Case Workspace — nothing is stored outside a case.
+        Each case has its own documents — upload in section 7 on this page (no separate step).
       </p>
+      {createdCaseNumber && (
+        <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          Case <strong className="text-white">{createdCaseNumber}</strong> created. Add files below — they
+          are linked to this case only.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -492,20 +504,35 @@ export function MasterCaseIntakeForm({
         </div>
       </FormSection>
 
-      <FormSection title="7 — Documents & files (next step)">
-        <p className="text-sm text-zinc-300">
-          PDF, DOC, images, video, audio, ZIP — upload after case is created in the Case Workspace Documents tab.
-        </p>
-      </FormSection>
+      <div id="case-documents-section">
+        <FormSection title="7 — Documents & files (this case)">
+          <DocumentCenter
+            caseId={createdCaseId ?? undefined}
+            requireCase={!createdCaseId}
+            showProcess
+          />
+        </FormSection>
+      </div>
 
       {error && (
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>
       )}
 
-      <div className="sanson-sticky-footer">
-        <Button loading={loading} onClick={submit} className="w-full sm:w-auto">
-          Create draft & open workspace
-        </Button>
+      <div className="sanson-sticky-footer flex flex-wrap items-center gap-3">
+        {!createdCaseId ? (
+          <Button loading={loading} onClick={submit} className="w-full sm:w-auto">
+            Create draft case
+          </Button>
+        ) : (
+          <>
+            <Link href={`/dashboard/case?id=${createdCaseId}&tab=documents`}>
+              <Button variant="outline">Open full case workspace</Button>
+            </Link>
+            <Button variant="ghost" onClick={() => router.push("/dashboard/paralegal/cases")}>
+              Back to case list
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -132,6 +132,16 @@ function CaseWorkspaceContent() {
                     <CaseDataPanel title="" data={caseDetails} />
                   </CardContent>
                 </Card>
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-300">
+                    Case documents
+                  </h3>
+                  <DocumentCenter
+                    caseId={caseId}
+                    showProcess={role === "PARALEGAL"}
+                    readOnly={role === "LAWYER"}
+                  />
+                </div>
                 <Card className="sanson-panel">
                   <CardContent className="p-0">
                     <h3 className="border-b border-white/10 px-4 py-3 text-sm font-medium text-zinc-300">

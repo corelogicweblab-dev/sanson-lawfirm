@@ -7,21 +7,33 @@ import {
   Loader2,
   Sparkles,
   Download,
+  Printer,
   AlertCircle,
 } from "lucide-react";
+import { printDocument } from "@/lib/print";
 import { Badge, Button, Card, CardContent, EmptyState } from "@sanson/ui";
 import type { DocumentCategory, DocumentItem } from "@sanson/types";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+const UPLOAD_ACCEPT =
+  ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.zip,.mp4,.mov,.mp3,.wav,.m4a,.aac";
 
 interface DocumentCenterProps {
   showProcess?: boolean;
   caseId?: string;
   /** Lawyers: view/download only — no uploads (paralegal-centric file authority). */
   readOnly?: boolean;
+  /** Show placeholder until case exists (intake form). */
+  requireCase?: boolean;
 }
 
-export function DocumentCenter({ showProcess = false, caseId, readOnly = false }: DocumentCenterProps) {
+export function DocumentCenter({
+  showProcess = false,
+  caseId,
+  readOnly = false,
+  requireCase = false,
+}: DocumentCenterProps) {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [categories, setCategories] = useState<DocumentCategory[]>([]);
   const [categoryId, setCategoryId] = useState("");
@@ -47,6 +59,10 @@ export function DocumentCenter({ showProcess = false, caseId, readOnly = false }
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
+    if (requireCase && !caseId) {
+      window.alert("Create or open a case first — documents are stored per case.");
+      return;
+    }
     setUploading(true);
     for (const file of Array.from(files)) {
       await api.uploadDocument(file, {
@@ -70,6 +86,15 @@ export function DocumentCenter({ showProcess = false, caseId, readOnly = false }
     if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
     return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  if (requireCase && !caseId) {
+    return (
+      <p className="rounded-lg border border-pink-500/25 bg-black/40 px-4 py-3 text-sm text-zinc-300">
+        Save the case first — then upload PDF, DOC, images, video, audio, and ZIP files here. Each file
+        belongs to this case only.
+      </p>
+    );
+  }
 
   if (loading) {
     return (
@@ -103,8 +128,11 @@ export function DocumentCenter({ showProcess = false, caseId, readOnly = false }
             <Upload className="mb-3 h-10 w-10 text-pink-400" />
             <p className="mb-1 font-medium text-white">Drag & drop legal documents</p>
             <p className="mb-4 text-xs text-zinc-500">
-              PDF, DOC, DOCX, TXT, PNG, JPG, WEBP — max 25MB
+              PDF, DOC, images, video, audio, ZIP — max 25MB · stored on this case only
             </p>
+            {caseId && (
+              <p className="mb-2 font-mono text-[10px] text-pink-300/80">Case ID: {caseId.slice(0, 8)}…</p>
+            )}
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <select
                 value={categoryId}
@@ -123,7 +151,7 @@ export function DocumentCenter({ showProcess = false, caseId, readOnly = false }
                   type="file"
                   multiple
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
+                  accept={UPLOAD_ACCEPT}
                   onChange={(e) => handleFiles(e.target.files)}
                 />
                 <Button type="button" disabled={uploading}>
@@ -167,12 +195,22 @@ export function DocumentCenter({ showProcess = false, caseId, readOnly = false }
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {doc.downloadUrl && (
-                    <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="outline">
-                        <Download className="mr-1 h-3 w-3" />
-                        Download
+                    <>
+                      <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="outline">
+                          <Download className="mr-1 h-3 w-3" />
+                          Download
+                        </Button>
+                      </a>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => printDocument(doc.fileName, doc.downloadUrl)}
+                      >
+                        <Printer className="mr-1 h-3 w-3" />
+                        Print
                       </Button>
-                    </a>
+                    </>
                   )}
                   {showProcess && (
                     <Button
