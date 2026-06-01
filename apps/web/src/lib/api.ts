@@ -414,15 +414,24 @@ export class ApiClient {
           success: false,
           message: body.message || "Upload failed",
           data: null,
+          meta: body.meta,
           errors: body.errors,
         };
       }
       return body;
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        return { success: false, message: "Upload timed out. Try a smaller file or check your connection.", data: null };
+        return {
+          success: false,
+          message: "Upload timed out. Try a smaller file or check your connection.",
+          data: null,
+        };
       }
-      return { success: false, message: "Upload failed. Check your connection and try again.", data: null };
+      return {
+        success: false,
+        message: "Upload failed. Check your connection and try again.",
+        data: null,
+      };
     } finally {
       clearTimeout(timer);
     }
