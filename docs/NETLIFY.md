@@ -1,6 +1,15 @@
 # Deploy SANSON Legal OS to Netlify (from GitHub)
 
-The **web app** deploys on Netlify. The **API** stays on [Render](https://sanson-lawfirm.onrender.com).  
+**Primary path:** `GitHub → Netlify` (web). **Not** Firebase Hosting.
+
+| Layer | Platform |
+|-------|----------|
+| Web UI | **Netlify** (auto-deploy from `main`) |
+| API | **Render** (proxied at `/api/*` on Netlify) |
+| Login | **Firebase Authentication only** — add Netlify URL under *Authorized domains*, **not** under Hosting custom domains |
+
+See [FIREBASE-VS-NETLIFY.md](./FIREBASE-VS-NETLIFY.md) if Firebase shows CAA / certificate errors for `*.netlify.app`.
+
 Netlify **proxies** `/api/*` to Render so the browser never hits `onrender.com` directly (fixes NetworkError).
 
 ## 1. Connect GitHub to Netlify
@@ -90,6 +99,7 @@ Netlify → **Domain management** → add domain → update DNS per Netlify inst
 
 | Service | URL |
 |---------|-----|
-| API (direct) | https://sanson-lawfirm.onrender.com |
-| Web (Netlify) | Your `*.netlify.app` or custom domain |
-| Web (Firebase redirect) | https://sansonlawfirm.web.app → redirects to Render unified app |
+| Web (use this) | `https://sanson-lawfirm.netlify.app` (or your Netlify subdomain) |
+| API (via proxy) | `https://<your-netlify-site>/api/v1/...` |
+| API (direct, optional) | https://sanson-lawfirm.onrender.com |
+| Firebase Hosting | **Not used** — do not add `*.netlify.app` there |
