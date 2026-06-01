@@ -1,5 +1,5 @@
-/** Production API — used when build omitted NEXT_PUBLIC_API_URL on Firebase Hosting. */
-const PRODUCTION_API_URL = "https://sanson-lawfirm.onrender.com";
+/** Direct Render URL — local dev, mobile, server-side. */
+export const RENDER_API_URL = "https://sanson-lawfirm.onrender.com";
 
 const HOSTING_HOSTS = new Set([
   "sansonlawfirm.web.app",
@@ -7,25 +7,30 @@ const HOSTING_HOSTS = new Set([
 ]);
 
 /**
- * Resolve API base URL. NEXT_PUBLIC_* is baked in at build time; if missing on
- * Hosting, fall back to Render so login sync does not hit localhost.
+ * On Firebase Hosting use same-origin `/api/*` (proxied to Render).
+ * Avoids browser NetworkError from cross-site blocking of onrender.com.
  */
 export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined" && HOSTING_HOSTS.has(window.location.hostname)) {
+    return "";
+  }
+
   const fromEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (fromEnv && !fromEnv.includes("localhost") && !fromEnv.includes("127.0.0.1")) {
     return fromEnv.replace(/\/$/, "");
   }
 
-  if (typeof window !== "undefined" && HOSTING_HOSTS.has(window.location.hostname)) {
-    return PRODUCTION_API_URL;
-  }
-
   return fromEnv || "http://localhost:8100";
+}
+
+export function isProductionHosting(): boolean {
+  if (typeof window === "undefined") return false;
+  return HOSTING_HOSTS.has(window.location.hostname);
 }
 
 export function isLikelyMisconfiguredApi(): boolean {
   if (typeof window === "undefined") return false;
-  if (!HOSTING_HOSTS.has(window.location.hostname)) return false;
+  if (!isProductionHosting()) return false;
   const env = process.env.NEXT_PUBLIC_API_URL?.trim() || "";
-  return !env || env.includes("localhost") || env.includes("127.0.0.1");
+  return env.includes("localhost") || env.includes("127.0.0.1");
 }

@@ -146,8 +146,8 @@ export function LawyerCommandCenter() {
         <p className="font-medium text-rose-200">Dashboard could not load</p>
         <p className="text-rose-300">{error}</p>
         <p className="text-zinc-400">
-          The live API runs on Render and may need 30–60 seconds to wake after idle time. This is not
-          a broken app — tap Retry once or twice. If it keeps failing, sign out and sign in again.
+          If you see “NetworkError”, hard-refresh (Ctrl+Shift+R) so the app uses the same-site API
+          proxy. Disable ad blockers for sansonlawfirm.web.app, then tap Retry.
         </p>
         <Button size="sm" variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
           Retry

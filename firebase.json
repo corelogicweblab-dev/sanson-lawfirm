@@ -1,4 +1,11 @@
 {
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
+    }
+  ],
   "hosting": {
     "public": "apps/web/out",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
@@ -20,6 +27,12 @@
         "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
       }
     ],
-    "cleanUrls": true
+    "cleanUrls": true,
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "apiProxy"
+      }
+    ]
   }
 }

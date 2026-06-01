@@ -1,14 +1,6 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { getApiBaseUrl, isProductionHosting } from "@/lib/api-url";
 
-const HOSTING_HOSTS = new Set([
-  "sansonlawfirm.web.app",
-  "sansonlawfirm.firebaseapp.com",
-]);
-
-export function isProductionHosting(): boolean {
-  if (typeof window === "undefined") return false;
-  return HOSTING_HOSTS.has(window.location.hostname);
-}
+export { isProductionHosting };
 
 /** Render free tier cold starts can exceed 25s; allow more time on live Hosting. */
 export function getRequestTimeoutMs(): number {
@@ -66,6 +58,12 @@ export async function fetchWithRetry(
         await delay(1000 * (attempt + 1));
         continue;
       }
+      const msg = err instanceof Error ? err.message : "";
+      if (isProductionHosting() && /networkerror|failed to fetch|load failed/i.test(msg)) {
+        throw new Error(
+          "Connection blocked. Press Ctrl+Shift+R to reload, then Retry. Turn off ad blockers for sansonlawfirm.web.app."
+        );
+      }
       throw err;
     }
   }
@@ -76,7 +74,8 @@ export async function fetchWithRetry(
 export async function pingApiHealth(): Promise<boolean> {
   try {
     const base = getApiBaseUrl();
-    const res = await fetchWithRetry(`${base}/api/v1/health`, { method: "GET" }, {
+    const healthPath = base ? `${base}/api/v1/health` : "/api/v1/health";
+    const res = await fetchWithRetry(healthPath, { method: "GET" }, {
       timeoutMs: 45_000,
       retries: 1,
     });

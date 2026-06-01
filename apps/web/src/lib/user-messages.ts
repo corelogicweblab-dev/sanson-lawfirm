@@ -41,6 +41,13 @@ export function friendlyUploadError(detail?: string): string {
   if (d.includes("empty file")) {
     return "The selected file is empty. Choose a different file.";
   }
+  if (
+    d.includes("networkerror") ||
+    d.includes("failed to fetch") ||
+    d.includes("load failed")
+  ) {
+    return "Connection blocked by the browser. Refresh the page (Ctrl+Shift+R). If it continues, disable ad blockers for this site.";
+  }
   if (detail.length <= 160 && !detail.includes("postgresql") && !detail.includes("asyncpg")) {
     return detail;
   }
