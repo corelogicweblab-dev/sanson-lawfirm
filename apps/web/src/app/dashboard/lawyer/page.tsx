@@ -13,7 +13,7 @@ export default function LawyerDashboardPage() {
         title="Lawyer Dashboard"
         breadcrumbs={[{ label: "Lawyer dashboard" }]}
       >
-        <PageContainer>
+        <PageContainer className="sanson-dashboard-hero">
           <SectionHeader
             title="Lawyer Dashboard"
             description="Legal decision maker — review, approve, strategize, and represent. Paralegals build the case file."

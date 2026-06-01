@@ -14,6 +14,8 @@ export function FuturisticBackground() {
     <div className="sanson-app-bg" data-motion-bg={tier} aria-hidden>
       <div className="sanson-bg-gradient-shift" />
       <div className="sanson-bg-gradient-flow" />
+      <div className="sanson-cyber-streak sanson-cyber-streak-a" />
+      <div className="sanson-cyber-streak sanson-cyber-streak-b" />
       <div className="sanson-mesh-grid" />
       <div className="sanson-holo-floor" />
       <div className="sanson-hex-mesh" />

@@ -42,7 +42,7 @@ export function InstallAppPrompt() {
   if (installed) return null;
 
   return (
-    <Card className={cn("sanson-stagger-item sanson-panel sanson-no-print")} interactive>
+    <Card className={cn("sanson-stagger-item sanson-panel sanson-install-hero sanson-no-print")} interactive>
       <CardContent className="p-4 sm:p-5">
         <div className="mb-3 flex items-center gap-2">
           <Download className="h-5 w-5 text-pink-400" />

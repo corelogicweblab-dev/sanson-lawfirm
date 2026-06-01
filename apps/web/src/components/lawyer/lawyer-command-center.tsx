@@ -186,29 +186,20 @@ export function LawyerCommandCenter() {
     <div className="space-y-8">
       <LawyerWorkflowStrip />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard title="Active cases" value={stats.active_cases} icon={<Briefcase className="h-5 w-5" />} />
-        <StatCard title="Pending review" value={stats.pending_review} icon={<Scale className="h-5 w-5" />} />
-        <StatCard title="Urgent / high" value={stats.urgent_high} icon={<AlertCircle className="h-5 w-5" />} />
-        <StatCard title="Pending approvals" value={stats.pending_approvals} icon={<Gavel className="h-5 w-5" />} />
-        <StatCard title="Open tasks" value={stats.open_tasks} icon={<ListTodo className="h-5 w-5" />} />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard title="Appointments pending" value={stats.appointments_pending} icon={<CalendarDays className="h-5 w-5" />} />
-        <StatCard title="Documents in system" value={stats.documents_total} icon={<FileText className="h-5 w-5" />} />
-        <StatCard title="Evidence items" value={stats.evidence_total} icon={<Shield className="h-5 w-5" />} />
+      <div className="sanson-metrics-grid">
+        <StatCard staggerIndex={0} title="Active cases" value={stats.active_cases} icon={<Briefcase className="h-5 w-5" />} />
+        <StatCard staggerIndex={1} title="Pending review" value={stats.pending_review} icon={<Scale className="h-5 w-5" />} />
+        <StatCard staggerIndex={2} title="Urgent / high" value={stats.urgent_high} icon={<AlertCircle className="h-5 w-5" />} />
+        <StatCard staggerIndex={3} title="Pending approvals" value={stats.pending_approvals} icon={<Gavel className="h-5 w-5" />} />
+        <StatCard staggerIndex={4} title="Appointments pending" value={stats.appointments_pending} icon={<CalendarDays className="h-5 w-5" />} />
+        <StatCard staggerIndex={5} title="Documents in system" value={stats.documents_total} icon={<FileText className="h-5 w-5" />} />
+        <StatCard staggerIndex={6} title="Evidence items system" value={stats.evidence_total} icon={<Shield className="h-5 w-5" />} />
         <StatCard
+          staggerIndex={7}
           title="AI analyses today"
           value={stats.ai_analyses_today}
           icon={<Sparkles className="h-5 w-5" />}
-          description="Open AI Center"
-        />
-        <StatCard
-          title="Notifications"
-          value={stats.notifications_unread}
-          icon={<Bell className="h-5 w-5" />}
-          description="Unread"
+          description={`Notifications · ${stats.notifications_unread} unread`}
         />
       </div>
 

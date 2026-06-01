@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 
 export function LawyerWorkflowStrip({ className }: { className?: string }) {
   return (
-    <div className={cn("sanson-panel overflow-x-auto p-4", className)}>
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-300">
+    <div className={cn("sanson-panel sanson-workflow-panel overflow-x-auto p-4", className)}>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-pink-200/90">
         Lawyer legal command workflow
       </p>
       <ol className="flex min-w-max gap-2">
