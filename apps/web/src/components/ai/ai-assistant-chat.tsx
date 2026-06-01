@@ -47,12 +47,28 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
             isSystem && "border border-violet-500/20 bg-violet-500/10 text-violet-100"
           )}
         >
-          <p className="whitespace-pre-wrap">{msg.message}</p>
+          <p className="whitespace-pre-wrap break-words">{msg.message}</p>
         </div>
         <span className="text-[10px] text-zinc-500">{formatTime(msg.createdAt)}</span>
       </div>
     </div>
   );
+}
+
+/** Collapse consecutive identical messages (from old stream retry duplicates). */
+function visibleMessages(messages: ChatMessage[]): ChatMessage[] {
+  const filtered = messages.filter(
+    (m) => m.messageType !== "SYSTEM" || messages.length <= 2
+  );
+  const out: ChatMessage[] = [];
+  for (const m of filtered) {
+    const prev = out[out.length - 1];
+    if (prev && prev.senderType === m.senderType && prev.message === m.message) {
+      continue;
+    }
+    out.push(m);
+  }
+  return out;
 }
 
 export function AiAssistantChat() {
@@ -68,11 +84,13 @@ export function AiAssistantChat() {
   const [streamBuffer, setStreamBuffer] = useState("");
   const [suggested, setSuggested] = useState<string[]>([]);
   const [decisionLoading, setDecisionLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback(() => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, []);
 
   const loadSessions = useCallback(async () => {
     const res = await api.listChatSessions();
@@ -98,7 +116,7 @@ export function AiAssistantChat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamBuffer, streaming]);
+  }, [messages, streamBuffer, streaming, scrollToBottom]);
 
   const startNewSession = async () => {
     setSending(true);
@@ -137,29 +155,27 @@ export function AiAssistantChat() {
     };
     setMessages((prev) => [...prev, optimistic]);
 
-    await api.streamChatMessage(
-      activeSession.id,
-      content,
-      (delta) => setStreamBuffer((b) => b + delta),
-      async () => {
-        setStreaming(false);
-        setStreamBuffer("");
-        await loadMessages(activeSession.id);
-        setSending(false);
-      },
-      async () => {
-        const fallback = await api.sendChatMessage(activeSession.id, content);
-        if (fallback.success && fallback.data) {
-          setMessages((prev) => [
-            ...prev.filter((m) => m.id !== optimistic.id),
-            fallback.data!.userMessage,
-            fallback.data!.aiMessage,
-          ]);
+    const finish = async () => {
+      setStreaming(false);
+      setStreamBuffer("");
+      await loadMessages(activeSession.id);
+      setSending(false);
+    };
+
+    try {
+      await api.streamChatMessage(
+        activeSession.id,
+        content,
+        (delta) => setStreamBuffer((b) => b + delta),
+        finish,
+        async () => {
+          /* Stream failed — user message may already be saved; reload only (no duplicate POST). */
+          await finish();
         }
-        setStreaming(false);
-        setSending(false);
-      }
-    );
+      );
+    } catch {
+      await finish();
+    }
   };
 
   const handleDecision = async (decision: string) => {
@@ -178,29 +194,31 @@ export function AiAssistantChat() {
     }
   };
 
+  const displayList = visibleMessages(messages);
+
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
+      <div className="flex h-full min-h-[240px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-pink-400" />
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr] xl:grid-cols-[minmax(0,260px)_1fr_minmax(0,280px)]">
-      <Card className="order-2 sanson-panel p-3 backdrop-blur-md lg:order-1">
+    <div className="sanson-ai-chat-root grid h-full min-h-0 grid-cols-1 gap-3 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-4 xl:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,260px)]">
+      <Card className="sanson-panel flex max-h-[min(28vh,220px)] min-h-0 flex-col overflow-hidden p-3 backdrop-blur-md md:max-h-none md:h-full">
         <Button
-          className="mb-3 w-full gap-2"
+          className="mb-3 w-full shrink-0 gap-2"
           onClick={startNewSession}
           disabled={sending}
         >
           <MessageSquarePlus className="h-4 w-4" />
           New conversation
         </Button>
-        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+        <p className="mb-2 shrink-0 text-xs font-medium uppercase tracking-wider text-zinc-500">
           Session history
         </p>
-        <div className="max-h-[200px] space-y-1 overflow-y-auto sm:max-h-[320px] lg:max-h-[420px]">
+        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
           {sessions.length === 0 && (
             <p className="text-xs text-zinc-500">No sessions yet</p>
           )}
@@ -223,25 +241,28 @@ export function AiAssistantChat() {
         </div>
       </Card>
 
-      <Card className="order-1 flex min-h-[min(70dvh,560px)] flex-col border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-md sm:min-h-[480px] lg:order-2 lg:min-h-[560px]">
-        <div className="border-b border-white/10 px-4 py-3">
+      <Card className="flex h-full min-h-0 flex-col overflow-hidden border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-md">
+        <div className="shrink-0 border-b border-white/10 px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-pink-400" />
-            <h2 className="font-semibold text-white">AI Legal Assistant</h2>
+            <Sparkles className="h-5 w-5 shrink-0 text-pink-400" />
+            <h2 className="truncate font-semibold text-white">AI Legal Assistant</h2>
           </div>
-          <p className="mt-1 text-xs text-zinc-400">
-            Magsulat sa English, Filipino, Cebuano, o anumang wika — tutugon ang assistant sa parehong wika.
+          <p className="mt-1 line-clamp-2 text-xs text-zinc-400">
+            Magsulat sa English, Filipino, Cebuano, o anumang wika — tutugon ang assistant sa
+            parehong wika.
           </p>
           {activeSession && (
-            <p className="mt-1 font-mono text-xs text-zinc-500">{activeSession.sessionReference}</p>
+            <p className="mt-1 truncate font-mono text-[10px] text-zinc-500 sm:text-xs">
+              {activeSession.sessionReference}
+            </p>
           )}
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div ref={messagesScrollRef} className="sanson-ai-chat-messages space-y-4 p-3 sm:p-4">
           {!activeSession && (
-            <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-              <Bot className="h-16 w-16 text-pink-400/50" />
-              <p className="text-zinc-400">
+            <div className="flex min-h-[12rem] flex-col items-center justify-center gap-4 py-8 text-center">
+              <Bot className="h-14 w-14 text-pink-400/50 sm:h-16 sm:w-16" />
+              <p className="max-w-sm text-sm text-zinc-400">
                 Start a conversation to describe your legal concern. You may write in English,
                 Filipino (Tagalog), Cebuano, or your preferred language.
               </p>
@@ -249,14 +270,11 @@ export function AiAssistantChat() {
             </div>
           )}
 
-          {activeSession &&
-            messages
-              .filter((m) => m.messageType !== "SYSTEM" || messages.length <= 2)
-              .map((m) => <MessageBubble key={m.id} msg={m} />)}
+          {activeSession && displayList.map((m) => <MessageBubble key={m.id} msg={m} />)}
 
           {streaming && streamBuffer && (
             <div className="flex gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/20">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/20">
                 <Bot className="h-4 w-4 text-violet-300" />
               </div>
               <div className="max-w-[85%] rounded-2xl rounded-bl-md border sanson-panel px-4 py-2.5 text-sm text-zinc-100">
@@ -266,25 +284,25 @@ export function AiAssistantChat() {
             </div>
           )}
 
-          {sending && !streaming && (
+          {sending && !streaming && !streamBuffer && (
             <div className="flex items-center gap-2 text-sm text-zinc-500">
               <Loader2 className="h-4 w-4 animate-spin" />
               Thinking…
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
 
         {activeSession && (
-          <>
+          <div className="shrink-0 border-t border-white/10">
             {suggested.length > 0 && messages.length < 3 && (
-              <div className="flex flex-wrap gap-2 border-t border-white/10 px-4 py-2">
+              <div className="flex max-h-24 flex-wrap gap-2 overflow-y-auto px-3 py-2 sm:px-4">
                 {suggested.slice(0, 3).map((q) => (
                   <button
                     key={q}
                     type="button"
                     className="rounded-full border sanson-panel px-3 py-1 text-xs text-zinc-300 hover:border-pink-500/30 hover:text-pink-200"
                     onClick={() => sendMessage(q)}
+                    disabled={sending}
                   >
                     {q.length > 60 ? `${q.slice(0, 60)}…` : q}
                   </button>
@@ -292,7 +310,7 @@ export function AiAssistantChat() {
               </div>
             )}
 
-            <div className="border-t border-white/10 p-4">
+            <div className="p-3 sm:p-4">
               <div className="flex gap-2">
                 <textarea
                   value={input}
@@ -305,12 +323,12 @@ export function AiAssistantChat() {
                   }}
                   placeholder="Ilahad ang legal concern (English, Filipino, Cebuano, atbp.)…"
                   rows={2}
-                  className="flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-pink-500/50 focus:outline-none"
+                  className="max-h-24 min-h-[2.75rem] flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-pink-500/50 focus:outline-none"
                   disabled={sending || activeSession.status !== "ACTIVE"}
                 />
                 <Button
                   size="icon"
-                  className="h-auto shrink-0"
+                  className="h-auto shrink-0 self-end"
                   onClick={() => sendMessage()}
                   disabled={sending || !input.trim() || activeSession.status !== "ACTIVE"}
                 >
@@ -319,11 +337,11 @@ export function AiAssistantChat() {
               </div>
 
               {activeSession.status === "ACTIVE" && (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={decisionLoading}
+                    disabled={decisionLoading || sending}
                     onClick={() => handleDecision("CONTINUE_CHAT")}
                   >
                     Continue chat
@@ -331,14 +349,14 @@ export function AiAssistantChat() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={decisionLoading}
+                    disabled={decisionLoading || sending}
                     onClick={() => handleDecision("RETURN_LATER")}
                   >
                     Return later
                   </Button>
                   <Button
                     size="sm"
-                    disabled={decisionLoading}
+                    disabled={decisionLoading || sending}
                     onClick={() => handleDecision("REQUEST_LEGAL_REPRESENTATION")}
                   >
                     Request representation
@@ -346,13 +364,13 @@ export function AiAssistantChat() {
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
       </Card>
 
-      <div className="order-3 space-y-4">
+      <div className="hidden min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain xl:flex xl:max-h-full">
         <LegalDisclaimer compact />
-        <Card className="sanson-panel p-4 backdrop-blur-md">
+        <Card className="sanson-panel shrink-0 p-4 backdrop-blur-md">
           <h3 className="mb-3 text-sm font-semibold text-white">Intake insights</h3>
           {!insights?.classification && !insights?.summary && (
             <p className="text-xs text-zinc-500">

@@ -325,6 +325,7 @@ export class ApiClient {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let hadError = false;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -336,15 +337,23 @@ export class ApiClient {
         if (!line.startsWith("data: ")) continue;
         try {
           const payload = JSON.parse(line.slice(6));
-          if (payload.error) onError(payload.error);
-          else if (payload.delta) onDelta(payload.delta);
-          else if (payload.done) onDone();
+          if (payload.error) {
+            hadError = true;
+            onError(payload.error);
+          } else if (payload.delta) onDelta(payload.delta);
+          else if (payload.done) {
+            /* stream complete */
+          }
         } catch {
           /* skip malformed chunks */
         }
       }
     }
-    onDone();
+    if (hadError) {
+      onError("Stream ended before completion");
+    } else {
+      onDone();
+    }
   }
 
   async submitChatDecision(
