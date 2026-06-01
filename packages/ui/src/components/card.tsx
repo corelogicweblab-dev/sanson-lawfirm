@@ -26,7 +26,10 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-lg font-semibold leading-none tracking-tight text-white", className)} {...props} />
+    <h3
+      className={cn("sanson-heading text-lg font-bold leading-none tracking-tight text-white", className)}
+      {...props}
+    />
   );
 }
 

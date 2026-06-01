@@ -16,8 +16,8 @@ export function LawyerWorkflowStrip({ className }: { className?: string }) {
             className={cn(
               "sanson-glass-chip flex shrink-0 flex-col rounded-lg px-3 py-2 text-center",
               s.owner === "LAWYER"
-                ? "border-pink-400/45 shadow-[0_0_16px_rgba(255,79,163,0.15)]"
-                : "border-white/20"
+                ? "border-pink-400/55 shadow-[0_0_20px_rgba(255,79,163,0.25)]"
+                : "border-pink-500/15"
             )}
           >
             <span className="text-[10px] text-zinc-400">Step {s.step}</span>

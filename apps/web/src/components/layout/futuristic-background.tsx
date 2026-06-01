@@ -15,6 +15,7 @@ export function FuturisticBackground() {
       <div className="sanson-bg-gradient-shift" />
       <div className="sanson-bg-gradient-flow" />
       <div className="sanson-mesh-grid" />
+      <div className="sanson-holo-floor" />
       <div className="sanson-depth-veil" />
 
       {showFx && (
@@ -22,6 +23,8 @@ export function FuturisticBackground() {
           <div className="sanson-bg-gradient-flow-b" />
           <div className="sanson-shimmer" />
           <div className="sanson-hex-mesh" />
+          <div className="sanson-lens-flare sanson-lens-flare-1" />
+          <div className="sanson-lens-flare sanson-lens-flare-2" />
           <div className="sanson-bokeh-layer" />
 
           <div className="sanson-blob sanson-blob-1" />

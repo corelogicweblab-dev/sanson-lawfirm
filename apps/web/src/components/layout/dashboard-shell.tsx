@@ -259,11 +259,11 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
               title={sidebarCollapsed ? item.label : undefined}
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                "flex items-center gap-2.5 rounded-xl py-2 text-sm font-medium transition-colors duration-200",
+                "sanson-sidebar-link flex items-center gap-2.5 rounded-xl border border-transparent py-2 text-sm font-medium",
                 sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3",
                 pathname === item.href
-                  ? "border border-pink-400/40 bg-gradient-to-r from-pink-600/25 to-black/40 text-white shadow-[0_0_20px_rgba(255,79,163,0.15)]"
-                  : "text-zinc-300 hover:border hover:border-pink-500/20 hover:bg-black/35 hover:text-white"
+                  ? "border-pink-400/50 bg-gradient-to-r from-pink-600/30 to-black/50 text-white shadow-[0_0_24px_rgba(255,79,163,0.22)]"
+                  : "text-zinc-300"
               )}
             >
               {item.icon}
