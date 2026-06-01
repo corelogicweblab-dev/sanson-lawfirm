@@ -15,6 +15,18 @@ Netlify **proxies** `/api/*` to Render so the browser never hits `onrender.com` 
 
 5. Click **Deploy site** (first build ~3–5 minutes).
 
+### If build fails: "Exposed secrets detected"
+
+Firebase `NEXT_PUBLIC_*` values are **meant to be in the browser bundle**. Netlify may flag them by mistake.
+
+`netlify.toml` already sets `SECRETS_SCAN_OMIT_KEYS` for Firebase. If it still fails, add the same variable in **Site settings → Environment variables**:
+
+```text
+SECRETS_SCAN_OMIT_KEYS=NEXT_PUBLIC_FIREBASE_API_KEY,NEXT_PUBLIC_FIREBASE_APP_ID,NEXT_PUBLIC_FIREBASE_PROJECT_ID,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+```
+
+Then **Clear cache and deploy** again.
+
 ## 2. Required environment variables (Netlify UI)
 
 **Site settings → Environment variables → Production** (and Deploy previews if needed):
@@ -22,9 +34,9 @@ Netlify **proxies** `/api/*` to Render so the browser never hits `onrender.com` 
 | Variable | Example / notes |
 |----------|-----------------|
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | From Firebase Console |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `sansonlawfirm.firebaseapp.com` |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `sansonlawfirm` |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | `sansonlawfirm.firebasestorage.app` |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | From Firebase (e.g. `your-project.firebaseapp.com`) |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | From Firebase |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | From Firebase |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | From Firebase |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | Optional |
