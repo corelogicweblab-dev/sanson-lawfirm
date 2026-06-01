@@ -194,7 +194,7 @@ export function MasterCaseIntakeForm({
           setDirectoryHint("No clients in directory yet — use + New client to create one with this case.");
         }
       } else {
-        setDirectoryHint("Could not load client list. Use + New client, or refresh after backend deploy.");
+        setDirectoryHint("Could not load client list. Use + New client or try again later.");
       }
     });
     api.listUserDirectory("LAWYER").then((r) => {

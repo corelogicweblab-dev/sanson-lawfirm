@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
-import { Scale } from "lucide-react";
 import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
 import { getFirebaseAuth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { formatFirebaseAuthError } from "@/lib/auth-errors";
 import { api } from "@/lib/api";
-import { getApiBaseUrl } from "@/lib/api-url";
 import { getDashboardPath as pathForRole } from "@sanson/utils";
+import { friendlySyncError } from "@/lib/user-messages";
 import type { UserRole } from "@sanson/types";
 import { useAuthStore } from "@/store/auth";
 
@@ -25,62 +24,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiStatus, setApiStatus] = useState<string | null>(null);
-  const [apiOk, setApiOk] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const base = getApiBaseUrl();
-
-    const check = async (attempt: number) => {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 25_000);
-      try {
-        const r = await fetch(`${base}/api/v1/health/ready`, {
-          signal: controller.signal,
-          cache: "no-store",
-        });
-        const body = (await r.json()) as {
-          data?: {
-            database?: string;
-            database_url_issues?: string[];
-            database_error?: string | null;
-            hint?: string | null;
-          };
-        };
-        if (body?.data?.database === "connected") {
-          setApiOk(true);
-          setApiStatus(null);
-          return;
-        }
-        setApiOk(false);
-        const issues = body?.data?.database_url_issues ?? [];
-        if (issues.length > 0) {
-          setApiStatus(
-            `Mali ang format ng DATABASE_URL: ${issues[0]} Dapat colon (:) bago password, hindi tuldok (.).`
-          );
-          return;
-        }
-        const detail = body?.data?.database_error || body?.data?.hint;
-        setApiStatus(
-          detail ||
-            "Database offline sa Render. I-save ang DATABASE_URL → Manual Deploy → hintayin Live, tapos refresh."
-        );
-      } catch {
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 2000));
-          return check(attempt + 1);
-        }
-        setApiOk(false);
-        setApiStatus(
-          `Hindi maabot ang API (${base}). Kung bagong deploy, hintayin 1–2 minuto (Render cold start) tapos i-refresh.`
-        );
-      } finally {
-        clearTimeout(timer);
-      }
-    };
-
-    check(1);
-  }, []);
 
   const handleSyncAndRedirect = async (token: string, userEmail: string, profile?: {
     first_name?: string;
@@ -95,10 +38,7 @@ export default function LoginPage() {
     });
 
     if (!response.success || !response.data?.user) {
-      setError(
-        response.message ||
-          "Hindi ma-sync ang user. Karaniwang sanhi: database offline sa Render (tingnan /health/ready)."
-      );
+      setError(friendlySyncError());
       return;
     }
 
@@ -114,7 +54,7 @@ export default function LoginPage() {
     setLoading(true);
 
     if (!isFirebaseConfigured()) {
-      setError("Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_* environment variables.");
+      setError("Sign-in is temporarily unavailable. Please contact your administrator.");
       setLoading(false);
       return;
     }
@@ -125,7 +65,7 @@ export default function LoginPage() {
       const token = await credential.user.getIdToken();
       await handleSyncAndRedirect(token, email);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : formatFirebaseAuthError(err));
+      setError(formatFirebaseAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -136,7 +76,7 @@ export default function LoginPage() {
     setLoading(true);
 
     if (!isFirebaseConfigured()) {
-      setError("Firebase is not configured.");
+      setError("Sign-in is temporarily unavailable. Please contact your administrator.");
       setLoading(false);
       return;
     }
@@ -158,17 +98,12 @@ export default function LoginPage() {
     }
   };
 
-  const roleHint = email ? inferRoleFromEmail(email) : null;
-
   return (
     <div className="auth-gradient flex flex-1 items-center justify-center p-4 py-8 safe-bottom">
       <Card className="sanson-auth-card w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400">
-            <Scale className="h-6 w-6 text-white" />
-          </div>
           <CardTitle>Sign In</CardTitle>
-          <CardDescription>Access your SANSON Legal OS portal</CardDescription>
+          <CardDescription>Enter your firm credentials to continue</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailLogin} className="space-y-4">
@@ -177,7 +112,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@sansonlaw.ph"
+              placeholder="you@sansonlaw.ph"
               required
               autoComplete="email"
             />
@@ -190,27 +125,16 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
             />
-            {roleHint && roleHint !== "CLIENT" && (
-              <p className="text-xs text-zinc-500">
-                Dashboard: <span className="text-pink-400">{roleHint}</span>
-              </p>
-            )}
             <div className="text-right">
               <Link href="/forgot-password" className="text-xs text-pink-400 hover:underline">
                 Forgot password?
               </Link>
             </div>
-            {apiOk === true && (
-              <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
-                API at database connected sa Render — puwede nang mag-sign in.
+            {error && (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                {error}
               </p>
             )}
-            {apiStatus && (
-              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                {apiStatus}
-              </p>
-            )}
-            {error && <p className="text-sm text-red-400">{error}</p>}
             <Button type="submit" className="w-full" loading={loading}>
               Sign In
             </Button>

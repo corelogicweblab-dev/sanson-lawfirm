@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FileText,
   Upload,
@@ -14,10 +14,11 @@ import { printDocument } from "@/lib/print";
 import { Badge, Button, Card, CardContent, EmptyState } from "@sanson/ui";
 import type { DocumentCategory, DocumentItem } from "@sanson/types";
 import { api } from "@/lib/api";
+import { friendlyUploadError } from "@/lib/user-messages";
 import { cn } from "@/lib/utils";
 
 const UPLOAD_ACCEPT =
-  ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.zip,.mp4,.mov,.mp3,.wav,.m4a,.aac";
+  ".pdf,.doc,.docx,.txt,.rtf,.png,.jpg,.jpeg,.webp,.gif,.zip,.rar,.7z,.mp4,.mov,.avi,.mkv,.webm,.m4a,.mp3,.wav,.aac,.ogg,.flac,.xls,.xlsx,.ppt,.pptx";
 
 interface DocumentCenterProps {
   showProcess?: boolean;
@@ -41,6 +42,8 @@ export function DocumentCenter({
   const [uploading, setUploading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,14 +66,21 @@ export function DocumentCenter({
       window.alert("Create or open a case first — documents are stored per case.");
       return;
     }
+    setUploadError(null);
     setUploading(true);
-    for (const file of Array.from(files)) {
-      await api.uploadDocument(file, {
+    const list = Array.from(files);
+    for (const file of list) {
+      const res = await api.uploadDocument(file, {
         categoryId: categoryId || undefined,
         caseId,
       });
+      if (!res.success) {
+        setUploadError(friendlyUploadError(res.message ?? undefined));
+        break;
+      }
     }
     setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     await load();
   };
 
@@ -127,13 +137,15 @@ export function DocumentCenter({
           >
             <Upload className="mb-3 h-10 w-10 text-pink-400" />
             <p className="mb-1 font-medium text-white">Drag & drop legal documents</p>
-            <p className="mb-4 text-xs text-zinc-500">
-              PDF, DOC, images, video, audio, ZIP — max 25MB · stored on this case only
+            <p className="mb-4 text-xs text-zinc-400">
+              PDF, Office, images, video, audio, ZIP — linked to this case only
             </p>
-            {caseId && (
-              <p className="mb-2 font-mono text-[10px] text-pink-300/80">Case ID: {caseId.slice(0, 8)}…</p>
+            {uploadError && (
+              <p className="mb-3 w-full rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                {uploadError}
+              </p>
             )}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="mb-4 flex w-full flex-wrap items-center justify-center gap-2">
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -146,27 +158,28 @@ export function DocumentCenter({
                   </option>
                 ))}
               </select>
-              <label>
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  accept={UPLOAD_ACCEPT}
-                  onChange={(e) => handleFiles(e.target.files)}
-                />
-                <Button type="button" disabled={uploading}>
-                  {uploading ? "Uploading…" : "Browse files"}
-                </Button>
-              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                accept={UPLOAD_ACCEPT}
+                onChange={(e) => {
+                  handleFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? "Uploading…" : "Browse files"}
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
-      )}
-      {readOnly && (
-        <p className="rounded-lg border border-pink-500/20 bg-pink-950/20 px-3 py-2 text-sm text-zinc-400">
-          Read-only view. Paralegals upload and organize all case files.
-        </p>
       )}
 
       {documents.length === 0 ? (
@@ -194,7 +207,7 @@ export function DocumentCenter({
                   <Badge variant="secondary">{doc.reviewStatus}</Badge>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {doc.downloadUrl && (
+                  {doc.downloadUrl ? (
                     <>
                       <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
                         <Button size="sm" variant="outline">
@@ -211,6 +224,8 @@ export function DocumentCenter({
                         Print
                       </Button>
                     </>
+                  ) : (
+                    <span className="text-xs text-zinc-500">Preview unavailable</span>
                   )}
                   {showProcess && (
                     <Button

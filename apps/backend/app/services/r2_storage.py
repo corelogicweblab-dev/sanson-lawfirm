@@ -11,14 +11,65 @@ ALLOWED_MIME_TYPES = {
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "text/plain",
     "image/png",
     "image/jpeg",
     "image/jpg",
     "image/webp",
+    "image/gif",
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/x-rar-compressed",
+    "application/octet-stream",
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/webm",
+    "video/x-matroska",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/aac",
+    "audio/ogg",
+    "audio/flac",
 }
 
-ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt", ".png", ".jpg", ".jpeg", ".webp"}
+ALLOWED_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".txt",
+    ".rtf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".gif",
+    ".zip",
+    ".rar",
+    ".7z",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".mkv",
+    ".webm",
+    ".m4v",
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".aac",
+    ".ogg",
+    ".flac",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+}
 
 
 class R2StorageService:
@@ -46,10 +97,11 @@ class R2StorageService:
         if ext not in ALLOWED_EXTENSIONS:
             raise ValueError(f"File type not allowed: {ext or 'unknown'}")
         if mime_type and mime_type not in ALLOWED_MIME_TYPES:
-            if not mime_type.startswith("image/"):
+            allowed_prefix = mime_type.startswith(("image/", "video/", "audio/", "application/"))
+            if not allowed_prefix:
                 raise ValueError(f"MIME type not allowed: {mime_type}")
         if size > self.settings.document_max_size_bytes:
-            raise ValueError(f"File exceeds {self.settings.document_max_size_mb}MB limit")
+            raise ValueError("File is too large for upload")
 
     def build_storage_path(self, user_id: uuid.UUID, filename: str) -> str:
         safe = "".join(c for c in filename if c.isalnum() or c in ".-_")[:200]

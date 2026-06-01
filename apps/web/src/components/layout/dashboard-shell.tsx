@@ -44,6 +44,7 @@ import { loadProfilePhotoUrl } from "@/lib/profile-photo";
 import { Button } from "@sanson/ui";
 import { SearchModal } from "@/components/search/global-search";
 import { PrintButton } from "@/components/print/print-button";
+import { AppHeaderBrand } from "@/components/layout/app-header-brand";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { performLogoutAndRedirect } from "@/lib/logout";
@@ -215,20 +216,13 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
         )}
       >
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-3 sm:h-16 sm:px-4">
-          <Link
-            href={roleHome}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-600 to-pink-400 shadow-[0_0_16px_rgba(255,79,163,0.35)] transition hover:scale-105"
-            title="Dashboard home"
-          >
-            <Scale className="h-4 w-4 text-white" />
-          </Link>
           <div
             className={cn(
               "min-w-0 flex-1 overflow-hidden transition-opacity duration-200",
               sidebarCollapsed && "lg:pointer-events-none lg:opacity-0"
             )}
           >
-            <p className="truncate text-sm font-bold text-white">SANSON Legal OS</p>
+            <AppHeaderBrand href={roleHome} />
           </div>
           <button
             type="button"
@@ -308,15 +302,9 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
             <Menu className="h-5 w-5" />
           </button>
 
-          <Link
-            href={roleHome}
-            className="sanson-topbar-brand hidden min-w-0 items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-white/5 sm:flex lg:hidden"
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-600 to-pink-400">
-              <Scale className="h-4 w-4 text-white" />
-            </div>
-            <span className="truncate text-sm font-semibold text-white">SANSON</span>
-          </Link>
+          <div className="hidden sm:flex lg:hidden">
+            <AppHeaderBrand href={roleHome} />
+          </div>
 
           {breadcrumbs && breadcrumbs.length > 0 ? (
             <nav

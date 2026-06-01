@@ -61,13 +61,9 @@ export class ApiClient {
       });
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        throw new Error(
-          `API request timed out after ${timeoutMs / 1000}s. Render may be waking up — try again, or check DATABASE_URL on Render.`
-        );
+        throw new Error("The request took too long. Please try again.");
       }
-      throw new Error(
-        `Cannot reach API at ${baseUrl}. Check that Render is running and CORS_ORIGINS includes ${typeof window !== "undefined" ? window.location.origin : "your site"}.`
-      );
+      throw new Error("Cannot reach the server. Check your connection and try again.");
     } finally {
       clearTimeout(timer);
     }
@@ -401,12 +397,35 @@ export class ApiClient {
     const headers: Record<string, string> = {};
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
 
-    const response = await fetch(`${getApiBaseUrl()}${API_BASE_PATH}/documents/upload`, {
-      method: "POST",
-      headers,
-      body: form,
-    });
-    return response.json();
+    const controller = new AbortController();
+    const timeoutMs = Math.max(120_000, Math.min(900_000, file.size / 1024 + 120_000));
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}${API_BASE_PATH}/documents/upload`, {
+        method: "POST",
+        headers,
+        body: form,
+        signal: controller.signal,
+      });
+      const body = (await response.json()) as ApiResponse<DocumentItem>;
+      if (!response.ok && body.success !== false) {
+        return {
+          success: false,
+          message: body.message || "Upload failed",
+          data: null,
+          errors: body.errors,
+        };
+      }
+      return body;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return { success: false, message: "Upload timed out. Try a smaller file or check your connection.", data: null };
+      }
+      return { success: false, message: "Upload failed. Check your connection and try again.", data: null };
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async getDocument(id: string): Promise<ApiResponse<DocumentItem>> {

@@ -172,9 +172,7 @@ export function LawyerCommandCenter() {
     return (
       <div className="sanson-panel space-y-3 p-6 text-sm">
         <p className="text-rose-300">{error}</p>
-        <p className="text-zinc-400">
-          If Render was sleeping, wait a moment and refresh. Ensure you are signed in as a lawyer.
-        </p>
+        <p className="text-zinc-400">Please refresh the page or sign in again.</p>
         <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
           Retry
         </Button>

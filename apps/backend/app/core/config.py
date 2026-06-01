@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     r2_bucket_name: str = "sanson-legal-documents"
     r2_endpoint_url: str = ""
     r2_public_base_url: str = ""
-    document_max_size_mb: int = 25
+    document_max_size_mb: int = 512
     document_signed_url_ttl_seconds: int = 3600
 
     qdrant_url: str = ""
