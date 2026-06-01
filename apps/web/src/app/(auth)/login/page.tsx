@@ -50,7 +50,9 @@ export default function LoginPage() {
     setLoading(true);
 
     if (!isFirebaseConfigured()) {
-      setError("Sign-in is temporarily unavailable. Please contact your administrator.");
+      setError(
+        "Firebase is not configured on this site. Add NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID in Netlify (or hosting) environment variables, then redeploy."
+      );
       setLoading(false);
       return;
     }
@@ -77,7 +79,9 @@ export default function LoginPage() {
     setLoading(true);
 
     if (!isFirebaseConfigured()) {
-      setError("Sign-in is temporarily unavailable. Please contact your administrator.");
+      setError(
+        "Firebase is not configured on this site. Add NEXT_PUBLIC_FIREBASE_* variables in Netlify environment settings, then redeploy."
+      );
       setLoading(false);
       return;
     }

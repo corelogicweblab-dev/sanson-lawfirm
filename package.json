@@ -22,7 +22,7 @@
     "db:check": "node scripts/migrate-pipeline.js --check",
     "validate:env": "node scripts/validate-env.js",
     "validate:env:prod": "node scripts/validate-env.js --environment production --offline",
-    "build:web": "npm run build --workspace=@sanson/web",
+    "build:web": "node scripts/verify-web-env.js && npm run build --workspace=@sanson/web",
     "deploy:hosting": "npm run build:web && firebase deploy --only hosting"
   },
   "devDependencies": {
