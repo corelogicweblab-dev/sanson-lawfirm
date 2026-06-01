@@ -1,0 +1,58 @@
+# SANSON Legal OS — Netlify (GitHub-connected deploy)
+# UI on Netlify; API proxied to Render (same-origin, no browser NetworkError).
+
+[build]
+  base = "."
+  command = "npm ci && npm run build:web"
+  publish = "apps/web/out"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_CONFIG_LEGACY_PEER_DEPS = "true"
+  # Same-origin API via proxy below — do not set NEXT_PUBLIC_API_URL to onrender.com
+  NEXT_PUBLIC_API_URL = ""
+
+# Proxy API to Render (browser calls your-site.netlify.app/api/…)
+[[redirects]]
+  from = "/api/*"
+  to = "https://sanson-lawfirm.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Next.js static export uses trailing slashes
+[[redirects]]
+  from = "/dashboard/lawyer"
+  to = "/dashboard/lawyer/"
+  status = 301
+
+[[redirects]]
+  from = "/dashboard/paralegal"
+  to = "/dashboard/paralegal/"
+  status = 301
+
+[[redirects]]
+  from = "/dashboard/client"
+  to = "/dashboard/client/"
+  status = 301
+
+[[redirects]]
+  from = "/login"
+  to = "/login/"
+  status = 301
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

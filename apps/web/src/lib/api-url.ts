@@ -1,4 +1,4 @@
-/** Direct Render URL — fallback for cross-origin Hosting. */
+/** Direct Render URL — only when cross-origin hosting has no API proxy. */
 export const RENDER_API_URL = "https://sanson-lawfirm.onrender.com";
 
 const FIREBASE_HOSTS = new Set([
@@ -6,18 +6,14 @@ const FIREBASE_HOSTS = new Set([
   "sansonlawfirm.firebaseapp.com",
 ]);
 
-/** Combined UI+API on one host — no cross-origin, no NetworkError. */
-const SAME_ORIGIN_HOSTS = new Set([
-  ...FIREBASE_HOSTS,
-  "sanson-lawfirm.onrender.com",
-  "localhost",
-  "127.0.0.1",
-]);
+function isNetlifyHost(host: string): boolean {
+  return host.endsWith(".netlify.app") || host.endsWith(".netlify.live");
+}
 
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host === "sanson-lawfirm.onrender.com" || host === "localhost" || host === "127.0.0.1") {
+    if (host === "sanson-lawfirm.onrender.com" || isNetlifyHost(host)) {
       return host === "localhost" || host === "127.0.0.1" ? "http://localhost:8100" : "";
     }
   }
@@ -36,20 +32,20 @@ export function getApiBaseUrl(): string {
 
 export function isProductionHosting(): boolean {
   if (typeof window === "undefined") return false;
-  return FIREBASE_HOSTS.has(window.location.hostname);
+  const host = window.location.hostname;
+  return FIREBASE_HOSTS.has(host) || host.endsWith(".netlify.app");
 }
 
 export function isSameOriginApi(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
-  if (host === "sanson-lawfirm.onrender.com") return true;
-  if (host === "localhost" || host === "127.0.0.1") return true;
-  return false;
+  return host === "sanson-lawfirm.onrender.com" || isNetlifyHost(host);
 }
 
 export function isLikelyMisconfiguredApi(): boolean {
   if (typeof window === "undefined") return false;
-  if (!FIREBASE_HOSTS.has(window.location.hostname)) return false;
+  const host = window.location.hostname;
+  if (!FIREBASE_HOSTS.has(host) && !host.endsWith(".netlify.app")) return false;
   const env = process.env.NEXT_PUBLIC_API_URL?.trim() || "";
-  return env.includes("localhost") || env.includes("127.0.0.1");
+  return env.includes("onrender.com") || env.includes("localhost");
 }
