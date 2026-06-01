@@ -29,6 +29,7 @@ REQUIRED_PRODUCTION = [
 ]
 
 RECOMMENDED_PRODUCTION = [
+    ("gemini_api_key", "GEMINI_API_KEY"),
     ("openai_api_key", "OPENAI_API_KEY"),
     ("qdrant_url", "QDRANT_URL"),
     ("r2_access_key_id", "R2_ACCESS_KEY_ID"),
@@ -58,6 +59,11 @@ def validate_environment(settings: Settings) -> EnvValidationResult:
 
         if not settings.cors_origins_list:
             result.warnings.append("CORS_ORIGINS is empty")
+
+        if not settings.gemini_configured and not settings.openai_configured:
+            result.warnings.append(
+                "No AI chat provider: set GEMINI_API_KEY or OPENAI_API_KEY on Render"
+            )
 
     if env == "staging" and not settings.database_url.strip():
         result.errors.append("DATABASE_URL required for staging")

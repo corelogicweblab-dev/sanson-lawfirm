@@ -24,7 +24,8 @@ from app.models.legal import CaseCategoryEnum, PriorityLevelEnum
 from app.services.ai_audit_service import AiAuditService
 from app.services.audit_service import AuditService
 from app.services.legal_workflow import LegalWorkflowService
-from app.services.openai_service import OpenAIService, sanitize_user_input
+from app.services.llm_service import LLMService
+from app.services.openai_service import sanitize_user_input
 from app.utils.references import generate_chat_session_reference
 
 
@@ -32,7 +33,7 @@ class ChatService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.audit = AuditService(db)
-        self.openai = OpenAIService()
+        self.llm = LLMService()
         self.legal = LegalWorkflowService(db)
 
     async def create_session(
@@ -184,7 +185,7 @@ class ChatService:
         await AiAuditService(self.db).log(
             user_id=client_id,
             prompt_type="client_chat",
-            model_name=self.openai.model,
+            model_name=f"{self.llm.provider}:{self.llm.model}",
             tokens_output=tokens or 0,
             output_summary=ai_text[:500] if ai_text else None,
             session_id=session_id,
@@ -213,7 +214,7 @@ class ChatService:
 
         history = await self._conversation_history(session_id)
         full = []
-        async for chunk in self.openai.stream_chat(history, user_text):
+        async for chunk in self.llm.stream_chat(history, user_text):
             full.append(chunk)
             payload = json.dumps({"delta": chunk})
             yield f"data: {payload}\n\n"
@@ -263,7 +264,7 @@ class ChatService:
             raise ValueError("Session not found")
 
         text = await self._conversation_text(session_id)
-        data = await self.openai.classify(text)
+        data = await self.llm.classify(text)
         row = AiClassification(
             session_id=session_id,
             category=self._map_category(data.get("category")),
@@ -301,7 +302,7 @@ class ChatService:
             raise ValueError("Session not found")
 
         text = await self._conversation_text(session_id)
-        data = await self.openai.summarize(text)
+        data = await self.llm.summarize(text)
 
         classification = await self._latest_classification(session_id)
         urgency = classification.urgency if classification else None
@@ -347,7 +348,7 @@ class ChatService:
             raise ValueError("Session not found")
 
         text = await self._conversation_text(session_id)
-        data = await self.openai.recommend(text)
+        data = await self.llm.recommend(text)
         items = data.get("recommendations", [])
         rows = []
         for item in items:
@@ -388,7 +389,7 @@ class ChatService:
             raise ValueError("Session not found")
 
         text = await self._conversation_text(session_id)
-        data = await self.openai.extract_intake(text)
+        data = await self.llm.extract_intake(text)
         rows = []
         for item in data.get("responses", []):
             row = AiIntakeResponse(

@@ -39,6 +39,11 @@ class Settings(BaseSettings):
 
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-1.5-flash"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+
     ai_rate_limit_per_minute: int = 30
 
     r2_account_id: str = ""
@@ -122,6 +127,14 @@ class Settings(BaseSettings):
     @property
     def openai_configured(self) -> bool:
         return bool(self.openai_api_key.strip())
+
+    @property
+    def gemini_configured(self) -> bool:
+        return bool(self.gemini_api_key.strip())
+
+    @property
+    def ai_chat_configured(self) -> bool:
+        return self.gemini_configured or self.openai_configured
 
     @property
     def r2_configured(self) -> bool:

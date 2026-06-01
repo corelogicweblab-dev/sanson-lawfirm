@@ -51,7 +51,15 @@ async def environment_status():
             "integrations": {
                 "database_ssl": settings.requires_database_ssl,
                 "firebase": settings.firebase_configured,
+                "gemini": settings.gemini_configured,
                 "openai": settings.openai_configured,
+                "ai_chat_provider": (
+                    "gemini"
+                    if settings.gemini_configured
+                    else "openai"
+                    if settings.openai_configured
+                    else "none"
+                ),
                 "qdrant": settings.qdrant_configured,
                 "r2": settings.r2_configured,
             },

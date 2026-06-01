@@ -33,6 +33,12 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4o-mini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: GEMINI_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta
       - key: QDRANT_URL
         sync: false
       - key: QDRANT_API_KEY
