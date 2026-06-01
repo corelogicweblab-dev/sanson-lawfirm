@@ -101,14 +101,20 @@ h4,
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  isolation: isolate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   background: radial-gradient(ellipse 110% 90% at 50% 15%, #140818 0%, #08040c 42%, #020104 100%);
+}
+
+.sanson-app-bg > * {
+  backface-visibility: hidden;
 }
 
 .sanson-bg-gradient-shift {
   position: absolute;
   inset: -50%;
-  opacity: 0.32;
-  mix-blend-mode: screen;
+  opacity: 0.3;
   background: linear-gradient(
     125deg,
     transparent 0%,
@@ -118,17 +124,13 @@ h4,
     rgba(157, 23, 77, 0.3) 68%,
     transparent 88%
   );
-  background-size: 240% 240%;
-  animation:
-    sanson-bg-drift 18s ease-in-out infinite alternate,
-    sanson-gradient-pos 14s ease-in-out infinite alternate;
-  will-change: transform, background-position;
+  animation: sanson-bg-drift 28s linear infinite;
 }
 
 .sanson-bg-gradient-flow {
   position: absolute;
   inset: -30%;
-  opacity: 0.28;
+  opacity: 0.22;
   background: conic-gradient(
     from 0deg at 50% 50%,
     transparent 0deg,
@@ -139,34 +141,18 @@ h4,
     rgba(236, 72, 153, 0.3) 300deg,
     transparent 360deg
   );
-  animation: sanson-conic-spin 24s linear infinite;
-  will-change: transform;
+  animation: sanson-conic-spin 48s linear infinite;
 }
 
 @keyframes sanson-bg-drift {
   0% {
-    transform: translate(0%, 0%) scale(1) rotate(0deg);
-  }
-  33% {
-    transform: translate(-10%, -8%) scale(1.06) rotate(1deg);
-  }
-  66% {
-    transform: translate(8%, 6%) scale(1.04) rotate(-1deg);
-  }
-  100% {
-    transform: translate(-4%, 5%) scale(1.05) rotate(0.5deg);
-  }
-}
-
-@keyframes sanson-gradient-pos {
-  0% {
-    background-position: 0% 50%;
+    transform: translate3d(0%, 0%, 0) scale(1.02);
   }
   50% {
-    background-position: 100% 50%;
+    transform: translate3d(-6%, -4%, 0) scale(1.04);
   }
   100% {
-    background-position: 0% 50%;
+    transform: translate3d(0%, 0%, 0) scale(1.02);
   }
 }
 
@@ -207,8 +193,6 @@ h4,
       rgba(236, 72, 153, 0.25) 60%,
       transparent 80%
     );
-  animation: sanson-mesh-blend 20s ease-in-out infinite alternate;
-  will-change: opacity, transform;
 }
 
 .sanson-ambient-top {
@@ -228,10 +212,9 @@ h4,
   width: 150%;
   height: 28%;
   filter: blur(48px);
-  opacity: 0.65;
+  opacity: 0.58;
   pointer-events: none;
   z-index: 2;
-  will-change: transform, opacity;
 }
 
 .sanson-cyber-streak-a {
@@ -243,8 +226,8 @@ h4,
     rgba(147, 51, 234, 0.35) 55%,
     transparent 85%
   );
-  transform: rotate(-7deg);
-  animation: sanson-cyber-streak-a 16s ease-in-out infinite alternate;
+  transform: rotate(-7deg) translate3d(-4%, 0, 0);
+  animation: sanson-cyber-streak-a 24s linear infinite;
 }
 
 .sanson-cyber-streak-b {
@@ -257,29 +240,31 @@ h4,
     rgba(190, 24, 93, 0.45) 60%,
     transparent 90%
   );
-  transform: rotate(-5deg);
-  animation: sanson-cyber-streak-b 20s ease-in-out infinite alternate-reverse;
+  transform: rotate(-5deg) translate3d(4%, 0, 0);
+  animation: sanson-cyber-streak-b 32s linear infinite;
 }
 
 @keyframes sanson-cyber-streak-a {
   0% {
-    transform: rotate(-7deg) translateX(-4%);
-    opacity: 0.5;
+    transform: rotate(-7deg) translate3d(-5%, 0, 0);
+  }
+  50% {
+    transform: rotate(-7deg) translate3d(5%, 0, 0);
   }
   100% {
-    transform: rotate(-6deg) translateX(6%);
-    opacity: 0.72;
+    transform: rotate(-7deg) translate3d(-5%, 0, 0);
   }
 }
 
 @keyframes sanson-cyber-streak-b {
   0% {
-    transform: rotate(-5deg) translateX(5%);
-    opacity: 0.45;
+    transform: rotate(-5deg) translate3d(5%, 0, 0);
+  }
+  50% {
+    transform: rotate(-5deg) translate3d(-5%, 0, 0);
   }
   100% {
-    transform: rotate(-6deg) translateX(-5%);
-    opacity: 0.68;
+    transform: rotate(-5deg) translate3d(5%, 0, 0);
   }
 }
 
@@ -300,11 +285,10 @@ h4,
   inset: -20%;
   background: radial-gradient(
     ellipse 80% 60% at 30% 20%,
-    rgba(236, 72, 153, 0.28) 0%,
+    rgba(236, 72, 153, 0.22) 0%,
     transparent 55%
   );
-  animation: sanson-mesh-a 22s ease-in-out infinite alternate;
-  will-change: transform;
+  pointer-events: none;
 }
 
 .sanson-app-bg::after {
@@ -313,11 +297,10 @@ h4,
   inset: -15%;
   background: radial-gradient(
     ellipse 70% 50% at 75% 80%,
-    rgba(88, 28, 135, 0.22) 0%,
+    rgba(88, 28, 135, 0.18) 0%,
     transparent 50%
   );
-  animation: sanson-mesh-b 26s ease-in-out infinite alternate-reverse;
-  will-change: transform;
+  pointer-events: none;
 }
 
 .sanson-blob {
@@ -462,26 +445,14 @@ h4,
 .sanson-grid-scan {
   position: absolute;
   inset: 0;
-  opacity: 0.4;
+  opacity: 0.26;
   z-index: 2;
   background-image:
     linear-gradient(rgba(255, 79, 163, 0.12) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 79, 163, 0.12) 1px, transparent 1px);
   background-size: 40px 40px;
-  animation:
-    sanson-grid-drift 12s linear infinite,
-    sanson-grid-pulse 4s ease-in-out infinite alternate;
-  will-change: background-position, opacity;
+  animation: sanson-grid-drift 24s linear infinite;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 20%, transparent 75%);
-}
-
-@keyframes sanson-grid-pulse {
-  0% {
-    opacity: 0.18;
-  }
-  100% {
-    opacity: 0.34;
-  }
 }
 
 @keyframes sanson-grid-drift {
@@ -508,22 +479,18 @@ h4,
     radial-gradient(1px 1px at 35% 48%, rgba(249, 168, 212, 0.65), transparent),
     radial-gradient(1px 1px at 55% 82%, rgba(255, 255, 255, 0.45), transparent);
   background-size: 100% 100%;
-  animation: sanson-particle-drift 22s ease-in-out infinite alternate;
-  will-change: transform, opacity;
+  animation: sanson-particle-drift 32s linear infinite;
 }
 
 @keyframes sanson-particle-drift {
   0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.28;
+    transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate(2%, -3%) scale(1.02);
-    opacity: 0.42;
+    transform: translate3d(2%, -2%, 0) scale(1.01);
   }
   100% {
-    transform: translate(-2%, 2%) scale(1);
-    opacity: 0.32;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -544,24 +511,16 @@ h4,
     transparent
   );
   box-shadow: 0 0 32px rgba(255, 79, 163, 0.65);
-  animation: sanson-scan-beam 6s ease-in-out infinite;
-  will-change: top, opacity;
+  animation: sanson-scan-beam 14s linear infinite;
+  opacity: 0.35;
 }
 
 @keyframes sanson-scan-beam {
   0% {
     top: -2%;
-    opacity: 0;
-  }
-  8% {
-    opacity: 0.85;
-  }
-  92% {
-    opacity: 0.85;
   }
   100% {
     top: 102%;
-    opacity: 0;
   }
 }
 
@@ -634,16 +593,18 @@ h4,
     rgba(255, 255, 255, 0.05) 54%,
     transparent 60%
   );
-  animation: sanson-light-sweep 10s ease-in-out infinite;
-  will-change: transform;
+  animation: sanson-light-sweep 18s linear infinite;
 }
 
 @keyframes sanson-light-sweep {
   0% {
-    transform: translateX(-35%) translateY(-10%) rotate(12deg);
+    transform: translate3d(-30%, -8%, 0) rotate(12deg);
+  }
+  50% {
+    transform: translate3d(30%, 8%, 0) rotate(12deg);
   }
   100% {
-    transform: translateX(35%) translateY(10%) rotate(12deg);
+    transform: translate3d(-30%, -8%, 0) rotate(12deg);
   }
 }
 
@@ -716,8 +677,7 @@ h4,
   opacity: 0.34;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48' viewBox='0 0 56 48'%3E%3Cpath fill='none' stroke='rgba(255,79,163,0.5)' stroke-width='0.7' d='M28 0 L56 14 L56 34 L28 48 L0 34 L0 14 Z'/%3E%3C/svg%3E");
   background-size: 56px 48px;
-  animation: sanson-hex-drift 20s linear infinite;
-  will-change: background-position, transform;
+  animation: sanson-hex-drift 32s linear infinite;
   mask-image: linear-gradient(180deg, transparent 0%, black 35%, black 100%);
 }
 
@@ -740,8 +700,7 @@ h4,
     64px 64px,
     64px 64px,
     64px 56px;
-  animation: sanson-holo-floor-scroll 16s linear infinite;
-  will-change: background-position;
+  animation: sanson-holo-floor-scroll 28s linear infinite;
   mask-image: linear-gradient(
     to top,
     rgba(0, 0, 0, 0.95) 0%,
@@ -770,7 +729,8 @@ h4,
   border-radius: 50%;
   filter: blur(40px);
   pointer-events: none;
-  animation: sanson-lens-pulse 6s ease-in-out infinite alternate;
+  animation: none;
+  opacity: 0.45;
 }
 
 .sanson-lens-flare-1 {
