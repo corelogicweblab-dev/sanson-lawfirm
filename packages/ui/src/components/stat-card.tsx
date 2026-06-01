@@ -25,7 +25,7 @@ export function StatCard({
   return (
     <Card
       interactive
-      className={cn(motionStaggerChild(), "overflow-hidden", className)}
+      className={cn("sanson-stat-card", motionStaggerChild(), "overflow-hidden", className)}
       style={{ animationDelay: `${Math.min(staggerIndex, 7) * 40}ms` }}
     >
       <CardContent className="p-4 sm:p-6">
@@ -37,7 +37,7 @@ export function StatCard({
             {trend && <p className="text-xs text-[#FF4FA3]">{trend}</p>}
           </div>
           {icon && (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-pink-300/30 bg-pink-950/25 text-[#F9A8D4] shadow-[0_0_20px_rgba(255,79,163,0.2)] backdrop-blur-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-pink-400/35 bg-gradient-to-br from-pink-600/25 to-black/50 text-pink-100 shadow-[0_0_24px_rgba(255,79,163,0.25)]">
               {icon}
             </div>
           )}

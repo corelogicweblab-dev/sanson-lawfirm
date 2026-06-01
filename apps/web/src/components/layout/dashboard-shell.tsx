@@ -262,8 +262,8 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
                 "flex items-center gap-2.5 rounded-xl py-2 text-sm font-medium transition-colors duration-200",
                 sidebarCollapsed ? "justify-center px-2 lg:px-2" : "px-3",
                 pathname === item.href
-                  ? "border border-pink-500/35 bg-pink-500/20 text-white shadow-sm shadow-pink-500/15"
-                  : "text-zinc-200 hover:border hover:border-white/10 hover:bg-black/30 hover:text-white"
+                  ? "border border-pink-400/40 bg-gradient-to-r from-pink-600/25 to-black/40 text-white shadow-[0_0_20px_rgba(255,79,163,0.15)]"
+                  : "text-zinc-300 hover:border hover:border-pink-500/20 hover:bg-black/35 hover:text-white"
               )}
             >
               {item.icon}

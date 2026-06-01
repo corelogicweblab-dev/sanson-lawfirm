@@ -18,18 +18,39 @@
   --muted-accent: #fce7f3;
   --accent: var(--pink-primary);
   --accent-light: var(--pink-luxury);
-  --surface: rgba(157, 23, 77, 0.55);
-  --surface-sidebar: rgba(136, 19, 55, 0.78);
-  --surface-header: rgba(157, 23, 77, 0.75);
-  --border: rgba(236, 72, 153, 0.22);
-  /* Dashboard cards/panels — dark pink glass @ 70% so animated bg shows through */
-  --glass-bg: rgba(157, 23, 77, 0.7);
-  --glass-bg-elevated: rgba(136, 19, 55, 0.78);
-  --glass-bg-chip: rgba(190, 24, 93, 0.45);
-  --glass-border: rgba(244, 114, 182, 0.32);
+  --surface: rgba(12, 8, 12, 0.72);
+  --surface-sidebar: rgba(6, 6, 10, 0.9);
+  --surface-header: rgba(10, 8, 12, 0.88);
+  --border: rgba(236, 72, 153, 0.28);
+  /* Premium dark glass — charcoal base + pink rim; ~72% opacity shows animated bg */
+  --glass-bg: linear-gradient(
+    155deg,
+    rgba(14, 10, 14, 0.9) 0%,
+    rgba(8, 6, 10, 0.84) 48%,
+    rgba(22, 10, 18, 0.78) 100%
+  );
+  --glass-bg-flat: rgba(10, 8, 12, 0.82);
+  --glass-bg-elevated: linear-gradient(
+    180deg,
+    rgba(8, 8, 10, 0.94) 0%,
+    rgba(12, 8, 14, 0.9) 100%
+  );
+  --glass-bg-chip: linear-gradient(
+    145deg,
+    rgba(16, 10, 14, 0.75) 0%,
+    rgba(8, 6, 10, 0.7) 100%
+  );
+  --glass-border: rgba(244, 114, 182, 0.22);
+  --glass-border-strong: rgba(255, 79, 163, 0.38);
+  --glass-rim: rgba(255, 79, 163, 0.12);
   --motion-duration: 200ms;
   --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --glow-pink: 0 0 40px rgba(255, 79, 163, 0.35);
+  --glow-pink: 0 0 48px rgba(255, 79, 163, 0.28);
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 0 1px rgba(255, 79, 163, 0.08) inset,
+    0 16px 48px rgba(0, 0, 0, 0.42),
+    0 8px 24px rgba(190, 24, 93, 0.12);
 
   /* Readable text pairing on dark glass + pink atmosphere */
   --text-primary: #ffffff;
@@ -155,8 +176,8 @@ body {
   inset: 0;
   background: radial-gradient(
     ellipse 85% 75% at 55% 45%,
-    rgba(8, 8, 8, 0.28) 0%,
-    rgba(8, 8, 8, 0.08) 45%,
+    rgba(8, 8, 8, 0.18) 0%,
+    rgba(8, 8, 8, 0.04) 45%,
     transparent 72%
   );
   pointer-events: none;
@@ -1231,52 +1252,104 @@ body {
 }
 
 .sanson-glass {
+  position: relative;
+  overflow: hidden;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   border: 1px solid var(--glass-border);
   border-radius: 1rem;
-  box-shadow:
-    0 12px 36px rgba(190, 24, 93, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-card);
+}
+
+.sanson-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--glass-rim) 0%,
+    transparent 28%,
+    transparent 72%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+}
+
+.sanson-glass > * {
+  position: relative;
+  z-index: 1;
 }
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   border: 1px solid var(--glass-border);
   border-radius: 1rem;
+  box-shadow: var(--shadow-card);
 }
 
 /* Legacy panel classes → premium glass */
 .sanson-panel {
+  position: relative;
+  overflow: hidden;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid var(--glass-border-strong);
   border-radius: 1rem;
-  box-shadow:
-    0 12px 36px rgba(190, 24, 93, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-card);
+}
+
+.sanson-panel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 79, 163, 0.45),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Stat / metric cards — extra depth */
+.sanson-stat-card {
+  border-color: var(--glass-border-strong) !important;
+}
+
+.sanson-stat-card::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 79, 163, 0.1) 0%,
+    transparent 42%,
+    transparent 100%
+  ) !important;
 }
 
 /* Workflow steps & small tiles inside panels */
 .sanson-glass-chip {
   background: var(--glass-bg-chip);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(244, 114, 182, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(244, 114, 182, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
 .sanson-glass-header {
   background: var(--glass-bg-elevated);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 8px 32px rgba(190, 24, 93, 0.2),
-    0 0 24px rgba(255, 79, 163, 0.12);
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(255, 79, 163, 0.1);
 }
 
 /* Public marketing / auth header */
@@ -1326,10 +1399,11 @@ body {
 .sanson-dashboard-topbar {
   background: linear-gradient(
     135deg,
-    rgba(157, 23, 77, 0.75) 0%,
-    rgba(136, 19, 55, 0.72) 55%,
-    rgba(190, 24, 93, 0.35) 100%
+    rgba(8, 8, 10, 0.92) 0%,
+    rgba(12, 8, 12, 0.88) 60%,
+    rgba(30, 10, 22, 0.55) 100%
   );
+  border-bottom: 1px solid rgba(244, 114, 182, 0.15);
 }
 
 .sanson-topbar-icon-btn {
@@ -1362,10 +1436,12 @@ body {
 
 .sanson-glass-sidebar {
   background: var(--glass-bg-elevated);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid var(--glass-border);
-  box-shadow: 4px 0 32px rgba(157, 23, 77, 0.35);
+  backdrop-filter: blur(22px) saturate(1.05);
+  -webkit-backdrop-filter: blur(22px) saturate(1.05);
+  border-right: 1px solid rgba(244, 114, 182, 0.18);
+  box-shadow:
+    4px 0 40px rgba(0, 0, 0, 0.5),
+    inset -1px 0 0 rgba(255, 79, 163, 0.08);
 }
 
 .sanson-dashboard-canvas {
@@ -1383,13 +1459,13 @@ body {
   gap: 0.5rem;
   border-radius: 1rem;
   border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
+  background: var(--glass-bg-flat);
   padding: 1rem;
   text-align: center;
   font-size: 0.875rem;
   font-weight: 500;
   color: #f4f4f5;
-  box-shadow: 0 8px 28px rgba(190, 24, 93, 0.2);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
   transition:
     transform var(--motion-duration) var(--motion-ease),
     border-color var(--motion-duration) var(--motion-ease),
@@ -1420,6 +1496,22 @@ body {
 
 .neon-text {
   text-shadow: 0 0 12px rgba(255, 79, 163, 0.35);
+}
+
+.sanson-section-title {
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  text-shadow: 0 0 24px rgba(255, 79, 163, 0.2);
+}
+
+.sanson-section-title::after {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 2px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink-glow), transparent);
 }
 
 .auth-gradient {
