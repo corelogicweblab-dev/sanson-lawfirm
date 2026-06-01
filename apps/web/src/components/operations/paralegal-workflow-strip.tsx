@@ -12,16 +12,22 @@ const ownerStyles: Record<string, string> = {
 
 export function ParalegalWorkflowStrip({ className }: { className?: string }) {
   return (
-    <div className={cn("sanson-panel sanson-workflow-panel p-4", className)}>
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-300">
+    <div
+      className={cn("sanson-panel sanson-workflow-panel p-4 pb-3", className)}
+      role="region"
+      aria-label="Paralegal case workflow — scroll sideways to see all steps"
+      tabIndex={0}
+    >
+      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-300">
         Paralegal-centric case workflow
       </p>
+      <p className="mb-3 text-[10px] text-zinc-500">Scroll sideways to view all steps →</p>
       <ol className="sanson-workflow-steps">
         {PARALEGAL_CASE_WORKFLOW.map((s) => (
           <li
             key={s.step}
             className={cn(
-              "sanson-glass-chip flex min-w-0 flex-col rounded-lg px-3 py-2.5 text-center",
+              "sanson-workflow-step sanson-glass-chip flex flex-col rounded-lg px-3 py-2.5 text-center",
               ownerStyles[s.owner] ?? "border-white/20"
             )}
           >
