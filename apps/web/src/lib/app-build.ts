@@ -1,2 +1,2 @@
 /** Bump when deploying UI — triggers one-time hard refresh for cached clients. */
-export const APP_BUILD_ID = "2026.06.02-admin-roles-v47";
+export const APP_BUILD_ID = "2026.06.02-paralegal-full-edit-v48";

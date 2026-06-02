@@ -26,7 +26,8 @@ import {
 } from "@/components/cases/case-workspace-tabs";
 import { DocumentCenter } from "@/components/documents/document-center";
 import { CaseWorkspaceOps } from "@/components/operations/case-workspace-ops";
-import { ParalegalCaseEditor } from "@/components/operations/paralegal-case-editor";
+import { ParalegalCaseWorkspace } from "@/components/operations/paralegal-case-workspace";
+import { CaseBriefView } from "@/components/cases/case-brief-view";
 import { ParalegalWorkflowStrip } from "@/components/operations/paralegal-workflow-strip";
 import { LawyerWorkflowStrip } from "@/components/lawyer/lawyer-workflow-strip";
 import { LegalNotebookFloat } from "@/components/lawyer/legal-notebook-float";
@@ -119,28 +120,34 @@ function CaseWorkspaceContent() {
               lawyerMode={role === "LAWYER"}
             />
 
+            {role === "PARALEGAL" && tab !== "documents" && tab !== "tasks" && (
+              <ParalegalCaseWorkspace
+                caseId={caseId}
+                caseItem={caseItem}
+                activeTab={tab}
+                onSaved={() => setReloadKey((k) => k + 1)}
+              />
+            )}
+
             {tab === "overview" && (
               <div className="space-y-6">
-                {role === "PARALEGAL" ? (
-                  <ParalegalCaseEditor
-                    caseId={caseId}
-                    caseItem={caseItem}
-                    onSaved={() => setReloadKey((k) => k + 1)}
-                  />
-                ) : (
+                {role !== "PARALEGAL" && (
                   <Card className="sanson-panel">
-                    <CardContent className="p-4">
-                      <h3 className="mb-2 text-sm font-medium text-zinc-300">Summary</h3>
-                      <p className="text-sm text-zinc-400">{caseItem.description || "—"}</p>
-                      <CaseDataPanel title="" data={caseDetails} />
+                    <CardContent className="p-5">
+                      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-pink-300">
+                        Case brief
+                      </h3>
+                      <CaseBriefView description={caseItem.description} caseDetails={caseDetails} />
                     </CardContent>
                   </Card>
                 )}
-                <CaseWorkspaceOps
-                  caseId={caseId}
-                  role={role}
-                  onUpdated={() => setReloadKey((k) => k + 1)}
-                />
+                {role !== "PARALEGAL" && (
+                  <CaseWorkspaceOps
+                    caseId={caseId}
+                    role={role}
+                    onUpdated={() => setReloadKey((k) => k + 1)}
+                  />
+                )}
                 <div>
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-300">
                     Case documents
@@ -192,16 +199,16 @@ function CaseWorkspaceContent() {
               </div>
             )}
 
-            {tab === "client" && (
-              <Card className="sanson-panel p-4">
+            {tab === "client" && role !== "PARALEGAL" && (
+              <Card className="sanson-panel p-5">
                 <CaseDataPanel title="Client" data={clientSnap} />
               </Card>
             )}
 
-            {tab === "opposing" && (
-              <Card className="sanson-panel p-4">
+            {tab === "opposing" && role !== "PARALEGAL" && (
+              <Card className="sanson-panel p-5">
                 {party ? (
-                  <CaseDataPanel title="Opposing" data={party} />
+                  <CaseDataPanel title="Opposing party" data={party} />
                 ) : (
                   <p className="text-sm text-zinc-500">No opposing party on file.</p>
                 )}
@@ -217,19 +224,24 @@ function CaseWorkspaceContent() {
               />
             )}
 
-            {tab === "timeline" && (
-              <Card className="sanson-panel p-4">
+            {tab === "timeline" && role !== "PARALEGAL" && (
+              <Card className="sanson-panel p-5">
                 <CaseDataPanel title="Important dates" data={dates} />
-                <p className="mt-4 text-xs text-zinc-500">
-                  Add events via Paralegal operations on Overview tab.
-                </p>
               </Card>
             )}
 
-            {tab === "notes" && (
-              <Card className="sanson-panel p-4">
+            {tab === "notes" && role !== "PARALEGAL" && (
+              <Card className="sanson-panel p-5">
                 <CaseDataPanel title="Internal notes" data={notes} />
               </Card>
+            )}
+
+            {role === "PARALEGAL" && tab === "overview" && (
+              <CaseWorkspaceOps
+                caseId={caseId}
+                role={role}
+                onUpdated={() => setReloadKey((k) => k + 1)}
+              />
             )}
 
             {tab === "tasks" && (

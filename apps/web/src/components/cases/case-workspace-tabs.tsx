@@ -63,6 +63,17 @@ export function CaseWorkspaceTabs({
   );
 }
 
+function formatPanelValue(v: unknown): string {
+  if (v == null || v === "") return "";
+  if (typeof v === "object" && !Array.isArray(v)) {
+    return Object.entries(v as Record<string, unknown>)
+      .filter(([, val]) => val != null && val !== "")
+      .map(([k, val]) => `${k.replace(/_/g, " ")}: ${formatPanelValue(val)}`)
+      .join(" · ");
+  }
+  return String(v);
+}
+
 export function CaseDataPanel({
   title,
   data,
@@ -73,16 +84,29 @@ export function CaseDataPanel({
   if (!data || !Object.keys(data).length) {
     return <p className="text-sm text-zinc-500">No data recorded.</p>;
   }
+  const flat: { key: string; value: string }[] = [];
+  for (const [k, v] of Object.entries(data)) {
+    if (k === "details" && v && typeof v === "object") {
+      for (const [dk, dv] of Object.entries(v as Record<string, unknown>)) {
+        const text = formatPanelValue(dv);
+        if (text) flat.push({ key: dk, value: text });
+      }
+    } else {
+      const text = formatPanelValue(v);
+      if (text) flat.push({ key: k, value: text });
+    }
+  }
   return (
-    <dl className="grid gap-2 sm:grid-cols-2">
-      {Object.entries(data).map(([k, v]) =>
-        v ? (
-          <div key={k}>
-            <dt className="text-xs uppercase text-zinc-500">{k.replace(/_/g, " ")}</dt>
-            <dd className="text-sm text-zinc-200">{String(v)}</dd>
+    <div>
+      {title && <h3 className="mb-3 text-sm font-medium text-zinc-300">{title}</h3>}
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {flat.map(({ key, value }) => (
+          <div key={key} className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+            <dt className="text-xs uppercase tracking-wide text-zinc-500">{key.replace(/_/g, " ")}</dt>
+            <dd className="mt-1 text-sm text-zinc-200">{value}</dd>
           </div>
-        ) : null
-      )}
-    </dl>
+        ))}
+      </dl>
+    </div>
   );
 }
