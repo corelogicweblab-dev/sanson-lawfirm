@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@sanson/ui";
+import { ROLE_DISPLAY } from "@sanson/shared";
 import type { User, UserRole } from "@sanson/types";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -46,6 +47,7 @@ export function AdminUserManagement() {
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
+  const [roleSavingId, setRoleSavingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,6 +108,23 @@ export function AdminUserManagement() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const quickSetRole = async (u: User, role: UserRole) => {
+    if (u.role?.name === role) return;
+    if (u.id === me?.id && role !== "ADMIN") {
+      setError("You cannot remove your own administrator access.");
+      return;
+    }
+    setRoleSavingId(u.id);
+    setError("");
+    const r = await api.updateUserRole(u.id, role);
+    setRoleSavingId(null);
+    if (!r.success) {
+      setError(r.message ?? "Could not update role");
+      return;
+    }
+    await load();
   };
 
   const remove = async (u: User) => {
@@ -169,7 +188,7 @@ export function AdminUserManagement() {
               />
               <Input label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
               <label className="block text-sm sm:col-span-2">
-                <span className="sanson-label">Role</span>
+                <span className="sanson-label">Firm role (Lawyer / Paralegal / …)</span>
                 <select
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
@@ -177,7 +196,7 @@ export function AdminUserManagement() {
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {ROLE_DISPLAY[r]}
                     </option>
                   ))}
                 </select>
@@ -226,7 +245,21 @@ export function AdminUserManagement() {
                     <TableCell className="font-medium text-white">{displayName(u)}</TableCell>
                     <TableCell className="text-zinc-400">{u.email}</TableCell>
                     <TableCell>
-                      <Badge>{u.role?.name ?? "—"}</Badge>
+                      <Badge>{ROLE_DISPLAY[u.role?.name as UserRole] ?? u.role?.name ?? "—"}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        className="sanson-field min-w-[9rem] text-xs"
+                        value={u.role?.name ?? "CLIENT"}
+                        disabled={roleSavingId === u.id}
+                        onChange={(e) => void quickSetRole(u, e.target.value as UserRole)}
+                      >
+                        {ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {ROLE_DISPLAY[r]}
+                          </option>
+                        ))}
+                      </select>
                     </TableCell>
                     <TableCell>{u.is_active ? "Active" : "Inactive"}</TableCell>
                     <TableCell className="flex justify-end gap-2">

@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { PageContainer, SectionHeader, EmptyState } from "@sanson/ui";
+import { PageContainer, SectionHeader } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { AdminRoleAssignment } from "@/components/admin/admin-role-assignment";
 
 export default function AdminRolesPage() {
   return (
@@ -14,14 +15,13 @@ export default function AdminRolesPage() {
         ]}
       >
         <PageContainer>
-          <SectionHeader title="Role Management" description="Roles and permission matrix" />
-          <EmptyState
-            title="Permission matrix"
-            description="View role permissions via GET /api/v1/roles/matrix"
+          <SectionHeader
+            title="Assign firm roles"
+            description="Set whether each user is a Lawyer, Paralegal, Client, or System Administrator."
           />
+          <AdminRoleAssignment />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>
   );
 }
-
