@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { hardNavigate } from "@/lib/static-navigation";
 import {
   createUserWithEmailAndPassword,
   updateProfile,
@@ -28,7 +28,6 @@ import { useAuthStore } from "@/store/auth";
 import { useGoogleAuthRedirect } from "@/hooks/use-google-auth-redirect";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { setUser, setToken, getDashboardPath } = useAuthStore();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -41,9 +40,9 @@ export default function RegisterPage() {
     (user: import("@sanson/types").User, token: string, redirectPath?: string) => {
       setToken(token);
       setUser(user);
-      router.push(redirectPath ?? getDashboardPath());
+      hardNavigate(redirectPath ?? getDashboardPath());
     },
-    [getDashboardPath, router, setToken, setUser]
+    [getDashboardPath, setToken, setUser]
   );
 
   useGoogleAuthRedirect({
@@ -73,10 +72,9 @@ export default function RegisterPage() {
       await updateProfile(credential.user, {
         displayName: `${firstName} ${lastName}`.trim(),
       });
-      const token = await credential.user.getIdToken();
       const result = await syncFirebaseUser(credential.user);
       if (result.ok) {
-        finishAuth(result.user, token, result.redirectPath);
+        finishAuth(result.user, result.token, result.redirectPath);
       } else {
         setError(result.message);
       }
@@ -99,10 +97,9 @@ export default function RegisterPage() {
 
     try {
       const credential = await signInWithGoogle();
-      const token = await credential.user.getIdToken();
       const result = await syncFromGoogleCredential(credential);
       if (result.ok) {
-        finishAuth(result.user, token, result.redirectPath);
+        finishAuth(result.user, result.token, result.redirectPath);
       } else {
         setError(result.message);
       }

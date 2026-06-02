@@ -22,7 +22,7 @@
     "db:check": "node scripts/migrate-pipeline.js --check",
     "validate:env": "node scripts/validate-env.js",
     "validate:env:prod": "node scripts/validate-env.js --environment production --offline",
-    "build:web": "node scripts/verify-web-env.js && npm run build --workspace=@sanson/web",
+    "build:web": "node scripts/verify-web-env.js && npm run build --workspace=@sanson/web && node scripts/strip-export-rsc-txt.js",
     "deploy:netlify": "npm run build:web",
     "deploy:hosting": "echo Use Netlify (GitHub main) — see docs/NETLIFY.md. Firebase Hosting is not used."
   },

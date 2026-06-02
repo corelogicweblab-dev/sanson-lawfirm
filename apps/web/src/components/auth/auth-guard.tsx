@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { LoadingPage } from "@sanson/ui";
+import { hardNavigate, navigateToLogin } from "@/lib/static-navigation";
 import { useAuthStore } from "@/store/auth";
 import type { UserRole } from "@sanson/types";
 
@@ -12,24 +12,23 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
-  const router = useRouter();
   const { isAuthenticated, isLoading, getRole, getDashboardPath } = useAuthStore();
 
   useEffect(() => {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      router.replace("/login");
+      navigateToLogin();
       return;
     }
 
     if (allowedRoles) {
       const role = getRole();
       if (role && !allowedRoles.includes(role)) {
-        router.replace(getDashboardPath());
+        hardNavigate(getDashboardPath());
       }
     }
-  }, [isAuthenticated, isLoading, allowedRoles, router, getRole, getDashboardPath]);
+  }, [isAuthenticated, isLoading, allowedRoles, getRole, getDashboardPath]);
 
   if (isLoading) {
     return <LoadingPage text="Authenticating..." />;

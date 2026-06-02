@@ -19,11 +19,41 @@ import {
   TableRow,
 } from "@sanson/ui";
 import type { DocumentItem } from "@sanson/types";
+import { DocumentViewerModal } from "@/components/documents/document-viewer-modal";
+import {
+  loadDocumentPreview,
+  releaseDocumentPreview,
+  type DocumentPreview,
+} from "@/lib/document-actions";
 
 export default function AdminFilesPage() {
   const [docs, setDocs] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [preview, setPreview] = useState<DocumentPreview | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+
+  const closePreview = () => {
+    if (preview) releaseDocumentPreview(preview.url);
+    setPreview(null);
+    setPreviewDocId(null);
+  };
+
+  const openView = async (doc: DocumentItem) => {
+    setViewingId(doc.id);
+    setError("");
+    try {
+      const next = await loadDocumentPreview(doc.id, doc.fileName);
+      closePreview();
+      setPreview(next);
+      setPreviewDocId(doc.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open file.");
+    } finally {
+      setViewingId(null);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +88,11 @@ export default function AdminFilesPage() {
         ]}
       >
         <PageContainer>
+          <DocumentViewerModal
+            preview={preview}
+            documentId={previewDocId}
+            onClose={closePreview}
+          />
           <SectionHeader
             title="Firm files"
             description="View and remove documents across all cases. Deletions are logged in audit."
@@ -107,14 +142,11 @@ export default function AdminFilesPage() {
                         <TableCell className="flex justify-end gap-2">
                           <button
                             type="button"
-                            className="text-xs text-pink-400 hover:underline"
-                            onClick={() =>
-                              void import("@/lib/document-actions").then(({ viewDocument }) =>
-                                viewDocument(d.id, d.fileName)
-                              )
-                            }
+                            className="text-xs text-pink-400 hover:underline disabled:opacity-50"
+                            disabled={viewingId === d.id}
+                            onClick={() => void openView(d)}
                           >
-                            View
+                            {viewingId === d.id ? "Loading…" : "View"}
                           </button>
                           <Button size="sm" variant="outline" onClick={() => void remove(d)}>
                             Delete

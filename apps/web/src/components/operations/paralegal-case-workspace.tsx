@@ -5,6 +5,7 @@ import { Button, Card, CardContent, Input } from "@sanson/ui";
 import type { CaseCategory, CaseItem, PriorityLevel } from "@sanson/types";
 import { api } from "@/lib/api";
 import type { CaseWorkspaceTab } from "@/components/cases/case-workspace-tabs";
+import { CaseExportActions } from "@/components/cases/case-export-actions";
 
 const CASE_TYPES = [
   "CIVIL",
@@ -316,6 +317,11 @@ export function ParalegalCaseWorkspace({ caseItem, caseId, activeTab, onSaved }:
           </SectionCard>
 
           <SectionCard title="Legal case brief">
+            <CaseExportActions
+              caseId={caseId}
+              caseNumber={caseItem.case_number}
+              compact
+            />
             <FieldTextArea
               label="Executive summary"
               value={form.description}

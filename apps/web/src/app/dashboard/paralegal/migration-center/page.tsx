@@ -12,7 +12,7 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
-import { DocumentCenter } from "@/components/documents/document-center";
+import { CaseDocumentWorkspace } from "@/components/documents/case-document-workspace";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { api } from "@/lib/api";
@@ -245,7 +245,7 @@ export default function CaseMigrationCenterPage() {
               <Card className="sanson-panel">
                 <CardContent className="p-4 sm:p-6">
                   <p className="mb-3 text-sm font-medium text-white">Upload files now</p>
-                  <DocumentCenter />
+                  <CaseDocumentWorkspace />
                 </CardContent>
               </Card>
               <Card className="sanson-panel">

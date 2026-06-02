@@ -24,20 +24,17 @@ import type { CaseItem, TaskItem } from "@sanson/types";
 export default function ParalegalDashboardPage() {
   const [cases, setCases] = useState<CaseItem[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [docCount, setDocCount] = useState(0);
   const [intakeCount, setIntakeCount] = useState(0);
 
   useEffect(() => {
     (async () => {
-      const [c, t, d, req] = await Promise.all([
+      const [c, t, req] = await Promise.all([
         api.listCases(),
         api.listTasks(),
-        api.listDocuments(),
         api.listMyRequests(),
       ]);
       if (c.success && c.data) setCases(c.data);
       if (t.success && t.data) setTasks(t.data);
-      if (d.success && d.data) setDocCount(d.data.length);
       if (req.success && req.data) setIntakeCount(req.data.length);
     })();
   }, []);
@@ -87,7 +84,7 @@ export default function ParalegalDashboardPage() {
           <div className="mb-6 grid gap-4 sm:grid-cols-4">
             <StatCard title="Intake requests" value={intakeCount} icon={<ClipboardList className="h-5 w-5" />} />
             <StatCard title="Cases in repository" value={cases.length} icon={<Briefcase className="h-5 w-5" />} />
-            <StatCard title="Documents" value={docCount} icon={<FileText className="h-5 w-5" />} />
+            <StatCard title="Cases" value={cases.length} icon={<FileText className="h-5 w-5" />} />
             <StatCard title="Tasks" value={tasks.length} icon={<ListTodo className="h-5 w-5" />} />
           </div>
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { DocumentCenter, TimelineViewer } from "@/components/documents/document-center";
+import { CaseDocumentWorkspace } from "@/components/documents/case-document-workspace";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Card, PageContainer, SectionHeader } from "@sanson/ui";
+import { PageContainer, SectionHeader } from "@sanson/ui";
 
 export default function ParalegalDocumentsPage() {
   return (
@@ -18,13 +18,9 @@ export default function ParalegalDocumentsPage() {
         <PageContainer>
           <SectionHeader
             title="Evidence Preparation"
-            description="Primary file authority — contracts, evidence, affidavits, court filings, photos, video, and audio."
+            description="Select a case first — every file is stored inside that case only (not a firm-wide folder)."
           />
-          <DocumentCenter showProcess />
-          <Card className="mt-8 sanson-panel p-6">
-            <h3 className="mb-4 font-semibold text-white">Timeline Review</h3>
-            <TimelineViewer />
-          </Card>
+          <CaseDocumentWorkspace showProcess showTimeline />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>

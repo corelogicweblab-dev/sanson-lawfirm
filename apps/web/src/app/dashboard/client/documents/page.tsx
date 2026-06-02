@@ -1,7 +1,7 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { DocumentCenter } from "@/components/documents/document-center";
+import { CaseDocumentWorkspace } from "@/components/documents/case-document-workspace";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PageContainer, SectionHeader } from "@sanson/ui";
 
@@ -18,9 +18,9 @@ export default function ClientDocumentsPage() {
         <PageContainer>
           <SectionHeader
             title="Upload Center"
-            description="Securely upload evidence and supporting documents for your legal matter."
+            description="Select your legal matter, then upload evidence and supporting documents for that case only."
           />
-          <DocumentCenter allowPrint={false} />
+          <CaseDocumentWorkspace allowPrint={false} />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>

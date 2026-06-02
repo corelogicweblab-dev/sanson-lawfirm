@@ -33,8 +33,10 @@ class SupabaseStorageService:
     def validate_file(self, filename: str, mime_type: str, size: int) -> None:
         self._validator.validate_file(filename, mime_type, size)
 
-    def build_storage_path(self, user_id: UUID, filename: str) -> str:
-        return self._validator.build_storage_path(user_id, filename)
+    def build_storage_path(
+        self, user_id: UUID, filename: str, case_id: UUID | None = None
+    ) -> str:
+        return self._validator.build_storage_path(user_id, filename, case_id)
 
     def _base_url(self) -> str:
         return self.settings.supabase_url.rstrip("/")

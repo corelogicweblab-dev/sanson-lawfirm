@@ -34,6 +34,16 @@ def _optional_uuid(value: str | None, field: str) -> UUID | None:
         raise HTTPException(400, f"Invalid {field}") from exc
 
 
+def _require_case_uuid(value: str | None) -> UUID:
+    parsed = _optional_uuid(value, "case_id")
+    if parsed is None:
+        raise HTTPException(
+            400,
+            "case_id is required. All files must be uploaded to a specific case.",
+        )
+    return parsed
+
+
 def _is_staff(user: AuthenticatedUser) -> bool:
     return user.role_name in ("LAWYER", "PARALEGAL", "ADMIN")
 
@@ -75,6 +85,19 @@ async def list_documents(
     user: AuthenticatedUser = Depends(require_permission("documents:read")),
     db: AsyncSession = Depends(get_db),
 ):
+    if _is_staff(user) and case_id is None and legal_request_id is None:
+        meta = PaginationMeta(
+            page=pagination.page,
+            page_size=pagination.page_size,
+            total=0,
+            total_pages=0,
+        )
+        return success_response(
+            [],
+            "Select a case to view its documents",
+            meta=meta.model_dump(),
+        )
+
     svc = DocumentService(db)
     staff = _is_staff(user)
     docs, total = await svc.list_documents(
@@ -118,6 +141,7 @@ async def upload_document(
     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty file")
+    case_uuid = _require_case_uuid(case_id)
     svc = DocumentService(db)
     try:
         doc = await svc.create_document_from_upload(
@@ -126,7 +150,7 @@ async def upload_document(
             mime_type=file.content_type or "application/octet-stream",
             file_data=data,
             category_id=_optional_uuid(category_id, "category_id"),
-            case_id=_optional_uuid(case_id, "case_id"),
+            case_id=case_uuid,
             legal_request_id=_optional_uuid(legal_request_id, "legal_request_id"),
             visibility=visibility,
             ip=ip,
@@ -156,6 +180,7 @@ async def upload_document_json(
         raise HTTPException(400, "Invalid file encoding") from exc
     if len(file_data) > 4 * 1024 * 1024:
         raise HTTPException(400, "File too large for JSON upload (max 4 MB). Retry — larger files use Supabase direct upload.")
+    case_uuid = _require_case_uuid(body.case_id)
     svc = DocumentService(db)
     try:
         doc = await svc.create_document_from_upload(
@@ -164,7 +189,7 @@ async def upload_document_json(
             mime_type=body.mime_type,
             file_data=file_data,
             category_id=_optional_uuid(body.category_id, "category_id"),
-            case_id=_optional_uuid(body.case_id, "case_id"),
+            case_id=case_uuid,
             legal_request_id=_optional_uuid(body.legal_request_id, "legal_request_id"),
             visibility=body.visibility,
             ip=ip,
@@ -188,6 +213,7 @@ async def complete_presigned_upload(
             status_code=403,
             detail="Lawyers review documents only. Paralegals manage case file uploads.",
         )
+    case_uuid = _require_case_uuid(body.case_id)
     svc = DocumentService(db)
     try:
         doc = await svc.create_document_after_presigned(
@@ -197,7 +223,7 @@ async def complete_presigned_upload(
             mime_type=body.mime_type,
             file_size=body.file_size,
             category_id=_optional_uuid(body.category_id, "category_id"),
-            case_id=_optional_uuid(body.case_id, "case_id"),
+            case_id=case_uuid,
             legal_request_id=_optional_uuid(body.legal_request_id, "legal_request_id"),
             visibility=body.visibility,
             ip=ip,

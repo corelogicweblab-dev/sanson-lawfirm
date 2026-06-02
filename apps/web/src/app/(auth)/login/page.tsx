@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { hardNavigate } from "@/lib/static-navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@sanson/ui";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
@@ -18,7 +18,6 @@ import { useAuthStore } from "@/store/auth";
 import { useGoogleAuthRedirect } from "@/hooks/use-google-auth-redirect";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { setUser, setToken, getDashboardPath } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,18 +30,16 @@ export default function LoginPage() {
       api.setToken(token);
       setUser(user);
       if (user.role?.name === "LAWYER") void prefetchLawyerDashboard();
-      router.push(redirectPath ?? getDashboardPath());
+      hardNavigate(redirectPath ?? getDashboardPath());
     },
-    [getDashboardPath, router, setToken, setUser]
+    [getDashboardPath, setToken, setUser]
   );
 
   useGoogleAuthRedirect({
     setLoading,
     onError: setError,
-    onSuccess: async ({ user, redirectPath }) => {
-      const auth = getFirebaseAuth();
-      const token = await auth.currentUser?.getIdToken();
-      if (token) finishAuth(user, token, redirectPath);
+    onSuccess: ({ user, redirectPath, token }) => {
+      finishAuth(user, token, redirectPath);
     },
   });
 
@@ -62,10 +59,9 @@ export default function LoginPage() {
     try {
       const auth = getFirebaseAuth();
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await credential.user.getIdToken();
       const result = await syncFirebaseUser(credential.user);
       if (result.ok) {
-        finishAuth(result.user, token, result.redirectPath);
+        finishAuth(result.user, result.token, result.redirectPath);
       } else {
         setError(result.message);
       }
@@ -90,20 +86,18 @@ export default function LoginPage() {
 
     try {
       const credential = await signInWithGoogle();
-      const token = await credential.user.getIdToken();
       const result = await syncFromGoogleCredential(credential);
       if (result.ok) {
-        finishAuth(result.user, token, result.redirectPath);
+        finishAuth(result.user, result.token, result.redirectPath);
       } else {
         setError(result.message);
       }
     } catch (err: unknown) {
-      const msg = firebaseAuthErrorMessage(err);
-      if (msg.includes("Redirecting to Google")) {
-        setError("");
+      if (err instanceof Error && err.message === "GOOGLE_REDIRECT_STARTED") {
+        setError("Redirecting to Google…");
         return;
       }
-      setError(msg);
+      setError(firebaseAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }

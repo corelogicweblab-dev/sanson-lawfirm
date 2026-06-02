@@ -42,6 +42,19 @@
   to = "/login/"
   status = 301
 
+# Never serve Next.js RSC flight files to the browser
+[[redirects]]
+  from = "/login/index.txt"
+  to = "/login/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/register/index.txt"
+  to = "/register/"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]

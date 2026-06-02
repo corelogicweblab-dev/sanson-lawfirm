@@ -12,6 +12,7 @@ class PresignUploadRequest(BaseModel):
     file_name: str = Field(..., min_length=1, max_length=255)
     mime_type: str = Field(..., min_length=3, max_length=120)
     file_size: int = Field(..., gt=0)
+    case_id: str = Field(..., min_length=36, max_length=36)
 
 
 class DocumentJsonUploadRequest(BaseModel):

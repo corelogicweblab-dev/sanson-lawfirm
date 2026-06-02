@@ -11,7 +11,14 @@ import {
   AlertCircle,
   Eye,
 } from "lucide-react";
-import { downloadDocument, printDocument, viewDocument } from "@/lib/document-actions";
+import {
+  downloadDocument,
+  loadDocumentPreview,
+  printDocument,
+  releaseDocumentPreview,
+  type DocumentPreview,
+} from "@/lib/document-actions";
+import { DocumentViewerModal } from "@/components/documents/document-viewer-modal";
 import { Badge, Button, Card, CardContent, EmptyState } from "@sanson/ui";
 import type { DocumentCategory, DocumentItem } from "@sanson/types";
 import { api } from "@/lib/api";
@@ -39,7 +46,7 @@ export function DocumentCenter({
   readOnly = false,
   allowPrint = true,
   uploadDisabled = false,
-  uploadDisabledHint = "Click “Create draft case” above to enable uploads for this matter.",
+  uploadDisabledHint = "Select a case to upload files for that matter only.",
 }: DocumentCenterProps) {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [categories, setCategories] = useState<DocumentCategory[]>([]);
@@ -51,7 +58,15 @@ export function DocumentCenter({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [actionDocId, setActionDocId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<DocumentPreview | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const closePreview = () => {
+    if (preview) releaseDocumentPreview(preview.url);
+    setPreview(null);
+    setPreviewDocId(null);
+  };
 
   const runDocAction = async (
     docId: string,
@@ -61,9 +76,16 @@ export function DocumentCenter({
     setActionError(null);
     setActionDocId(docId);
     try {
-      if (action === "view") await viewDocument(docId, fileName);
-      else if (action === "download") await downloadDocument(docId, fileName);
-      else await printDocument(docId, fileName);
+      if (action === "view") {
+        const next = await loadDocumentPreview(docId, fileName);
+        closePreview();
+        setPreview(next);
+        setPreviewDocId(docId);
+      } else if (action === "download") {
+        await downloadDocument(docId, fileName);
+      } else {
+        await printDocument(docId, fileName);
+      }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Could not open file.");
     } finally {
@@ -83,13 +105,13 @@ export function DocumentCenter({
   }, [caseId]);
 
   useEffect(() => {
-    if (!caseId && uploadDisabled) {
+    if (!caseId) {
       setLoading(false);
       setDocuments([]);
       return;
     }
     load();
-  }, [load, caseId, uploadDisabled]);
+  }, [load, caseId]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -137,7 +159,17 @@ export function DocumentCenter({
 
   const uploadsLocked = uploadDisabled || !caseId;
 
-  if (loading && caseId) {
+  if (!caseId) {
+    return (
+      <EmptyState
+        icon={<FileText className="h-12 w-12" />}
+        title="No case selected"
+        description="Documents are organized by case. Select or open a case to manage its files."
+      />
+    );
+  }
+
+  if (loading) {
     return (
       <div className="flex h-48 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-pink-400" />
@@ -147,6 +179,12 @@ export function DocumentCenter({
 
   return (
     <div className="space-y-6">
+      <DocumentViewerModal
+        preview={preview}
+        documentId={previewDocId}
+        onClose={closePreview}
+        allowPrint={allowPrint}
+      />
       {!readOnly && (
       <Card className="border-dashed border-white/20 bg-white/5 backdrop-blur-md">
         <CardContent className="p-6">

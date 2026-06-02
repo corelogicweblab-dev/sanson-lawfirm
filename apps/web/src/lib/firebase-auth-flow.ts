@@ -4,13 +4,18 @@ import type { ApiResponse, User, UserRole } from "@sanson/types";
 import { getDashboardPath as pathForRole } from "@sanson/utils";
 import { api } from "@/lib/api";
 import { extractApiErrorMessage } from "@/lib/api-error";
-import { pingApiHealth, isProductionHosting } from "@/lib/api-request";
+import { isProductionHosting } from "@/lib/api-request";
 import { formatFirebaseAuthError } from "@/lib/auth-errors";
 import { friendlyNetworkError, friendlySyncError } from "@/lib/user-messages";
+import { useAuthStore } from "@/store/auth";
 
 export type AuthFlowResult =
-  | { ok: true; user: User; redirectPath: string }
+  | { ok: true; user: User; redirectPath: string; token: string }
   | { ok: false; message: string };
+
+/** One sync at a time — login page + AuthProvider share the same Firebase event. */
+let syncInflight: Promise<AuthFlowResult> | null = null;
+let lastSyncedUid: string | null = null;
 
 export function namesFromFirebaseUser(firebaseUser: FirebaseUser) {
   const displayName = firebaseUser.displayName?.split(" ") ?? [];
@@ -61,28 +66,39 @@ function resolveSyncFailureMessage(
   return friendlySyncError();
 }
 
-export async function syncFirebaseUser(
-  firebaseUser: FirebaseUser
-): Promise<AuthFlowResult> {
+function sessionAlreadyReady(firebaseUser: FirebaseUser): AuthFlowResult | null {
+  const { isAuthenticated, user, firebaseToken } = useAuthStore.getState();
+  if (!isAuthenticated || !user || !firebaseToken) return null;
+  const email = firebaseUser.email?.trim().toLowerCase();
+  if (!email || user.email?.trim().toLowerCase() !== email) return null;
+  const role = user.role?.name as UserRole | undefined;
+  return {
+    ok: true,
+    user,
+    token: firebaseToken,
+    redirectPath: role ? pathForRole(role) : "/dashboard/client",
+  };
+}
+
+async function performSync(firebaseUser: FirebaseUser): Promise<AuthFlowResult> {
   const email = firebaseUser.email?.trim();
   if (!email) {
     return { ok: false, message: formatFirebaseAuthError(new Error("GOOGLE_NO_EMAIL")) };
   }
 
-  try {
-    const token = await firebaseUser.getIdToken(true);
-    api.setToken(token);
+  const cached = sessionAlreadyReady(firebaseUser);
+  if (cached) return cached;
 
-    if (isProductionHosting()) {
-      await pingApiHealth();
-    }
+  try {
+    const token = await firebaseUser.getIdToken();
+    api.setToken(token);
 
     const { names } = namesFromFirebaseUser(firebaseUser);
     const payload = { ...names, role: inferRoleFromEmail(email) };
 
     let response = await api.syncUser(payload);
     if ((!response.success || !response.data?.user) && isProductionHosting()) {
-      await pingApiHealth();
+      await new Promise((r) => setTimeout(r, 1200));
       response = await api.syncUser(payload);
     }
 
@@ -92,15 +108,28 @@ export async function syncFirebaseUser(
 
     const user = response.data.user;
     const role = user.role?.name as UserRole | undefined;
+    lastSyncedUid = firebaseUser.uid;
     return {
       ok: true,
       user,
+      token,
       redirectPath: role ? pathForRole(role) : "/dashboard/client",
     };
   } catch (err) {
     const networkMessage = err instanceof Error ? err.message : undefined;
     return { ok: false, message: resolveSyncFailureMessage(null, networkMessage) };
   }
+}
+
+export async function syncFirebaseUser(firebaseUser: FirebaseUser): Promise<AuthFlowResult> {
+  if (syncInflight && lastSyncedUid === firebaseUser.uid) {
+    return syncInflight;
+  }
+
+  syncInflight = performSync(firebaseUser).finally(() => {
+    syncInflight = null;
+  });
+  return syncInflight;
 }
 
 export async function syncFromGoogleCredential(

@@ -63,15 +63,21 @@ class DocumentService:
         file_data: bytes,
         category_id: UUID | None = None,
         case_id: UUID | None = None,
+        *,
+        require_case: bool = True,
         legal_request_id: UUID | None = None,
         visibility: str = "CLIENT",
         ip: str | None = None,
         ua: str | None = None,
     ) -> Document:
+        if require_case and not case_id:
+            raise ValueError(
+                "A case is required. Select a case and upload files for that matter only."
+            )
         mime_type = normalize_upload_mime_type(filename, mime_type)
         await self._assert_case_exists(case_id)
         self.storage.validate_file(filename, mime_type, len(file_data))
-        relative_path = self.storage.build_storage_path(user_id, filename)
+        relative_path = self.storage.build_storage_path(user_id, filename, case_id)
         storage_path = await self.storage.upload_bytes(relative_path, file_data, mime_type)
 
         doc = Document(
@@ -139,11 +145,17 @@ class DocumentService:
             if not self.storage.supabase.configured:
                 raise ValueError("Supabase Storage is not configured on the server")
         else:
-            expected_prefix = f"documents/{user_id}/"
-            if not storage_path.startswith(expected_prefix) and not storage_path.startswith(
-                "local-fallback/"
-            ):
-                raise ValueError("Invalid storage path for this user")
+            legacy_prefix = f"documents/{user_id}/"
+            case_prefix = f"documents/cases/{case_id}/" if case_id else ""
+            valid = storage_path.startswith(legacy_prefix) or (
+                case_prefix and storage_path.startswith(case_prefix)
+            )
+            if not valid and not storage_path.startswith("local-fallback/"):
+                raise ValueError("Invalid storage path for this user and case")
+        if not case_id:
+            raise ValueError(
+                "A case is required. Select a case and upload files for that matter only."
+            )
         mime_type = normalize_upload_mime_type(filename, mime_type)
         await self._assert_case_exists(case_id)
         self.storage.validate_file(filename, mime_type, file_size)
@@ -264,7 +276,7 @@ class DocumentService:
         ua: str | None = None,
     ) -> DocumentVersion:
         self.storage.validate_file(filename, mime_type, len(file_data))
-        relative_path = self.storage.build_storage_path(user_id, filename)
+        relative_path = self.storage.build_storage_path(user_id, filename, doc.case_id)
         storage_path = await self.storage.upload_bytes(relative_path, file_data, mime_type)
 
         new_ver = doc.version_number + 1
@@ -495,9 +507,21 @@ class DocumentService:
         return doc
 
     async def get_presigned_upload(
-        self, user_id: UUID, filename: str, mime_type: str, size: int
+        self,
+        user_id: UUID,
+        filename: str,
+        mime_type: str,
+        size: int,
+        case_id: UUID | None = None,
     ) -> dict:
-        return await self.storage.presigned_upload(user_id, filename, mime_type, size)
+        if not case_id:
+            raise ValueError(
+                "A case is required. Select a case and upload files for that matter only."
+            )
+        await self._assert_case_exists(case_id)
+        return await self.storage.presigned_upload(
+            user_id, filename, mime_type, size, case_id
+        )
 
     async def process_document_pipeline(
         self, doc: Document, performed_by: UUID, ip: str | None = None, ua: str | None = None

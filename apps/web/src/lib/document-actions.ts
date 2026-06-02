@@ -3,6 +3,7 @@ import { getApiBaseUrl } from "@/lib/api-url";
 import { api } from "@/lib/api";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuthStore } from "@/store/auth";
+import { normalizeClientMimeType } from "@/lib/mime-type";
 
 async function ensureAuthToken(): Promise<void> {
   const stored = useAuthStore.getState().firebaseToken;
@@ -21,11 +22,21 @@ async function ensureAuthToken(): Promise<void> {
 
 export type DocumentDisposition = "inline" | "attachment";
 
+export type DocumentPreview = {
+  url: string;
+  mimeType: string;
+  fileName: string;
+};
+
 export function documentContentUrl(
   documentId: string,
   disposition: DocumentDisposition = "inline"
 ): string {
   return `${getApiBaseUrl()}${API_BASE_PATH}/documents/${documentId}/content?disposition=${disposition}`;
+}
+
+export function releaseDocumentPreview(url: string): void {
+  URL.revokeObjectURL(url);
 }
 
 async function fetchDocumentBlob(
@@ -53,18 +64,26 @@ async function fetchDocumentBlob(
   return response.blob();
 }
 
-/** Open file in a new tab for viewing. */
-export async function viewDocument(documentId: string, fileName: string): Promise<void> {
+/** Load file for in-page viewer (no pop-up). Caller must revoke url via releaseDocumentPreview. */
+export async function loadDocumentPreview(
+  documentId: string,
+  fileName: string
+): Promise<DocumentPreview> {
   const blob = await fetchDocumentBlob(documentId, "inline");
-  const url = URL.createObjectURL(blob);
-  const opened = window.open(url, "_blank", "noopener,noreferrer");
-  if (!opened) {
-    window.alert("Pop-up blocked. Allow pop-ups for this site to view the file.");
-    URL.revokeObjectURL(url);
-    return;
-  }
-  window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
-  void fileName;
+  const mimeType =
+    blob.type && blob.type !== "application/octet-stream"
+      ? blob.type
+      : normalizeClientMimeType({ name: fileName } as File);
+  return {
+    url: URL.createObjectURL(blob),
+    mimeType,
+    fileName,
+  };
+}
+
+/** @deprecated Use loadDocumentPreview + DocumentViewerModal */
+export async function viewDocument(documentId: string, fileName: string): Promise<DocumentPreview> {
+  return loadDocumentPreview(documentId, fileName);
 }
 
 /** Save file to disk. */
@@ -81,7 +100,7 @@ export async function downloadDocument(documentId: string, fileName: string): Pr
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-/** Print via hidden iframe (loads authenticated blob URL). */
+/** Print via hidden iframe (no pop-up). */
 export async function printDocument(documentId: string, fileName: string): Promise<void> {
   const blob = await fetchDocumentBlob(documentId, "inline");
   const url = URL.createObjectURL(blob);
@@ -100,7 +119,7 @@ export async function printDocument(documentId: string, fileName: string): Promi
   iframe.className = "sanson-no-print";
   iframe.setAttribute("title", `Print ${fileName}`);
   iframe.style.cssText =
-    "position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none";
+    "position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;opacity:0";
   iframe.src = url;
   document.body.appendChild(iframe);
 
@@ -109,20 +128,23 @@ export async function printDocument(documentId: string, fileName: string): Promi
     URL.revokeObjectURL(url);
   };
 
-  iframe.onload = () => {
+  const triggerPrint = () => {
     window.setTimeout(() => {
       try {
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
       } catch {
-        window.open(url, "_blank", "noopener,noreferrer");
+        throw new Error(
+          "Could not open the print dialog for this file. Try View, then use your browser print."
+        );
       }
       window.setTimeout(cleanup, 60_000);
-    }, 600);
+    }, 800);
   };
 
+  iframe.onload = triggerPrint;
   iframe.onerror = () => {
-    window.open(url, "_blank", "noopener,noreferrer");
     cleanup();
+    throw new Error("Could not load file for printing.");
   };
 }

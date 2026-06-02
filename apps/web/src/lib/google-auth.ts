@@ -4,6 +4,7 @@ import {
   signInWithRedirect,
   type UserCredential,
 } from "firebase/auth";
+import { isProductionHosting } from "@/lib/api-request";
 import { getFirebaseAuth, googleProvider } from "@/lib/firebase";
 
 /** Prefer account picker on repeat visits. */
@@ -47,9 +48,18 @@ function shouldUseRedirect(err: unknown): boolean {
   );
 }
 
-/** Sign in with Google — popup first, redirect if the browser blocks popups. */
+function preferGoogleRedirect(): boolean {
+  return typeof window !== "undefined" && isProductionHosting();
+}
+
+/** Sign in with Google — redirect on Netlify/production; popup for local dev. */
 export async function signInWithGoogle(): Promise<UserCredential> {
   const auth = getFirebaseAuth();
+  if (preferGoogleRedirect()) {
+    markGoogleRedirectPending();
+    await signInWithRedirect(auth, googleProvider);
+    throw new Error("GOOGLE_REDIRECT_STARTED");
+  }
   try {
     return await signInWithPopup(auth, googleProvider);
   } catch (err) {

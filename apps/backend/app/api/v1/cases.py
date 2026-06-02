@@ -1,7 +1,8 @@
 ﻿import structlog
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -17,6 +18,7 @@ from app.schemas.case_intake import MasterCaseIntakeCreate
 from app.schemas.legal import CaseCreate, CaseFromRequest, CaseUpdate
 from app.services.case_intake_service import CaseIntakeService
 from app.schemas.legal_mappers import to_case, to_case_status
+from app.services.case_docx_export_service import CaseDocxExportService
 from app.services.legal_workflow import LegalWorkflowService
 
 router = APIRouter()
@@ -137,6 +139,65 @@ async def list_case_statuses(
     service = LegalWorkflowService(db)
     statuses = await service.list_case_statuses()
     return success_response([to_case_status(s) for s in statuses], "Case statuses retrieved")
+
+
+def _assert_case_access(case: object, user: AuthenticatedUser) -> None:
+    from app.models.legal import Case
+
+    if not isinstance(case, Case):
+        return
+    if user.role_name == "CLIENT" and case.client_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ownership validation failed")
+
+
+@router.get("/{case_id}/export/brief")
+async def export_case_brief_docx(
+    case_id: UUID,
+    current_user: AuthenticatedUser = Depends(require_permission("cases:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = CaseDocxExportService(db)
+    case = await svc.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+    _assert_case_access(case, current_user)
+    try:
+        data = svc.build_brief_docx(case)
+    except Exception as exc:
+        logger.exception("export_case_brief_failed", case_id=str(case_id))
+        raise HTTPException(status_code=500, detail=f"Could not build Word file: {exc}") from exc
+    filename = svc.safe_filename(case.case_number, "case_brief")
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{case_id}/export/pleadings")
+async def export_case_pleadings_docx(
+    case_id: UUID,
+    all_documents: bool = Query(True, description="Include all case files; if false, court-related categories only"),
+    current_user: AuthenticatedUser = Depends(require_permission("cases:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = CaseDocxExportService(db)
+    case = await svc.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+    _assert_case_access(case, current_user)
+    documents = await svc.list_case_documents(case_id)
+    try:
+        data = await svc.build_pleadings_docx(case, documents, all_documents=all_documents)
+    except Exception as exc:
+        logger.exception("export_case_pleadings_failed", case_id=str(case_id))
+        raise HTTPException(status_code=500, detail=f"Could not build Word file: {exc}") from exc
+    filename = svc.safe_filename(case.case_number, "pleadings_pack")
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/{case_id}")

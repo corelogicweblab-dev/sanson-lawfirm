@@ -29,6 +29,7 @@ import { DocumentCenter } from "@/components/documents/document-center";
 import { CaseWorkspaceOps } from "@/components/operations/case-workspace-ops";
 import { ParalegalCaseWorkspace } from "@/components/operations/paralegal-case-workspace";
 import { CaseBriefView } from "@/components/cases/case-brief-view";
+import { CaseExportActions } from "@/components/cases/case-export-actions";
 import { ParalegalWorkflowStrip } from "@/components/operations/paralegal-workflow-strip";
 import { LawyerWorkflowStrip } from "@/components/lawyer/lawyer-workflow-strip";
 import { LegalNotebookFloat } from "@/components/lawyer/legal-notebook-float";
@@ -161,12 +162,19 @@ function CaseWorkspaceContent() {
 
             {tab === "overview" && (
               <div className="space-y-6">
-                {role !== "PARALEGAL" && (
+                {(role === "LAWYER" || role === "PARALEGAL" || role === "ADMIN") && (
                   <Card className="sanson-panel">
                     <CardContent className="p-5">
-                      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-pink-300">
-                        Case brief
-                      </h3>
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-300">
+                          Case brief
+                        </h3>
+                        <CaseExportActions
+                          caseId={caseId}
+                          caseNumber={caseItem.case_number}
+                          compact
+                        />
+                      </div>
                       <CaseBriefView description={caseItem.description} caseDetails={caseDetails} />
                     </CardContent>
                   </Card>
@@ -179,9 +187,19 @@ function CaseWorkspaceContent() {
                   />
                 )}
                 <div>
-                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-300">
-                    Case documents
-                  </h3>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">
+                      Case documents
+                    </h3>
+                    {(role === "LAWYER" || role === "PARALEGAL" || role === "ADMIN") && (
+                      <CaseExportActions
+                        caseId={caseId}
+                        caseNumber={caseItem.case_number}
+                        showPleadings
+                        compact
+                      />
+                    )}
+                  </div>
                   <DocumentCenter
                     caseId={caseId}
                     showProcess={role === "PARALEGAL"}
@@ -246,12 +264,20 @@ function CaseWorkspaceContent() {
             )}
 
             {tab === "documents" && (
-              <DocumentCenter
-                caseId={caseId}
-                showProcess={role === "PARALEGAL"}
-                readOnly={role === "LAWYER"}
-                allowPrint={role === "LAWYER" || role === "PARALEGAL"}
-              />
+              <div className="space-y-4">
+                {(role === "LAWYER" || role === "PARALEGAL" || role === "ADMIN") && (
+                  <CaseExportActions
+                    caseId={caseId}
+                    caseNumber={caseItem.case_number}
+                  />
+                )}
+                <DocumentCenter
+                  caseId={caseId}
+                  showProcess={role === "PARALEGAL"}
+                  readOnly={role === "LAWYER"}
+                  allowPrint={role === "LAWYER" || role === "PARALEGAL"}
+                />
+              </div>
             )}
 
             {tab === "timeline" && role !== "PARALEGAL" && (

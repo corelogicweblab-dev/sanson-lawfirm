@@ -2,14 +2,18 @@
 
 import { useEffect, useRef } from "react";
 import { isFirebaseConfigured } from "@/lib/firebase";
-import { completeGoogleRedirectSignIn } from "@/lib/google-auth";
+import { completeGoogleRedirectSignIn, isGoogleRedirectPending } from "@/lib/google-auth";
 import {
   firebaseAuthErrorMessage,
   syncFromGoogleCredential,
 } from "@/lib/firebase-auth-flow";
 
 type Options = {
-  onSuccess: (result: { user: import("@sanson/types").User; redirectPath: string }) => void;
+  onSuccess: (result: {
+    user: import("@sanson/types").User;
+    redirectPath: string;
+    token: string;
+  }) => void;
   onError: (message: string) => void;
   setLoading: (loading: boolean) => void;
 };
@@ -22,6 +26,10 @@ export function useGoogleAuthRedirect({ onSuccess, onError, setLoading }: Option
     if (!isFirebaseConfigured() || ran.current) return;
     ran.current = true;
 
+    if (isGoogleRedirectPending()) {
+      setLoading(true);
+    }
+
     let cancelled = false;
 
     (async () => {
@@ -32,7 +40,11 @@ export function useGoogleAuthRedirect({ onSuccess, onError, setLoading }: Option
         const result = await syncFromGoogleCredential(credential);
         if (cancelled) return;
         if (result.ok) {
-          onSuccess({ user: result.user, redirectPath: result.redirectPath });
+          onSuccess({
+            user: result.user,
+            redirectPath: result.redirectPath,
+            token: result.token,
+          });
         } else {
           onError(result.message);
         }

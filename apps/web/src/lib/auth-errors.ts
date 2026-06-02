@@ -24,7 +24,7 @@ export function formatFirebaseAuthError(err: unknown): string {
     "auth/too-many-requests": "Too many attempts. Wait a few minutes and try again.",
     "auth/network-request-failed": "Network error. Check your connection and try again.",
     "auth/unauthorized-domain":
-      "This website is not authorized for Google sign-in. Please contact SANSON Law Firm support.",
+      "This site is not in Firebase Authorized domains. In Firebase Console → Authentication → Settings → Authorized domains, add sanson-lawfirm.netlify.app (and your custom domain), then try again.",
     "auth/popup-blocked":
       "Your browser blocked the sign-in window. Trying Google redirect…",
     "auth/popup-closed-by-user": "Google sign-in was cancelled.",

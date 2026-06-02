@@ -70,14 +70,14 @@ export async function fetchWithRetry(
   throw lastError;
 }
 
-/** Wake Render before authenticated dashboard calls (no auth required). */
+/** Background API warm-up (non-blocking — do not await before sign-in). */
 export async function pingApiHealth(): Promise<boolean> {
   try {
     const base = getApiBaseUrl();
     const healthPath = base ? `${base}/api/v1/health/live` : "/api/v1/health/live";
     const res = await fetchWithRetry(healthPath, { method: "GET" }, {
-      timeoutMs: 45_000,
-      retries: 1,
+      timeoutMs: 12_000,
+      retries: 0,
     });
     return res.ok;
   } catch {

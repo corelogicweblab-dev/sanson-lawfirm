@@ -28,10 +28,12 @@ class DocumentFileStorage:
     def validate_file(self, filename: str, mime_type: str, size: int) -> None:
         self.r2.validate_file(filename, mime_type, size)
 
-    def build_storage_path(self, user_id: UUID, filename: str) -> str:
+    def build_storage_path(
+        self, user_id: UUID, filename: str, case_id: UUID | None = None
+    ) -> str:
         if self.supabase.configured:
-            return self.supabase.build_storage_path(user_id, filename)
-        return self.r2.build_storage_path(user_id, filename)
+            return self.supabase.build_storage_path(user_id, filename, case_id)
+        return self.r2.build_storage_path(user_id, filename, case_id)
 
     async def upload_bytes(self, relative_path: str, data: bytes, mime_type: str) -> str:
         if self.supabase.configured:
@@ -47,9 +49,16 @@ class DocumentFileStorage:
             return self.r2.object_exists(storage_path)
         return True
 
-    async def presigned_upload(self, user_id: UUID, filename: str, mime_type: str, size: int) -> dict:
+    async def presigned_upload(
+        self,
+        user_id: UUID,
+        filename: str,
+        mime_type: str,
+        size: int,
+        case_id: UUID | None = None,
+    ) -> dict:
         self.validate_file(filename, mime_type, size)
-        relative = self.build_storage_path(user_id, filename)
+        relative = self.build_storage_path(user_id, filename, case_id)
         if self.supabase.configured:
             signed = await self.supabase.create_signed_upload(relative)
             return {**signed, "direct_upload_required": False, "storage_backend": "supabase"}

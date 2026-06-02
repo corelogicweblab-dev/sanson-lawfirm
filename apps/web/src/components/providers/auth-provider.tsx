@@ -2,10 +2,9 @@
 
 import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
-import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
-import { pingApiHealth } from "@/lib/api-request";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { syncFirebaseUser } from "@/lib/firebase-auth-flow";
 import { prefetchLawyerDashboard } from "@/lib/dashboard-cache";
 import { useAuthStore } from "@/store/auth";
 
@@ -21,36 +20,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
-        if (firebaseUser) {
-          const [token] = await Promise.all([
-            firebaseUser.getIdToken(),
-            pingApiHealth(),
-          ]);
-          setToken(token);
-          api.setToken(token);
-
-          const email = firebaseUser.email ?? "";
-          const parts = firebaseUser.displayName?.split(" ") ?? [];
-          const names = resolveSyncProfileNames(email, {
-            first_name: parts[0],
-            last_name: parts.slice(1).join(" "),
-          });
-          const response = await api.syncUser({
-            ...names,
-            role: inferRoleFromEmail(email),
-          });
-
-          if (response.success && response.data?.user) {
-            setUser(response.data.user);
-            if (response.data.user.role?.name === "LAWYER") {
-              void prefetchLawyerDashboard();
-            }
-          } else {
-            setUser(null);
-          }
-        } else {
+        if (!firebaseUser) {
           setToken(null);
           setUser(null);
+          return;
+        }
+
+        const result = await syncFirebaseUser(firebaseUser);
+        if (result.ok) {
+          setToken(result.token);
+          api.setToken(result.token);
+          setUser(result.user);
+          if (result.user.role?.name === "LAWYER") {
+            void prefetchLawyerDashboard();
+          }
+        } else {
+          const existing = useAuthStore.getState().user;
+          if (!existing) setUser(null);
         }
       } finally {
         setLoading(false);

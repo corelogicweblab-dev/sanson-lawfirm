@@ -132,8 +132,8 @@ export class ApiClient {
     return this.request("/auth/sync", {
       method: "POST",
       body: JSON.stringify(data),
-      timeoutMs: isProductionHosting() ? 90_000 : 25_000,
-      retries: isProductionHosting() ? 2 : 0,
+      timeoutMs: isProductionHosting() ? 35_000 : 20_000,
+      retries: isProductionHosting() ? 1 : 0,
     });
   }
 
@@ -511,6 +511,16 @@ export class ApiClient {
         await Promise.all([pingApiHealth(), warmRenderBeforeUpload()]);
       }
 
+      if (!meta?.caseId) {
+        return {
+          success: false,
+          message: "Select a case before uploading. Files must belong to a specific matter.",
+          data: null,
+          meta: null,
+          errors: null,
+        };
+      }
+
       const presign = await this.requestSafe<{
         upload_url: string | null;
         upload_token?: string | null;
@@ -523,6 +533,7 @@ export class ApiClient {
           file_name: file.name,
           mime_type: mimeType,
           file_size: file.size,
+          case_id: meta.caseId,
         }),
         timeoutMs: 90_000,
         retries: isProductionHosting() ? 2 : 0,

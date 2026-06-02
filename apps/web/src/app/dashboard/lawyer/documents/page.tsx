@@ -1,7 +1,7 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { DocumentCenter } from "@/components/documents/document-center";
+import { CaseDocumentWorkspace } from "@/components/documents/case-document-workspace";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PageContainer, SectionHeader } from "@sanson/ui";
 
@@ -18,9 +18,9 @@ export default function LawyerDocumentsPage() {
         <PageContainer>
           <SectionHeader
             title="Document Center"
-            description="Read-only review — paralegals upload and organize all case files."
+            description="Select a case to review its files. Paralegals upload and organize documents per case."
           />
-          <DocumentCenter readOnly showProcess={false} />
+          <CaseDocumentWorkspace readOnly allowPrint />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>

@@ -106,10 +106,15 @@ class R2StorageService:
         if size > self.settings.document_max_size_bytes:
             raise ValueError("File is too large for upload")
 
-    def build_storage_path(self, user_id: uuid.UUID, filename: str) -> str:
+    def build_storage_path(
+        self, user_id: uuid.UUID, filename: str, case_id: uuid.UUID | None = None
+    ) -> str:
         safe = "".join(c for c in filename if c.isalnum() or c in ".-_")[:200]
         date_prefix = datetime.now(timezone.utc).strftime("%Y/%m/%d")
-        return f"documents/{user_id}/{date_prefix}/{uuid.uuid4()}_{safe}"
+        unique = f"{date_prefix}/{uuid.uuid4()}_{safe}"
+        if case_id:
+            return f"documents/cases/{case_id}/{user_id}/{unique}"
+        return f"documents/{user_id}/{unique}"
 
     def upload_bytes(self, storage_path: str, data: bytes, mime_type: str) -> str:
         client = self._client()
