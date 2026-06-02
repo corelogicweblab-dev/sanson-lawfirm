@@ -78,18 +78,25 @@ export function DocumentCenter({
     }
     setUploadError(null);
     setUploading(true);
-    const list = Array.from(files);
-    for (const file of list) {
-      const res = await api.uploadDocument(file, {
-        categoryId: categoryId || undefined,
-        caseId,
-      });
-      if (!res.success) {
-        setUploadError(friendlyUploadError(res.message ?? undefined));
-        break;
+    try {
+      const list = Array.from(files);
+      for (const file of list) {
+        const res = await api.uploadDocument(file, {
+          categoryId: categoryId || undefined,
+          caseId,
+        });
+        if (!res.success) {
+          setUploadError(friendlyUploadError(res.message ?? undefined));
+          break;
+        }
       }
+    } catch (err) {
+      setUploadError(
+        friendlyUploadError(err instanceof Error ? err.message : "Upload failed. Please try again.")
+      );
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
     await load();
   };

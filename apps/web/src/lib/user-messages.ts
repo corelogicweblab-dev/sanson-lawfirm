@@ -27,6 +27,9 @@ export function friendlyUploadError(detail?: string): string {
   if (d.includes("not allowed") || d.includes("mime type")) {
     return "This file type is not supported. Use PDF, Office docs, images, video, audio, or ZIP.";
   }
+  if (d.includes("too large for json") || d.includes("max 6 mb")) {
+    return "This file is over 6 MB. Wait one minute for the server to wake up, then tap Retry upload.";
+  }
   if (
     d.includes("too large") ||
     d.includes("exceeds") ||

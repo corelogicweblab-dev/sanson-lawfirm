@@ -8,7 +8,13 @@ from app.core.dependencies import get_client_ip, get_current_user, get_user_agen
 from app.core.responses import PaginationMeta, PaginationParams, success_response
 from app.domain.authenticated_user import AuthenticatedUser
 from app.schemas.document_mappers import to_analysis, to_category, to_document, to_ocr, to_version
-from app.schemas.documents import CompleteDocumentUploadRequest, DocumentReviewUpdate
+import base64
+
+from app.schemas.documents import (
+    CompleteDocumentUploadRequest,
+    DocumentJsonUploadRequest,
+    DocumentReviewUpdate,
+)
 from app.services.document_service import DocumentService
 
 router = APIRouter()
@@ -99,6 +105,44 @@ async def upload_document(
             case_id=_optional_uuid(case_id, "case_id"),
             legal_request_id=_optional_uuid(legal_request_id, "legal_request_id"),
             visibility=visibility,
+            ip=ip,
+            ua=ua,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return success_response(to_document(doc), "Document uploaded")
+
+
+@router.post("/upload/json")
+async def upload_document_json(
+    body: DocumentJsonUploadRequest,
+    user: AuthenticatedUser = Depends(require_permission("documents:write")),
+    db: AsyncSession = Depends(get_db),
+    ip: str | None = Depends(get_client_ip),
+    ua: str | None = Depends(get_user_agent),
+):
+    if user.role_name == "LAWYER":
+        raise HTTPException(
+            status_code=403,
+            detail="Lawyers review documents only. Paralegals manage case file uploads.",
+        )
+    try:
+        file_data = base64.b64decode(body.file_content_base64, validate=True)
+    except Exception as exc:
+        raise HTTPException(400, "Invalid file encoding") from exc
+    if len(file_data) > 6 * 1024 * 1024:
+        raise HTTPException(400, "File too large for JSON upload (max 6 MB). Use drag-drop for larger files.")
+    svc = DocumentService(db)
+    try:
+        doc = await svc.create_document_from_upload(
+            user_id=user.id,
+            filename=body.file_name,
+            mime_type=body.mime_type,
+            file_data=file_data,
+            category_id=_optional_uuid(body.category_id, "category_id"),
+            case_id=_optional_uuid(body.case_id, "case_id"),
+            legal_request_id=_optional_uuid(body.legal_request_id, "legal_request_id"),
+            visibility=body.visibility,
             ip=ip,
             ua=ua,
         )
