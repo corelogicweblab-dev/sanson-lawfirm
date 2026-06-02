@@ -26,6 +26,7 @@ import {
 } from "@/components/cases/case-workspace-tabs";
 import { DocumentCenter } from "@/components/documents/document-center";
 import { CaseWorkspaceOps } from "@/components/operations/case-workspace-ops";
+import { ParalegalCaseEditor } from "@/components/operations/paralegal-case-editor";
 import { ParalegalWorkflowStrip } from "@/components/operations/paralegal-workflow-strip";
 import { LawyerWorkflowStrip } from "@/components/lawyer/lawyer-workflow-strip";
 import { LegalNotebookFloat } from "@/components/lawyer/legal-notebook-float";
@@ -120,18 +121,26 @@ function CaseWorkspaceContent() {
 
             {tab === "overview" && (
               <div className="space-y-6">
+                {role === "PARALEGAL" ? (
+                  <ParalegalCaseEditor
+                    caseId={caseId}
+                    caseItem={caseItem}
+                    onSaved={() => setReloadKey((k) => k + 1)}
+                  />
+                ) : (
+                  <Card className="sanson-panel">
+                    <CardContent className="p-4">
+                      <h3 className="mb-2 text-sm font-medium text-zinc-300">Summary</h3>
+                      <p className="text-sm text-zinc-400">{caseItem.description || "—"}</p>
+                      <CaseDataPanel title="" data={caseDetails} />
+                    </CardContent>
+                  </Card>
+                )}
                 <CaseWorkspaceOps
                   caseId={caseId}
                   role={role}
                   onUpdated={() => setReloadKey((k) => k + 1)}
                 />
-                <Card className="sanson-panel">
-                  <CardContent className="p-4">
-                    <h3 className="mb-2 text-sm font-medium text-zinc-300">Summary</h3>
-                    <p className="text-sm text-zinc-400">{caseItem.description || "—"}</p>
-                    <CaseDataPanel title="" data={caseDetails} />
-                  </CardContent>
-                </Card>
                 <div>
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-300">
                     Case documents

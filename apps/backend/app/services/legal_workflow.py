@@ -402,8 +402,18 @@ class LegalWorkflowService:
             case.title = kwargs["title"]
         if kwargs.get("description") is not None:
             case.description = kwargs["description"]
+        if kwargs.get("case_category"):
+            case.case_category = CaseCategoryEnum[kwargs["case_category"]]
         if kwargs.get("priority"):
             case.priority = PriorityLevelEnum[kwargs["priority"]]
+        if kwargs.get("master_data") is not None:
+            base = dict(case.master_data or {})
+            for key, val in kwargs["master_data"].items():
+                if isinstance(val, dict) and isinstance(base.get(key), dict):
+                    base[key] = {**base[key], **val}
+                else:
+                    base[key] = val
+            case.master_data = base
         if kwargs.get("status_id"):
             case.status_id = kwargs["status_id"]
         elif kwargs.get("status_name"):

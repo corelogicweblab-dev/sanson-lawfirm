@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Card, CardContent, Input } from "@sanson/ui";
 import type { UserRole } from "@sanson/types";
 import { api } from "@/lib/api";
@@ -13,6 +13,21 @@ type Props = {
 
 export function CaseWorkspaceOps({ caseId, role, onUpdated }: Props) {
   const [lawyerId, setLawyerId] = useState("");
+  const [lawyers, setLawyers] = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    if (role !== "PARALEGAL") return;
+    api.listUserDirectory("LAWYER").then((r) => {
+      if (r.success && r.data) {
+        setLawyers(
+          r.data.map((u) => ({
+            id: String(u.id),
+            label: String(u.display_name ?? u.email ?? u.id),
+          }))
+        );
+      }
+    });
+  }, [role]);
   const [timelineTitle, setTimelineTitle] = useState("");
   const [timelineDate, setTimelineDate] = useState("");
   const [message, setMessage] = useState("");
@@ -98,25 +113,39 @@ export function CaseWorkspaceOps({ caseId, role, onUpdated }: Props) {
       <Card className="border-pink-500/25 bg-pink-950/20">
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-medium text-white">Paralegal operations</p>
-          <Input
-            label="Assign lawyer (user UUID)"
-            value={lawyerId}
-            onChange={(e) => setLawyerId(e.target.value)}
-            placeholder="Lawyer user id from directory"
-          />
+          <p className="text-xs text-zinc-400">
+            Quick assign — or set the lawyer in Edit case above and Save.
+          </p>
+          <label className="block text-sm">
+            <span className="sanson-label">Lawyer</span>
+            <select
+              value={lawyerId}
+              onChange={(e) => setLawyerId(e.target.value)}
+              className="sanson-field mt-1.5 w-full"
+            >
+              <option value="">Select lawyer…</option>
+              {lawyers.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Button
             size="sm"
             loading={loading}
             disabled={!lawyerId.trim()}
             onClick={() =>
               run(async () => {
+                const assignee = lawyerId.trim();
                 const r = await api.assignCase(caseId, {
-                  assignee_id: lawyerId.trim(),
+                  assignee_id: assignee,
                   assignee_role: "LAWYER",
                 });
                 if (!r.success) throw new Error(r.message);
+                const u = await api.updateCase(caseId, { assigned_lawyer_id: assignee });
+                if (!u.success) throw new Error(u.message);
                 setMessage("Lawyer assigned.");
-                setLawyerId("");
               })
             }
           >

@@ -52,11 +52,13 @@ class CaseCreate(BaseModel):
 class CaseUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
+    case_category: str | None = None
     status_id: UUID | None = None
     status_name: str | None = None
     priority: str | None = None
     assigned_lawyer_id: UUID | None = None
     assigned_paralegal_id: UUID | None = None
+    master_data: dict | None = None
 
 
 class CaseFromRequest(BaseModel):

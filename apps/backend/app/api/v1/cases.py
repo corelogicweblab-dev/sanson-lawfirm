@@ -165,11 +165,18 @@ async def update_case(
     _legal: AuthenticatedUser = Depends(require_legal_operator()),
     db: AsyncSession = Depends(get_db),
 ):
-    if body.status_name in ("CLOSED", "RESOLVED", "ARCHIVED"):
+    if body.status_name in ("CLOSED", "RESOLVED", "ARCHIVED", "IN_PROGRESS"):
         if current_user.role_name != "LAWYER":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only lawyers may approve or close cases",
+            )
+    if body.status_name and current_user.role_name == "PARALEGAL":
+        allowed = {"DRAFT", "OPEN", "WAITING_DOCUMENTS", "UNDER_REVIEW"}
+        if body.status_name not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Paralegals may only set Draft, Open, Waiting documents, or Under review",
             )
     service = LegalWorkflowService(db)
     updated = await service.update_case(
@@ -179,11 +186,13 @@ async def update_case(
         ua=get_user_agent(request),
         title=body.title,
         description=body.description,
+        case_category=body.case_category,
         status_id=body.status_id,
         status_name=body.status_name,
         priority=body.priority,
         assigned_lawyer_id=body.assigned_lawyer_id,
         assigned_paralegal_id=body.assigned_paralegal_id,
+        master_data=body.master_data,
     )
     if not updated:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
