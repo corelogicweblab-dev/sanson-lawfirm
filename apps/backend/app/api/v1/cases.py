@@ -1,4 +1,5 @@
-﻿from uuid import UUID
+﻿import structlog
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,7 @@ from app.schemas.legal_mappers import to_case, to_case_status
 from app.services.legal_workflow import LegalWorkflowService
 
 router = APIRouter()
+logger = structlog.get_logger()
 
 
 @router.post("/master-intake")
@@ -103,20 +105,28 @@ async def list_cases(
     # Lawyers and paralegals see the firm-wide case repository (managing partner reviews all matters)
     lawyer_id = None
     paralegal_id = None
-    data, total = await service.list_cases(
-        offset=pagination.offset,
-        limit=pagination.page_size,
-        client_id=client_id,
-        lawyer_id=lawyer_id,
-        paralegal_id=paralegal_id,
-    )
+    try:
+        data, total = await service.list_cases(
+            offset=pagination.offset,
+            limit=pagination.page_size,
+            client_id=client_id,
+            lawyer_id=lawyer_id,
+            paralegal_id=paralegal_id,
+        )
+        payload = [to_case(c) for c in data]
+    except Exception as exc:
+        logger.exception("list_cases_failed", error=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not load cases. Please retry in a moment.",
+        ) from exc
     meta = PaginationMeta(
         page=pagination.page,
         page_size=pagination.page_size,
         total=total,
         total_pages=(total + pagination.page_size - 1) // pagination.page_size,
     )
-    return success_response([to_case(c) for c in data], "Cases retrieved", meta=meta.model_dump())
+    return success_response(payload, "Cases retrieved", meta=meta.model_dump())
 
 
 @router.get("/statuses")

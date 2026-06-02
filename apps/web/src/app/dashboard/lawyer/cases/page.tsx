@@ -21,21 +21,28 @@ function LawyerCasesPageContent() {
     setLoading(true);
     setError(null);
     try {
-      const [casesRes, queueRes, dir] = await Promise.all([
-        api.listCases(),
+      const [queueRes, casesRes, dir] = await Promise.all([
         api.getLawyerReviewQueue(),
+        api.listCases(),
         api.listUserDirectory("PARALEGAL"),
       ]);
       const byId = new Map<string, CaseItem>();
-      if (casesRes.success && casesRes.data) {
-        casesRes.data.forEach((c) => byId.set(c.id, c));
-      } else if (!casesRes.success) {
-        setError(casesRes.message ?? "Could not load cases.");
-      }
       if (queueRes.success && queueRes.data) {
         queueRes.data.forEach((c) => byId.set(c.id, c));
       }
-      setItems([...byId.values()]);
+      if (casesRes.success && casesRes.data) {
+        casesRes.data.forEach((c) => byId.set(c.id, c));
+      }
+      const merged = [...byId.values()];
+      setItems(merged);
+      if (merged.length === 0) {
+        const msg = !queueRes.success
+          ? queueRes.message
+          : !casesRes.success
+            ? casesRes.message
+            : null;
+        if (msg) setError(msg);
+      }
       if (dir.success && dir.data) {
         const m: Record<string, string> = {};
         dir.data.forEach((u) => {
