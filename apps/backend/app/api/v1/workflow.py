@@ -47,7 +47,6 @@ async def lawyer_dashboard(
     current_user: AuthenticatedUser = Depends(require_permission("dashboard:lawyer")),
     db: AsyncSession = Depends(get_db),
 ):
-    degraded = False
     service = LegalWorkflowService(db)
 
     try:
@@ -55,7 +54,6 @@ async def lawyer_dashboard(
     except Exception as exc:
         logger.exception("lawyer_dashboard_stats_failed", error=str(exc))
         stats = dict(DEFAULT_LAWYER_STATS)
-        degraded = True
 
     try:
         notif_svc = NotificationService(db)
@@ -64,29 +62,21 @@ async def lawyer_dashboard(
         )
         stats["notifications_unread"] = unread_total
     except Exception as exc:
-        logger.warning("lawyer_dashboard_notifications_failed", error=str(exc))
-        stats["notifications_unread"] = 0
-        degraded = True
+        logger.debug("lawyer_dashboard_notifications_skipped", error=str(exc))
+        stats["notifications_unread"] = stats.get("notifications_unread", 0)
 
     preview_payload: list[dict] = []
     try:
         preview = await service.list_cases_pending_lawyer_review(limit=5)
         preview_payload = [to_case(c) for c in preview]
     except Exception as exc:
-        logger.warning("lawyer_dashboard_preview_failed", error=str(exc))
-        degraded = True
+        logger.debug("lawyer_dashboard_preview_skipped", error=str(exc))
 
-    message = (
-        "Lawyer dashboard retrieved (limited — run database migrations on Supabase if counts stay at zero)"
-        if degraded
-        else "Lawyer dashboard retrieved"
-    )
     return success_response(
         {
             "stats": stats,
             "preview_cases": preview_payload,
-            "degraded": degraded,
         },
-        message,
+        "Lawyer dashboard retrieved",
     )
 

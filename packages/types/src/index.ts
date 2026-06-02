@@ -235,7 +235,6 @@ export interface LawyerDashboardStats {
 export interface LawyerDashboardPayload {
   stats: LawyerDashboardStats;
   preview_cases: CaseItem[];
-  degraded?: boolean;
 }
 
 export interface CaseItem {

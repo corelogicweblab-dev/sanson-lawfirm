@@ -23,6 +23,7 @@ import {
 import { StatCard, Button, Badge } from "@sanson/ui";
 import type { CaseItem, LawyerDashboardStats } from "@sanson/types";
 import { api } from "@/lib/api";
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { CaseIntelligenceCard } from "./case-intelligence-card";
 import { LawyerWorkflowStrip } from "./lawyer-workflow-strip";
 
@@ -47,52 +48,48 @@ const EMPTY_STATS: LawyerDashboardStats = {
 export function LawyerCommandCenter() {
   const [stats, setStats] = useState<LawyerDashboardStats>(EMPTY_STATS);
   const [previewCases, setPreviewCases] = useState<CaseItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      setWarning(null);
-      try {
-        const dash = await api.getLawyerDashboard();
-        if (cancelled) return;
-
-        if (!dash.success || !dash.data) {
+  const loadDashboard = async (silent: boolean) => {
+    if (!silent) setInitialLoad(true);
+    else setRefreshing(true);
+    setError(null);
+    try {
+      const dash = await api.getLawyerDashboard();
+      if (!dash.success || !dash.data) {
+        if (!silent) {
           setStats(EMPTY_STATS);
           setPreviewCases([]);
-          setError(
-            dash.message ||
-              "Could not load dashboard data. Tap Retry — API is at /api/v1 on this same site."
-          );
-          return;
         }
-
-        setStats(dash.data.stats);
-        setPreviewCases(dash.data.preview_cases ?? []);
-        if (dash.data.degraded) {
-          setWarning(
-            "Some dashboard metrics could not be loaded from the database. Run Supabase migrations if this persists."
-          );
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setStats(EMPTY_STATS);
-          setPreviewCases([]);
-          setError(err instanceof Error ? err.message : "Failed to load dashboard.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+        setError(dash.message || "Could not load dashboard. Tap Retry.");
+        return;
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      setStats(dash.data.stats);
+      setPreviewCases(dash.data.preview_cases ?? []);
+      setError(null);
+    } catch (err) {
+      if (!silent) {
+        setStats(EMPTY_STATS);
+        setPreviewCases([]);
+      }
+      setError(err instanceof Error ? err.message : "Failed to load dashboard.");
+    } finally {
+      setInitialLoad(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadDashboard(reloadKey > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloadKey drives manual retry
   }, [reloadKey]);
+
+  useAutoRefresh(() => {
+    void loadDashboard(true);
+  });
 
   const workQueue = [
     {
@@ -145,7 +142,7 @@ export function LawyerCommandCenter() {
     },
   ];
 
-  if (loading) {
+  if (initialLoad) {
     return (
       <div className="flex min-h-[240px] items-center justify-center gap-2 text-sm text-zinc-400">
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -156,6 +153,12 @@ export function LawyerCommandCenter() {
 
   return (
     <div className="space-y-8">
+      {refreshing && (
+        <p className="flex items-center gap-2 text-xs text-zinc-500">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Syncing latest firm data…
+        </p>
+      )}
       {error && (
         <div className="sanson-panel flex flex-wrap items-center justify-between gap-3 border-amber-500/35 bg-amber-500/10 p-4 text-sm">
           <p className="text-amber-100">{error}</p>
@@ -163,11 +166,6 @@ export function LawyerCommandCenter() {
             Retry
           </Button>
         </div>
-      )}
-      {warning && !error && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-          {warning}
-        </p>
       )}
       <LawyerWorkflowStrip />
 
