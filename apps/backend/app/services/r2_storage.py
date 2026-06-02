@@ -128,6 +128,16 @@ class R2StorageService:
             ) from exc
         return storage_path
 
+    def object_exists(self, storage_path: str) -> bool:
+        if not self.configured:
+            return True
+        client = self._client()
+        try:
+            client.head_object(Bucket=self.settings.r2_bucket_name, Key=storage_path)
+            return True
+        except ClientError:
+            return False
+
     def download_bytes(self, storage_path: str) -> bytes:
         client = self._client()
         obj = client.get_object(Bucket=self.settings.r2_bucket_name, Key=storage_path)

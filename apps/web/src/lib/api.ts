@@ -26,8 +26,9 @@ import type {
 } from "@sanson/types";
 import { API_BASE_PATH } from "@sanson/shared";
 import { extractApiErrorMessage } from "@/lib/api-error";
-import { fetchWithRetry, isProductionHosting, pingApiHealth } from "@/lib/api-request";
-import { buildDocumentUploadBases, getApiBaseUrl } from "@/lib/api-url";
+import { fetchWithRetry, isProductionHosting, pingApiHealth, warmRenderBeforeUpload } from "@/lib/api-request";
+import { getApiBaseUrl } from "@/lib/api-url";
+import { getRenderMultipartUploadUrl, putToPresignedUrl, xhrMultipartUpload } from "@/lib/upload-transport";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuthStore } from "@/store/auth";
 
@@ -461,15 +462,6 @@ export class ApiClient {
     file: File,
     meta?: { categoryId?: string; caseId?: string; legalRequestId?: string }
   ): Promise<ApiResponse<DocumentItem>> {
-    const buildForm = () => {
-      const fd = new FormData();
-      fd.append("file", file);
-      if (meta?.categoryId) fd.append("category_id", meta.categoryId);
-      if (meta?.caseId) fd.append("case_id", meta.caseId);
-      if (meta?.legalRequestId) fd.append("legal_request_id", meta.legalRequestId);
-      return fd;
-    };
-
     await this.refreshTokenForUpload();
 
     if (!this.token) {
@@ -482,88 +474,118 @@ export class ApiClient {
       };
     }
 
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.token}`,
-    };
-
-    const timeoutMs = Math.max(180_000, Math.min(900_000, file.size / 512 + 180_000));
-    const path = `${API_BASE_PATH}/documents/upload`;
+    const mimeType = file.type || "application/octet-stream";
+    const timeoutMs = Math.max(300_000, Math.min(900_000, file.size / 256 + 300_000));
 
     if (isProductionHosting()) {
-      await pingApiHealth();
+      await Promise.all([pingApiHealth(), warmRenderBeforeUpload()]);
     }
 
-    const bases = buildDocumentUploadBases(file.size);
+    const presign = await this.request<{
+      upload_url: string | null;
+      storage_path: string;
+      direct_upload_required?: boolean;
+      expires_in?: number;
+    }>("/uploads/presign", {
+      method: "POST",
+      body: JSON.stringify({
+        file_name: file.name,
+        mime_type: mimeType,
+        file_size: file.size,
+      }),
+      timeoutMs: 90_000,
+      retries: isProductionHosting() ? 2 : 0,
+    });
 
-    let lastMessage = "Upload failed. Please try again.";
-
-    for (const base of bases) {
-      const url = `${base}${path}`;
-      const isProxy = base === "";
+    if (
+      presign.success &&
+      presign.data?.upload_url &&
+      presign.data.storage_path &&
+      !presign.data.direct_upload_required
+    ) {
       try {
-        const response = await fetchWithRetry(
-          url,
-          { method: "POST", headers, body: buildForm() },
-          {
-            timeoutMs,
-            retries: isProxy ? 1 : isProductionHosting() ? 2 : 0,
-          }
-        );
-        let body: ApiResponse<DocumentItem> & Record<string, unknown>;
-        try {
-          body = (await response.json()) as ApiResponse<DocumentItem> & Record<string, unknown>;
-        } catch {
-          lastMessage = response.ok
-            ? "Upload response was invalid."
-            : `Upload failed (${response.status}). Try again or use a smaller file.`;
-          continue;
-        }
-        if (!response.ok && body.success !== false) {
-          lastMessage = extractApiErrorMessage(body, `Upload failed (${response.status})`);
-          if (response.status >= 500) continue;
-          return {
-            success: false,
-            message: lastMessage,
-            data: null,
-            meta: body.meta ?? null,
-            errors: body.errors ?? null,
-          };
-        }
-        if (!body.success) {
-          lastMessage = extractApiErrorMessage(body, body.message ?? "Upload failed");
-          if (response.status >= 500) continue;
-          return {
-            success: false,
-            message: lastMessage,
-            data: null,
-            meta: body.meta ?? null,
-            errors: body.errors ?? null,
-          };
-        }
-        return body;
+        await putToPresignedUrl(presign.data.upload_url, file, mimeType, timeoutMs);
+        const complete = await this.request<DocumentItem>("/documents/upload/complete", {
+          method: "POST",
+          body: JSON.stringify({
+            storage_path: presign.data.storage_path,
+            file_name: file.name,
+            mime_type: mimeType,
+            file_size: file.size,
+            category_id: meta?.categoryId ?? null,
+            case_id: meta?.caseId ?? null,
+            legal_request_id: meta?.legalRequestId ?? null,
+          }),
+          timeoutMs: 90_000,
+          retries: 1,
+        });
+        if (complete.success) return complete;
       } catch (err) {
-        if (err instanceof Error) {
-          if (err.name === "AbortError") {
-            return {
-              success: false,
-              message: "Upload timed out. Try a smaller file or wait and retry.",
-              data: null,
-              meta: null,
-              errors: null,
-            };
-          }
-          lastMessage = err.message;
+        const msg = err instanceof Error ? err.message : "";
+        if (!/failed to fetch|network/i.test(msg)) {
+          return {
+            success: false,
+            message: msg || "Direct storage upload failed.",
+            data: null,
+            meta: null,
+            errors: null,
+          };
         }
       }
     }
 
-    return {
-      success: false,
-      message: lastMessage,
-      data: null,
-      meta: null,
-      errors: null,
-    };
+    return this.uploadDocumentMultipart(file, meta, timeoutMs);
+  }
+
+  private async uploadDocumentMultipart(
+    file: File,
+    meta: { categoryId?: string; caseId?: string; legalRequestId?: string } | undefined,
+    timeoutMs: number
+  ): Promise<ApiResponse<DocumentItem>> {
+    const fd = new FormData();
+    fd.append("file", file);
+    if (meta?.categoryId) fd.append("category_id", meta.categoryId);
+    if (meta?.caseId) fd.append("case_id", meta.caseId);
+    if (meta?.legalRequestId) fd.append("legal_request_id", meta.legalRequestId);
+
+    const headers = { Authorization: `Bearer ${this.token}` };
+    const uploadUrl = isProductionHosting()
+      ? getRenderMultipartUploadUrl()
+      : `${getApiBaseUrl()}${API_BASE_PATH}/documents/upload`;
+
+    try {
+      const xhr = await xhrMultipartUpload(uploadUrl, fd, headers, timeoutMs);
+      let body: ApiResponse<DocumentItem> & Record<string, unknown>;
+      try {
+        body = (xhr.text ? JSON.parse(xhr.text) : {}) as ApiResponse<DocumentItem> & Record<string, unknown>;
+      } catch {
+        return {
+          success: false,
+          message: xhr.ok ? "Upload response was invalid." : `Upload failed (${xhr.status}).`,
+          data: null,
+          meta: null,
+          errors: null,
+        };
+      }
+      if (!xhr.ok || !body.success) {
+        return {
+          success: false,
+          message: extractApiErrorMessage(body, body.message ?? `Upload failed (${xhr.status})`),
+          data: null,
+          meta: body.meta ?? null,
+          errors: body.errors ?? null,
+        };
+      }
+      return body;
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : "Upload failed. Please try again.",
+        data: null,
+        meta: null,
+        errors: null,
+      };
+    }
   }
 
   async getDocument(id: string): Promise<ApiResponse<DocumentItem>> {

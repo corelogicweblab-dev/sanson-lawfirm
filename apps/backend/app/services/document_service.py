@@ -101,6 +101,63 @@ class DocumentService:
         )
         return doc
 
+    async def create_document_after_presigned(
+        self,
+        user_id: UUID,
+        storage_path: str,
+        filename: str,
+        mime_type: str,
+        file_size: int,
+        category_id: UUID | None = None,
+        case_id: UUID | None = None,
+        legal_request_id: UUID | None = None,
+        visibility: str = "CLIENT",
+        ip: str | None = None,
+        ua: str | None = None,
+    ) -> Document:
+        expected_prefix = f"documents/{user_id}/"
+        if not storage_path.startswith(expected_prefix):
+            raise ValueError("Invalid storage path for this user")
+        self.storage.validate_file(filename, mime_type, file_size)
+        if self.storage.configured and not self.storage.object_exists(storage_path):
+            raise ValueError("File not found in storage — upload may have failed")
+
+        doc = Document(
+            file_name=filename,
+            original_file_name=filename,
+            file_size=file_size,
+            mime_type=mime_type,
+            storage_path=storage_path,
+            uploaded_by=user_id,
+            category_id=category_id,
+            case_id=case_id,
+            legal_request_id=legal_request_id,
+            visibility=DocumentVisibilityEnum[visibility],
+            review_status=DocumentReviewStatusEnum.PENDING,
+            version_number=1,
+        )
+        self.db.add(doc)
+        await self.db.flush()
+
+        version = DocumentVersion(
+            document_id=doc.id,
+            version_number=1,
+            file_name=filename,
+            file_size=file_size,
+            mime_type=mime_type,
+            storage_path=storage_path,
+            uploaded_by=user_id,
+            created_at=datetime.now(timezone.utc),
+        )
+        self.db.add(version)
+        await self.db.flush()
+
+        await self.audit.log(
+            "document.upload", "documents", doc.id, user_id, ip, ua,
+            new_values={"file_name": filename, "size": file_size, "presigned": True},
+        )
+        return doc
+
     async def get_document(
         self, document_id: UUID, user_id: UUID | None = None, is_staff: bool = False
     ) -> Document | None:

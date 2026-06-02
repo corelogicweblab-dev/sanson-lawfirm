@@ -41,13 +41,17 @@ export function friendlyUploadError(detail?: string): string {
   if (d.includes("empty file")) {
     return "The selected file is empty. Choose a different file.";
   }
+  if (d.includes("r2 cors") || d.includes("storage upload failed")) {
+    return "File storage blocked the upload. Your administrator must allow CORS on the Cloudflare R2 bucket for this website.";
+  }
   if (
     d.includes("networkerror") ||
     d.includes("failed to fetch") ||
     d.includes("load failed") ||
-    d.includes("could not reach the firm server")
+    d.includes("could not reach the firm server") ||
+    d.includes("upload connection failed")
   ) {
-    return "Upload could not reach the server. Wait 30 seconds and try again — large files may take a minute on first upload.";
+    return "Upload could not reach the server. Wait 30 seconds and tap Retry — first upload after idle may take up to a minute.";
   }
   if (d.includes("waking up") || d.includes("longer than usual")) {
     return detail;

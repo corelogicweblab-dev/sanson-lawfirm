@@ -14,6 +14,17 @@ class PresignUploadRequest(BaseModel):
     file_size: int = Field(..., gt=0)
 
 
+class CompleteDocumentUploadRequest(BaseModel):
+    storage_path: str = Field(..., min_length=8, max_length=512)
+    file_name: str = Field(..., min_length=1, max_length=255)
+    mime_type: str = Field(..., min_length=3, max_length=120)
+    file_size: int = Field(..., gt=0)
+    category_id: str | None = None
+    case_id: str | None = None
+    legal_request_id: str | None = None
+    visibility: str = "CLIENT"
+
+
 class DocumentReviewUpdate(BaseModel):
     review_status: str = Field(..., pattern="^(PENDING|IN_REVIEW|APPROVED|REJECTED|ARCHIVED)$")
 
