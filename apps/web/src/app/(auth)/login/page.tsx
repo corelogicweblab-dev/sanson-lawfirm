@@ -13,6 +13,7 @@ import {
   syncFromGoogleCredential,
 } from "@/lib/firebase-auth-flow";
 import { api } from "@/lib/api";
+import { prefetchLawyerDashboard } from "@/lib/dashboard-cache";
 import { useAuthStore } from "@/store/auth";
 import { useGoogleAuthRedirect } from "@/hooks/use-google-auth-redirect";
 
@@ -29,6 +30,7 @@ export default function LoginPage() {
       setToken(token);
       api.setToken(token);
       setUser(user);
+      if (user.role?.name === "LAWYER") void prefetchLawyerDashboard();
       router.push(redirectPath ?? getDashboardPath());
     },
     [getDashboardPath, router, setToken, setUser]

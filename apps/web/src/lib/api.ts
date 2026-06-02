@@ -38,8 +38,9 @@ export class ApiClient {
 
   private async request<T>(
     path: string,
-    options: RequestInit = {}
+    options: RequestInit & { timeoutMs?: number; retries?: number } = {}
   ): Promise<ApiResponse<T>> {
+    const { timeoutMs, retries, ...fetchOptions } = options;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
@@ -53,10 +54,11 @@ export class ApiClient {
 
     let response: Response;
     try {
-      response = await fetchWithRetry(`${baseUrl}${API_BASE_PATH}${path}`, {
-        ...options,
-        headers,
-      });
+      response = await fetchWithRetry(
+        `${baseUrl}${API_BASE_PATH}${path}`,
+        { ...fetchOptions, headers },
+        { timeoutMs, retries }
+      );
     } catch (err) {
       if (err instanceof Error) {
         throw err;
@@ -207,7 +209,7 @@ export class ApiClient {
   }
 
   async getLawyerDashboard(): Promise<ApiResponse<LawyerDashboardPayload>> {
-    return this.request("/workflow/lawyer-dashboard");
+    return this.request("/workflow/lawyer-dashboard", { retries: 0, timeoutMs: 25_000 });
   }
 
   async listUserDirectory(role?: string): Promise<ApiResponse<Record<string, unknown>[]>> {

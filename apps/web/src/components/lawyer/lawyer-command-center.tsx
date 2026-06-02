@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Scale,
@@ -23,6 +23,10 @@ import {
 import { StatCard, Button, Badge } from "@sanson/ui";
 import type { CaseItem, LawyerDashboardStats } from "@sanson/types";
 import { api } from "@/lib/api";
+import {
+  readLawyerDashboardCache,
+  writeLawyerDashboardCache,
+} from "@/lib/dashboard-cache";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { CaseIntelligenceCard } from "./case-intelligence-card";
 import { LawyerWorkflowStrip } from "./lawyer-workflow-strip";
@@ -45,51 +49,48 @@ const EMPTY_STATS: LawyerDashboardStats = {
   notifications_unread: 0,
 };
 
+function initialFromCache() {
+  const cached = readLawyerDashboardCache();
+  return {
+    stats: cached?.stats ?? EMPTY_STATS,
+    previewCases: cached?.preview_cases ?? [],
+    hasCache: Boolean(cached),
+  };
+}
+
 export function LawyerCommandCenter() {
-  const [stats, setStats] = useState<LawyerDashboardStats>(EMPTY_STATS);
-  const [previewCases, setPreviewCases] = useState<CaseItem[]>([]);
-  const [initialLoad, setInitialLoad] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [initial] = useState(initialFromCache);
+  const [stats, setStats] = useState<LawyerDashboardStats>(initial.stats);
+  const [previewCases, setPreviewCases] = useState<CaseItem[]>(initial.previewCases);
+  const [refreshing, setRefreshing] = useState(!initial.hasCache);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const loadDashboard = async (silent: boolean) => {
-    if (!silent) setInitialLoad(true);
-    else setRefreshing(true);
+  const loadDashboard = useCallback(async () => {
+    setRefreshing(true);
     setError(null);
     try {
       const dash = await api.getLawyerDashboard();
       if (!dash.success || !dash.data) {
-        if (!silent) {
-          setStats(EMPTY_STATS);
-          setPreviewCases([]);
-        }
-        setError(dash.message || "Could not load dashboard. Tap Retry.");
+        setError(dash.message || "Could not refresh dashboard. Tap Retry.");
         return;
       }
       setStats(dash.data.stats);
       setPreviewCases(dash.data.preview_cases ?? []);
+      writeLawyerDashboardCache(dash.data);
       setError(null);
     } catch (err) {
-      if (!silent) {
-        setStats(EMPTY_STATS);
-        setPreviewCases([]);
-      }
-      setError(err instanceof Error ? err.message : "Failed to load dashboard.");
+      setError(err instanceof Error ? err.message : "Failed to refresh dashboard.");
     } finally {
-      setInitialLoad(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void loadDashboard(reloadKey > 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloadKey drives manual retry
-  }, [reloadKey]);
+    void loadDashboard();
+  }, [loadDashboard, reloadKey]);
 
-  useAutoRefresh(() => {
-    void loadDashboard(true);
-  });
+  useAutoRefresh(loadDashboard);
 
   const workQueue = [
     {
@@ -142,21 +143,12 @@ export function LawyerCommandCenter() {
     },
   ];
 
-  if (initialLoad) {
-    return (
-      <div className="flex min-h-[240px] items-center justify-center gap-2 text-sm text-zinc-400">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        Loading firm metrics…
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       {refreshing && (
-        <p className="flex items-center gap-2 text-xs text-zinc-500">
+        <p className="flex items-center gap-2 text-xs text-zinc-500" aria-live="polite">
           <Loader2 className="h-3 w-3 animate-spin" />
-          Syncing latest firm data…
+          Updating metrics…
         </p>
       )}
       {error && (

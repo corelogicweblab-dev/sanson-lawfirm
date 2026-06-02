@@ -6,6 +6,7 @@ import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { api } from "@/lib/api";
 import { pingApiHealth } from "@/lib/api-request";
+import { prefetchLawyerDashboard } from "@/lib/dashboard-cache";
 import { useAuthStore } from "@/store/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (response.success && response.data?.user) {
             setUser(response.data.user);
+            if (response.data.user.role?.name === "LAWYER") {
+              void prefetchLawyerDashboard();
+            }
           } else {
             setUser(null);
           }
