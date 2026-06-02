@@ -153,8 +153,8 @@ async def upload_document_json(
         file_data = base64.b64decode(body.file_content_base64, validate=True)
     except Exception as exc:
         raise HTTPException(400, "Invalid file encoding") from exc
-    if len(file_data) > 6 * 1024 * 1024:
-        raise HTTPException(400, "File too large for JSON upload (max 6 MB). Use drag-drop for larger files.")
+    if len(file_data) > 4 * 1024 * 1024:
+        raise HTTPException(400, "File too large for JSON upload (max 4 MB). Retry — larger files use Supabase direct upload.")
     svc = DocumentService(db)
     try:
         doc = await svc.create_document_from_upload(

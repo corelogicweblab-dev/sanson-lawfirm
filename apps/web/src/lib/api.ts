@@ -28,6 +28,7 @@ import { API_BASE_PATH } from "@sanson/shared";
 import { extractApiErrorMessage } from "@/lib/api-error";
 import { fetchWithRetry, isProductionHosting, pingApiHealth, warmRenderBeforeUpload } from "@/lib/api-request";
 import { getApiBaseUrl } from "@/lib/api-url";
+import { normalizeClientMimeType } from "@/lib/mime-type";
 import { JSON_UPLOAD_MAX_BYTES, readFileAsBase64 } from "@/lib/upload-file";
 import { getRenderMultipartUploadUrl, putToPresignedUrl, xhrMultipartUpload } from "@/lib/upload-transport";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
@@ -494,16 +495,11 @@ export class ApiClient {
         };
       }
 
-      const mimeType = file.type || "application/octet-stream";
+      const mimeType = normalizeClientMimeType(file);
       const timeoutMs = Math.max(300_000, Math.min(900_000, file.size / 256 + 300_000));
 
       if (isProductionHosting()) {
         await Promise.all([pingApiHealth(), warmRenderBeforeUpload()]);
-      }
-
-      if (isProductionHosting() && file.size <= JSON_UPLOAD_MAX_BYTES) {
-        const jsonResult = await this.uploadDocumentJson(file, meta, mimeType);
-        if (jsonResult.success) return jsonResult;
       }
 
       const presign = await this.requestSafe<{
@@ -552,19 +548,32 @@ export class ApiClient {
             retries: 1,
           });
           if (complete.success) return complete;
-        } catch {
-          /* try multipart */
+          if (complete.message) {
+            return complete;
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          if (msg && !/failed to fetch|network/i.test(msg)) {
+            return {
+              success: false,
+              message: msg,
+              data: null,
+              meta: null,
+              errors: null,
+            };
+          }
         }
       }
 
-      const multipart = await this.uploadDocumentMultipart(file, meta, timeoutMs);
-      if (multipart.success) return multipart;
-
       if (isProductionHosting() && file.size <= JSON_UPLOAD_MAX_BYTES) {
-        return await this.uploadDocumentJson(file, meta, mimeType);
+        const jsonResult = await this.uploadDocumentJson(file, meta, mimeType);
+        if (jsonResult.success) return jsonResult;
+        if (jsonResult.message && !/failed to fetch|network/i.test(jsonResult.message)) {
+          return jsonResult;
+        }
       }
 
-      return multipart;
+      return this.uploadDocumentMultipart(file, meta, timeoutMs);
     } catch (err) {
       return {
         success: false,

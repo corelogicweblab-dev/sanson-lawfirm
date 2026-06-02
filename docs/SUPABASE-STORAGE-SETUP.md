@@ -12,7 +12,17 @@ Case files are stored in **Supabase Storage** (same project as your database), n
 4. **Private** bucket (recommended)  
 5. Create
 
-### 2. Render environment variables
+**MIME types:** Either leave “Allowed MIME types” empty (allow all), or include `application/pdf` and types you need. If uploads fail with “mime type”, remove the restriction or add the file type.
+
+### 2. Storage policies (SQL)
+
+In **SQL Editor**, run:
+
+`scripts/migrations/023_supabase_storage_policies.sql`
+
+(Service role uploads from Render bypass RLS; policies help direct browser uploads.)
+
+### 3. Render environment variables
 
 In **Render** → `sanson-lawfirm` → **Environment**:
 
@@ -29,7 +39,7 @@ You should already have `DATABASE_URL` pointing at the same Supabase project.
 - **Render** → Manual Deploy  
 - **Netlify** → Clear cache and deploy (after latest `main` build)
 
-### 4. Test
+### 5. Test
 
 1. Sign in as **PARALEGAL**  
 2. Open a case → upload a small PDF (&lt; 6 MB)  

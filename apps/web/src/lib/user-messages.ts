@@ -51,7 +51,9 @@ export function friendlyUploadError(detail?: string): string {
     return "File storage blocked the upload. Your administrator must allow CORS on the Cloudflare R2 bucket for this website.";
   }
   if (d.includes("internal server error") || d.includes("server error (500)")) {
-    return "Server could not save the file. Check Supabase Storage bucket 'documents' and Render env SUPABASE_SERVICE_ROLE_KEY, then redeploy.";
+    return detail.length <= 220
+      ? detail
+      : "Server could not save the file. In Render: verify SUPABASE_SERVICE_ROLE_KEY (service_role, not anon), run SQL migration 023 for Storage policies, then Manual Deploy.";
   }
   if (
     d.includes("networkerror") ||

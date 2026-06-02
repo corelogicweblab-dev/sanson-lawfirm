@@ -8,6 +8,7 @@ from uuid import UUID
 import httpx
 
 from app.core.config import get_settings
+from app.services.mime_utils import normalize_upload_mime_type
 from app.services.r2_storage import R2StorageService
 
 
@@ -38,8 +39,15 @@ class SupabaseStorageService:
     def _base_url(self) -> str:
         return self.settings.supabase_url.rstrip("/")
 
+    def _service_key(self) -> str:
+        return self.settings.supabase_service_role_key.strip().strip('"').strip("'")
+
+    def _object_path_url(self, bucket: str, key: str) -> str:
+        encoded = urllib.parse.quote(key, safe="/")
+        return f"{self._base_url()}/storage/v1/object/{bucket}/{encoded}"
+
     def _headers(self, content_type: str | None = None) -> dict[str, str]:
-        key = self.settings.supabase_service_role_key.strip()
+        key = self._service_key()
         headers = {
             "Authorization": f"Bearer {key}",
             "apikey": key,
@@ -61,22 +69,32 @@ class SupabaseStorageService:
         return bucket, key
 
     async def upload_bytes(self, relative_path: str, data: bytes, mime_type: str) -> str:
-        encoded = "/".join(urllib.parse.quote(part) for part in relative_path.split("/"))
-        url = f"{self._base_url()}/storage/v1/object/{self.bucket}/{encoded}"
-        headers = {**self._headers(mime_type), "x-upsert": "true"}
+        content_type = normalize_upload_mime_type(
+            relative_path.rsplit("/", 1)[-1], mime_type
+        )
+        url = self._object_path_url(self.bucket, relative_path)
+        headers = {**self._headers(content_type), "x-upsert": "true"}
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(url, content=data, headers=headers)
         if response.status_code >= 400:
-            detail = response.text[:200]
-            hint = (
-                "Create a public or private bucket named "
-                f"'{self.bucket}' in Supabase → Storage, then retry."
-            )
+            detail = response.text[:280]
+            if response.status_code in (401, 403):
+                raise ValueError(
+                    "Supabase rejected the upload (invalid service role key). "
+                    "Copy SUPABASE_SERVICE_ROLE_KEY from Supabase → Settings → API → service_role "
+                    "into Render (no quotes), then Manual Deploy."
+                )
+            if "mime" in detail.lower() or response.status_code == 415:
+                raise ValueError(
+                    f"File type not allowed by bucket '{self.bucket}'. "
+                    f"Use PDF, Word, Excel, images, or ZIP. ({detail[:120]})"
+                )
             if response.status_code == 404:
-                raise ValueError(f"Supabase Storage bucket '{self.bucket}' not found. {hint}")
-            raise ValueError(
-                f"Supabase Storage upload failed ({response.status_code}). {detail or hint}"
-            )
+                raise ValueError(
+                    f"Supabase Storage bucket '{self.bucket}' not found. "
+                    "Create it in Supabase → Storage."
+                )
+            raise ValueError(f"Supabase Storage upload failed ({response.status_code}): {detail}")
         return self.full_storage_key(relative_path)
 
     async def object_exists(self, storage_path: str) -> bool:
@@ -84,14 +102,14 @@ class SupabaseStorageService:
         if not parsed:
             return False
         bucket, key = parsed
-        encoded = "/".join(urllib.parse.quote(part) for part in key.split("/"))
-        url = f"{self._base_url()}/storage/v1/object/info/{bucket}/{encoded}"
+        url = self._object_path_url(bucket, key)
+        headers = {**self._headers(), "Range": "bytes=0-0"}
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url, headers=self._headers())
-        return response.status_code == 200
+            response = await client.get(url, headers=headers)
+        return response.status_code in (200, 206)
 
     async def create_signed_upload(self, relative_path: str) -> dict:
-        encoded = "/".join(urllib.parse.quote(part) for part in relative_path.split("/"))
+        encoded = urllib.parse.quote(relative_path, safe="/")
         url = f"{self._base_url()}/storage/v1/object/upload/sign/{self.bucket}/{encoded}"
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -101,12 +119,15 @@ class SupabaseStorageService:
             )
         if response.status_code >= 400:
             raise ValueError(
-                f"Could not create Supabase upload URL ({response.status_code}). "
-                f"Ensure Storage bucket '{self.bucket}' exists in your Supabase project."
+                f"Could not create Supabase upload URL ({response.status_code}): "
+                f"{response.text[:200]}"
             )
         data = response.json()
+        upload_url = data.get("url")
+        if upload_url and upload_url.startswith("/"):
+            upload_url = f"{self._base_url()}{upload_url}"
         return {
-            "upload_url": data.get("url"),
+            "upload_url": upload_url,
             "upload_token": data.get("token"),
             "storage_path": self.full_storage_key(relative_path),
             "expires_in": self.settings.document_signed_url_ttl_seconds,
@@ -117,8 +138,7 @@ class SupabaseStorageService:
         if not parsed:
             raise ValueError("Invalid Supabase storage path")
         bucket, key = parsed
-        encoded = "/".join(urllib.parse.quote(part) for part in key.split("/"))
-        url = f"{self._base_url()}/storage/v1/object/{bucket}/{encoded}"
+        url = self._object_path_url(bucket, key)
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.get(url, headers=self._headers())
         if response.status_code >= 400:
@@ -130,7 +150,7 @@ class SupabaseStorageService:
         if not parsed:
             raise ValueError("Invalid Supabase storage path")
         bucket, key = parsed
-        encoded = "/".join(urllib.parse.quote(part) for part in key.split("/"))
+        encoded = urllib.parse.quote(key, safe="/")
         url = f"{self._base_url()}/storage/v1/object/sign/{bucket}/{encoded}"
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(

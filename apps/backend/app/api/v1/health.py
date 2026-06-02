@@ -40,6 +40,30 @@ async def readiness_check():
         db_ok, db_error = await check_database_connection_detailed()
 
     env = validate_environment(settings)
+    storage_backend = "none"
+    storage_ok = False
+    storage_error: str | None = None
+    try:
+        from app.services.document_file_storage import DocumentFileStorage
+
+        storage = DocumentFileStorage()
+        storage_backend = storage.backend
+        if storage.supabase.configured:
+            import httpx
+
+            url = f"{storage.supabase._base_url()}/storage/v1/bucket"
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                res = await client.get(url, headers=storage.supabase._headers())
+            storage_ok = res.status_code == 200
+            if not storage_ok:
+                storage_error = f"Storage API returned {res.status_code}"
+        elif storage.r2.configured:
+            storage_ok = True
+        else:
+            storage_error = "Set SUPABASE_SERVICE_ROLE_KEY and SUPABASE_URL on Render"
+    except Exception as exc:
+        storage_error = str(exc)[:200]
+
     ready = db_ok and (env.valid or settings.environment.lower() == "development")
 
     host_hint = ""
@@ -57,6 +81,9 @@ async def readiness_check():
             "database_host_mode": host_hint,
             "database_url_issues": url_issues,
             "env_validation": env.to_dict(),
+            "storage_backend": storage_backend,
+            "storage_ok": storage_ok,
+            "storage_error": storage_error,
             "hint": (
                 None
                 if db_ok

@@ -16,4 +16,5 @@ export function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-export const JSON_UPLOAD_MAX_BYTES = 6 * 1024 * 1024;
+/** Keep under Netlify ~8MB POST limit (base64 expands ~33%). */
+export const JSON_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;

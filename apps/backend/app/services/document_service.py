@@ -25,7 +25,9 @@ from app.models.documents import (
 from app.services.audit_service import AuditService
 from app.services.document_ai_service import DocumentAiService
 from app.services.ocr_service import OcrService
+from app.models.legal import Case
 from app.services.document_file_storage import DocumentFileStorage
+from app.services.mime_utils import normalize_upload_mime_type
 
 
 class DocumentService:
@@ -44,6 +46,15 @@ class DocumentService:
         )
         return list(result.scalars().all())
 
+    async def _assert_case_exists(self, case_id: UUID | None) -> None:
+        if not case_id:
+            return
+        row = await self.db.execute(
+            select(Case.id).where(Case.id == case_id, Case.deleted_at.is_(None))
+        )
+        if row.scalar_one_or_none() is None:
+            raise ValueError("Case not found. Open the case from Case Management and try again.")
+
     async def create_document_from_upload(
         self,
         user_id: UUID,
@@ -57,6 +68,8 @@ class DocumentService:
         ip: str | None = None,
         ua: str | None = None,
     ) -> Document:
+        mime_type = normalize_upload_mime_type(filename, mime_type)
+        await self._assert_case_exists(case_id)
         self.storage.validate_file(filename, mime_type, len(file_data))
         relative_path = self.storage.build_storage_path(user_id, filename)
         storage_path = await self.storage.upload_bytes(relative_path, file_data, mime_type)
@@ -122,6 +135,8 @@ class DocumentService:
                 "local-fallback/"
             ):
                 raise ValueError("Invalid storage path for this user")
+        mime_type = normalize_upload_mime_type(filename, mime_type)
+        await self._assert_case_exists(case_id)
         self.storage.validate_file(filename, mime_type, file_size)
         if not await self.storage.object_exists(storage_path):
             raise ValueError("File not found in storage — upload may have failed")
