@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -20,10 +20,15 @@ import { cn } from "@/lib/utils";
 type Props = {
   items: CaseItem[];
   paralegalNames?: Record<string, string>;
+  initialFilter?: string;
 };
 
-export function LawyerCasesTable({ items, paralegalNames = {} }: Props) {
-  const [filter, setFilter] = useState("all");
+export function LawyerCasesTable({ items, paralegalNames = {}, initialFilter = "all" }: Props) {
+  const [filter, setFilter] = useState(initialFilter);
+
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [initialFilter]);
 
   const filtered = useMemo(() => filterLawyerCases(items, filter), [items, filter]);
 

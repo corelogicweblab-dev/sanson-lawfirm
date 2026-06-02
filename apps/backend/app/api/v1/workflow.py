@@ -80,3 +80,19 @@ async def lawyer_dashboard(
         "Lawyer dashboard retrieved",
     )
 
+
+@router.get("/lawyer-review-queue")
+async def lawyer_review_queue(
+    limit: int = 200,
+    current_user: AuthenticatedUser = Depends(require_permission("dashboard:lawyer")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cases counted as pending review on the lawyer dashboard (includes DRAFT)."""
+    service = LegalWorkflowService(db)
+    safe_limit = max(1, min(limit, 500))
+    cases = await service.list_cases_pending_lawyer_review(limit=safe_limit)
+    return success_response(
+        [to_case(c) for c in cases],
+        "Lawyer review queue retrieved",
+    )
+

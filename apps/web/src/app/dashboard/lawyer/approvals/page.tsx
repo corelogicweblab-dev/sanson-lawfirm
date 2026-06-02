@@ -17,6 +17,7 @@ import {
 } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { isCasePendingLawyerReview } from "@sanson/shared";
 import { api } from "@/lib/api";
 import type { CaseItem } from "@sanson/types";
 
@@ -24,22 +25,23 @@ export default function LawyerApprovalsPage() {
   const [items, setItems] = useState<CaseItem[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
 
-  const load = () => {
-    api.listCases().then((r) => {
-      if (r.success && r.data) setItems(r.data);
-    });
+  const load = async () => {
+    const queue = await api.getLawyerReviewQueue();
+    if (queue.success && queue.data?.length) {
+      setItems(queue.data);
+      return;
+    }
+    const all = await api.listCases();
+    if (all.success && all.data) {
+      setItems(all.data.filter(isCasePendingLawyerReview));
+    }
   };
 
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
-  const pending = items.filter(
-    (c) =>
-      c.status?.name === "UNDER_REVIEW" ||
-      c.status?.name === "WAITING_DOCUMENTS" ||
-      c.status?.name === "OPEN"
-  );
+  const pending = items;
 
   return (
     <AuthGuard allowedRoles={["LAWYER"]}>

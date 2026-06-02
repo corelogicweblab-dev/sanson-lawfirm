@@ -162,10 +162,18 @@ export function LawyerCommandCenter() {
       <LawyerWorkflowStrip />
 
       <div className="sanson-metrics-grid">
-        <StatCard staggerIndex={0} title="Active cases" value={stats.active_cases} icon={<Briefcase className="h-5 w-5" />} />
-        <StatCard staggerIndex={1} title="Pending review" value={stats.pending_review} icon={<Scale className="h-5 w-5" />} />
-        <StatCard staggerIndex={2} title="Urgent / high" value={stats.urgent_high} icon={<AlertCircle className="h-5 w-5" />} />
-        <StatCard staggerIndex={3} title="Pending approvals" value={stats.pending_approvals} icon={<Gavel className="h-5 w-5" />} />
+        <Link href="/dashboard/lawyer/cases?filter=active" className="block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-400">
+          <StatCard staggerIndex={0} title="Active cases" value={stats.active_cases} icon={<Briefcase className="h-5 w-5" />} />
+        </Link>
+        <Link href="/dashboard/lawyer/approvals" className="block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-400">
+          <StatCard staggerIndex={1} title="Pending review" value={stats.pending_review} icon={<Scale className="h-5 w-5" />} />
+        </Link>
+        <Link href="/dashboard/lawyer/cases?filter=URGENT" className="block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-400">
+          <StatCard staggerIndex={2} title="Urgent / high" value={stats.urgent_high} icon={<AlertCircle className="h-5 w-5" />} />
+        </Link>
+        <Link href="/dashboard/lawyer/approvals" className="block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-400">
+          <StatCard staggerIndex={3} title="Pending approvals" value={stats.pending_approvals} icon={<Gavel className="h-5 w-5" />} />
+        </Link>
         <StatCard staggerIndex={4} title="Appointments pending" value={stats.appointments_pending} icon={<CalendarDays className="h-5 w-5" />} />
         <StatCard staggerIndex={5} title="Documents in system" value={stats.documents_total} icon={<FileText className="h-5 w-5" />} />
         <StatCard staggerIndex={6} title="Evidence items system" value={stats.evidence_total} icon={<Shield className="h-5 w-5" />} />

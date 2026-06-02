@@ -204,12 +204,17 @@ export class ApiClient {
     return this.request(`/assignments/cases/${caseId}`);
   }
 
-  async listCases(pageSize = 200): Promise<ApiResponse<CaseItem[]>> {
-    return this.request(`/cases/?page_size=${pageSize}`);
+  async listCases(pageSize = 100): Promise<ApiResponse<CaseItem[]>> {
+    const size = Math.min(100, Math.max(1, pageSize));
+    return this.request(`/cases/?page_size=${size}`);
   }
 
   async getLawyerDashboard(): Promise<ApiResponse<LawyerDashboardPayload>> {
     return this.request("/workflow/lawyer-dashboard", { retries: 0, timeoutMs: 25_000 });
+  }
+
+  async getLawyerReviewQueue(limit = 200): Promise<ApiResponse<CaseItem[]>> {
+    return this.request(`/workflow/lawyer-review-queue?limit=${limit}`);
   }
 
   async listUserDirectory(role?: string): Promise<ApiResponse<Record<string, unknown>[]>> {
