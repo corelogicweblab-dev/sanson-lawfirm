@@ -44,9 +44,13 @@ export function friendlyUploadError(detail?: string): string {
   if (
     d.includes("networkerror") ||
     d.includes("failed to fetch") ||
-    d.includes("load failed")
+    d.includes("load failed") ||
+    d.includes("could not reach the firm server")
   ) {
-    return "Connection blocked by the browser. Refresh the page (Ctrl+Shift+R). If it continues, disable ad blockers for this site.";
+    return "Upload could not reach the server. Wait 30 seconds and try again — large files may take a minute on first upload.";
+  }
+  if (d.includes("waking up") || d.includes("longer than usual")) {
+    return detail;
   }
   if (detail.length <= 160 && !detail.includes("postgresql") && !detail.includes("asyncpg")) {
     return detail;

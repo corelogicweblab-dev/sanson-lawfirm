@@ -61,7 +61,7 @@ export async function fetchWithRetry(
       const msg = err instanceof Error ? err.message : "";
       if (isProductionHosting() && /networkerror|failed to fetch|load failed/i.test(msg)) {
         throw new Error(
-          "Connection blocked. Press Ctrl+Shift+R to reload, then Retry. Turn off ad blockers for sansonlawfirm.web.app."
+          "Could not reach the firm server. Wait 30 seconds and try again (the API may be waking up)."
         );
       }
       throw err;

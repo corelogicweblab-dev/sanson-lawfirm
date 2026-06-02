@@ -42,6 +42,14 @@ export function isSameOriginApi(): boolean {
   return host === "sanson-lawfirm.onrender.com" || isNetlifyHost(host);
 }
 
+/** Multipart uploads bypass Netlify proxy (large bodies often fail on redirect). */
+export function getUploadApiBaseUrl(): string {
+  if (typeof window !== "undefined" && isSameOriginApi()) {
+    return RENDER_API_URL;
+  }
+  return getApiBaseUrl();
+}
+
 export function isLikelyMisconfiguredApi(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;

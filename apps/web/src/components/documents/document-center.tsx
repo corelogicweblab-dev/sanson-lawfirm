@@ -14,6 +14,7 @@ import { printDocument } from "@/lib/print";
 import { Badge, Button, Card, CardContent, EmptyState } from "@sanson/ui";
 import type { DocumentCategory, DocumentItem } from "@sanson/types";
 import { api } from "@/lib/api";
+import { pingApiHealth } from "@/lib/api-request";
 import { friendlyUploadError } from "@/lib/user-messages";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +79,7 @@ export function DocumentCenter({
     }
     setUploadError(null);
     setUploading(true);
+    await pingApiHealth();
     const list = Array.from(files);
     for (const file of list) {
       const res = await api.uploadDocument(file, {
@@ -152,9 +154,21 @@ export function DocumentCenter({
               PDF, Office, images, video, audio, ZIP — linked to this case only
             </p>
             {uploadError && (
-              <p className="mb-3 w-full rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
-                {uploadError}
-              </p>
+              <div className="mb-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                <span className="text-left">{uploadError}</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={uploading || uploadsLocked}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Retry upload
+                </Button>
+              </div>
+            )}
+            {uploading && (
+              <p className="mb-2 text-xs text-pink-200">Connecting to firm server and uploading…</p>
             )}
             <div className="mb-4 flex w-full flex-wrap items-center justify-center gap-2">
               <select

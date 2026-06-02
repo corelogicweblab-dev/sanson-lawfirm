@@ -26,8 +26,8 @@ import type {
 } from "@sanson/types";
 import { API_BASE_PATH } from "@sanson/shared";
 import { extractApiErrorMessage } from "@/lib/api-error";
-import { fetchWithRetry, isProductionHosting } from "@/lib/api-request";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { fetchWithRetry, isProductionHosting, pingApiHealth } from "@/lib/api-request";
+import { getApiBaseUrl, getUploadApiBaseUrl } from "@/lib/api-url";
 
 export class ApiClient {
   private token: string | null = null;
@@ -444,70 +444,95 @@ export class ApiClient {
     file: File,
     meta?: { categoryId?: string; caseId?: string; legalRequestId?: string }
   ): Promise<ApiResponse<DocumentItem>> {
-    const form = new FormData();
-    form.append("file", file);
-    if (meta?.categoryId) form.append("category_id", meta.categoryId);
-    if (meta?.caseId) form.append("case_id", meta.caseId);
-    if (meta?.legalRequestId) form.append("legal_request_id", meta.legalRequestId);
+    const buildForm = () => {
+      const fd = new FormData();
+      fd.append("file", file);
+      if (meta?.categoryId) fd.append("category_id", meta.categoryId);
+      if (meta?.caseId) fd.append("case_id", meta.caseId);
+      if (meta?.legalRequestId) fd.append("legal_request_id", meta.legalRequestId);
+      return fd;
+    };
 
     const headers: Record<string, string> = {};
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
 
-    const controller = new AbortController();
-    const timeoutMs = Math.max(120_000, Math.min(900_000, file.size / 1024 + 120_000));
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timeoutMs = Math.max(180_000, Math.min(900_000, file.size / 512 + 180_000));
+    const path = `${API_BASE_PATH}/documents/upload`;
 
-    try {
-      const response = await fetch(`${getApiBaseUrl()}${API_BASE_PATH}/documents/upload`, {
-        method: "POST",
-        headers,
-        body: form,
-        signal: controller.signal,
-      });
-      let body: ApiResponse<DocumentItem> & Record<string, unknown>;
-      try {
-        body = (await response.json()) as ApiResponse<DocumentItem> & Record<string, unknown>;
-      } catch {
-        return {
-          success: false,
-          message: response.ok
-            ? "Upload response was invalid."
-            : `Upload failed (${response.status}). Try again or use a smaller file.`,
-          data: null,
-          meta: null,
-          errors: null,
-        };
-      }
-      if (!response.ok && body.success !== false) {
-        return {
-          success: false,
-          message: extractApiErrorMessage(body, `Upload failed (${response.status})`),
-          data: null,
-          meta: body.meta ?? null,
-          errors: body.errors ?? null,
-        };
-      }
-      return body;
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        return {
-          success: false,
-          message: "Upload timed out. Try a smaller file or check your connection.",
-          data: null,
-          meta: null,
-          errors: null,
-        };
-      }
-      return {
-        success: false,
-        message: "Upload failed. Check your connection and try again.",
-        data: null,
-        meta: null,
-        errors: null,
-      };
-    } finally {
-      clearTimeout(timer);
+    if (isProductionHosting()) {
+      await pingApiHealth();
     }
+
+    const bases: string[] = [];
+    const direct = getUploadApiBaseUrl().replace(/\/$/, "");
+    const proxied = getApiBaseUrl().replace(/\/$/, "");
+    if (direct) bases.push(direct);
+    if (proxied && proxied !== direct) bases.push(proxied);
+
+    let lastMessage = "Upload failed. Please try again.";
+
+    for (const base of bases) {
+      try {
+        const response = await fetchWithRetry(
+          `${base}${path}`,
+          { method: "POST", headers, body: buildForm() },
+          { timeoutMs, retries: isProductionHosting() ? 2 : 0 }
+        );
+        let body: ApiResponse<DocumentItem> & Record<string, unknown>;
+        try {
+          body = (await response.json()) as ApiResponse<DocumentItem> & Record<string, unknown>;
+        } catch {
+          lastMessage = response.ok
+            ? "Upload response was invalid."
+            : `Upload failed (${response.status}). Try again or use a smaller file.`;
+          continue;
+        }
+        if (!response.ok && body.success !== false) {
+          lastMessage = extractApiErrorMessage(body, `Upload failed (${response.status})`);
+          if (response.status >= 500) continue;
+          return {
+            success: false,
+            message: lastMessage,
+            data: null,
+            meta: body.meta ?? null,
+            errors: body.errors ?? null,
+          };
+        }
+        if (!body.success) {
+          lastMessage = extractApiErrorMessage(body, body.message ?? "Upload failed");
+          if (response.status >= 500) continue;
+          return {
+            success: false,
+            message: lastMessage,
+            data: null,
+            meta: body.meta ?? null,
+            errors: body.errors ?? null,
+          };
+        }
+        return body;
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.name === "AbortError") {
+            return {
+              success: false,
+              message: "Upload timed out. Try a smaller file or wait and retry.",
+              data: null,
+              meta: null,
+              errors: null,
+            };
+          }
+          lastMessage = err.message;
+        }
+      }
+    }
+
+    return {
+      success: false,
+      message: lastMessage,
+      data: null,
+      meta: null,
+      errors: null,
+    };
   }
 
   async getDocument(id: string): Promise<ApiResponse<DocumentItem>> {
