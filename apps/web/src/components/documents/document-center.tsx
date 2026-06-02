@@ -9,8 +9,9 @@ import {
   Download,
   Printer,
   AlertCircle,
+  Eye,
 } from "lucide-react";
-import { printDocument } from "@/lib/print";
+import { downloadDocument, printDocument, viewDocument } from "@/lib/document-actions";
 import { Badge, Button, Card, CardContent, EmptyState } from "@sanson/ui";
 import type { DocumentCategory, DocumentItem } from "@sanson/types";
 import { api } from "@/lib/api";
@@ -48,7 +49,27 @@ export function DocumentCenter({
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [actionDocId, setActionDocId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const runDocAction = async (
+    docId: string,
+    action: "view" | "download" | "print",
+    fileName: string
+  ) => {
+    setActionError(null);
+    setActionDocId(docId);
+    try {
+      if (action === "view") await viewDocument(docId, fileName);
+      else if (action === "download") await downloadDocument(docId, fileName);
+      else await printDocument(docId, fileName);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Could not open file.");
+    } finally {
+      setActionDocId(null);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -231,6 +252,12 @@ export function DocumentCenter({
           }
         />
       ) : (
+        <div className="space-y-3">
+          {actionError && (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {actionError}
+            </p>
+          )}
         <div className="grid gap-4 md:grid-cols-2">
           {documents.map((doc) => (
             <Card key={doc.id} className="sanson-panel">
@@ -245,27 +272,38 @@ export function DocumentCenter({
                   <Badge variant="secondary">{doc.reviewStatus}</Badge>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {doc.downloadUrl ? (
-                    <>
-                      <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
-                        <Button size="sm" variant="outline">
-                          <Download className="mr-1 h-3 w-3" />
-                          Download
-                        </Button>
-                      </a>
-                      {allowPrint && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => printDocument(doc.fileName, doc.downloadUrl)}
-                        >
-                          <Printer className="mr-1 h-3 w-3" />
-                          Print
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-xs text-zinc-500">Preview unavailable</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={actionDocId === doc.id}
+                    onClick={() => runDocAction(doc.id, "view", doc.fileName)}
+                  >
+                    {actionDocId === doc.id ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Eye className="mr-1 h-3 w-3" />
+                    )}
+                    View
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={actionDocId === doc.id}
+                    onClick={() => runDocAction(doc.id, "download", doc.fileName)}
+                  >
+                    <Download className="mr-1 h-3 w-3" />
+                    Download
+                  </Button>
+                  {allowPrint && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={actionDocId === doc.id}
+                      onClick={() => runDocAction(doc.id, "print", doc.fileName)}
+                    >
+                      <Printer className="mr-1 h-3 w-3" />
+                      Print
+                    </Button>
                   )}
                   {showProcess && (
                     <Button
@@ -285,6 +323,7 @@ export function DocumentCenter({
               </CardContent>
             </Card>
           ))}
+        </div>
         </div>
       )}
     </div>

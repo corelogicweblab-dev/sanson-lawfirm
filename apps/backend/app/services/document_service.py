@@ -234,6 +234,11 @@ class DocumentService:
         )
         return list(result.scalars().all()), total
 
+    def content_url(self, document_id: UUID, disposition: str = "inline") -> str:
+        """Relative API path — frontend prefixes with API base + Bearer token."""
+        disp = "attachment" if disposition == "attachment" else "inline"
+        return f"/documents/{document_id}/content?disposition={disp}"
+
     async def get_download_url(self, doc: Document) -> str | None:
         try:
             return await self.storage.download_url(doc.storage_path)

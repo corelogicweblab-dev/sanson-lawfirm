@@ -1,7 +1,8 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,7 +87,7 @@ async def list_documents(
     )
     items = []
     for d in docs:
-        url = await svc.get_download_url(d) if staff or d.uploaded_by == user.id else None
+        url = svc.content_url(d.id) if staff or d.uploaded_by == user.id else None
         items.append(to_document(d, url))
     meta = PaginationMeta(
         page=pagination.page,
@@ -133,7 +134,7 @@ async def upload_document(
         )
     except Exception as exc:
         raise _upload_http_error(exc) from exc
-    return success_response(to_document(doc), "Document uploaded")
+    return success_response(to_document(doc, svc.content_url(doc.id)), "Document uploaded")
 
 
 @router.post("/upload/json")
@@ -171,7 +172,7 @@ async def upload_document_json(
         )
     except Exception as exc:
         raise _upload_http_error(exc) from exc
-    return success_response(to_document(doc), "Document uploaded")
+    return success_response(to_document(doc, svc.content_url(doc.id)), "Document uploaded")
 
 
 @router.post("/upload/complete")
@@ -204,7 +205,42 @@ async def complete_presigned_upload(
         )
     except Exception as exc:
         raise _upload_http_error(exc) from exc
-    return success_response(to_document(doc), "Document uploaded")
+    return success_response(to_document(doc, svc.content_url(doc.id)), "Document uploaded")
+
+
+@router.get("/{document_id}/content")
+async def document_content(
+    document_id: UUID,
+    disposition: str = Query("inline", pattern="^(inline|attachment)$"),
+    user: AuthenticatedUser = Depends(require_permission("documents:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Stream file bytes through the API (auth required). Avoids broken Supabase signed URLs in the browser."""
+    svc = DocumentService(db)
+    staff = _is_staff(user)
+    doc = await svc.get_document(document_id, user.id, staff)
+    if not doc:
+        raise HTTPException(404, "Document not found")
+    if not staff and doc.uploaded_by != user.id:
+        from app.models.documents import DocumentVisibilityEnum
+
+        if doc.visibility == DocumentVisibilityEnum.PRIVATE:
+            raise HTTPException(403, "Not allowed")
+    try:
+        data = await svc.storage.download_bytes(doc.storage_path)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    filename = (doc.original_file_name or doc.file_name or "document").replace('"', "")
+    disp = "attachment" if disposition == "attachment" else "inline"
+    return Response(
+        content=data,
+        media_type=doc.mime_type or "application/octet-stream",
+        headers={
+            "Content-Disposition": f'{disp}; filename="{filename}"',
+            "Content-Length": str(len(data)),
+            "Cache-Control": "private, max-age=300",
+        },
+    )
 
 
 @router.get("/{document_id}")
@@ -217,7 +253,7 @@ async def get_document(
     doc = await svc.get_document(document_id, user.id, _is_staff(user))
     if not doc:
         raise HTTPException(404, "Document not found")
-    url = await svc.get_download_url(doc)
+    url = svc.content_url(document_id)
     return success_response(to_document(doc, url), "Document retrieved")
 
 

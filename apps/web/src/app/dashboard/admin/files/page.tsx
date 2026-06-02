@@ -105,16 +105,17 @@ export default function AdminFilesPage() {
                           {d.createdAt?.slice(0, 16) ?? "—"}
                         </TableCell>
                         <TableCell className="flex justify-end gap-2">
-                          {d.downloadUrl && (
-                            <a
-                              href={d.downloadUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs text-pink-400 hover:underline"
-                            >
-                              Open
-                            </a>
-                          )}
+                          <button
+                            type="button"
+                            className="text-xs text-pink-400 hover:underline"
+                            onClick={() =>
+                              void import("@/lib/document-actions").then(({ viewDocument }) =>
+                                viewDocument(d.id, d.fileName)
+                              )
+                            }
+                          >
+                            View
+                          </button>
                           <Button size="sm" variant="outline" onClick={() => void remove(d)}>
                             Delete
                           </Button>

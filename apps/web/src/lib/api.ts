@@ -41,6 +41,10 @@ export class ApiClient {
     this.token = token;
   }
 
+  getToken(): string | null {
+    return this.token;
+  }
+
   private async request<T>(
     path: string,
     options: RequestInit & { timeoutMs?: number; retries?: number } = {}
