@@ -1,3 +1,5 @@
+from sqlalchemy.orm.attributes import instance_state
+
 from app.models.documents import (
     Document,
     DocumentAnalysis,
@@ -27,6 +29,14 @@ def to_category(c: DocumentCategory) -> dict:
     }
 
 
+def _loaded_category(d: Document) -> dict | None:
+    """Never lazy-load category in async handlers (causes 500 MissingGreenlet)."""
+    if "category" not in instance_state(d).dict:
+        return None
+    cat = instance_state(d).dict.get("category")
+    return to_category(cat) if cat is not None else None
+
+
 def to_document(d: Document, download_url: str | None = None) -> dict:
     return {
         "id": str(d.id),
@@ -37,7 +47,7 @@ def to_document(d: Document, download_url: str | None = None) -> dict:
         "storagePath": d.storage_path,
         "uploadedBy": str(d.uploaded_by),
         "categoryId": str(d.category_id) if d.category_id else None,
-        "category": to_category(d.category) if d.category else None,
+        "category": _loaded_category(d),
         "caseId": str(d.case_id) if d.case_id else None,
         "legalRequestId": str(d.legal_request_id) if d.legal_request_id else None,
         "visibility": _enum(d.visibility),

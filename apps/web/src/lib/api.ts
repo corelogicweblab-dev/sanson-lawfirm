@@ -80,12 +80,17 @@ export class ApiClient {
     try {
       body = (rawText ? JSON.parse(rawText) : {}) as ApiResponse<T>;
     } catch {
-      const snippet = rawText.slice(0, 120).replace(/\s+/g, " ");
-      throw new Error(
-        response.ok
-          ? "Invalid response from server."
-          : `Server error (${response.status}). ${snippet || "Tap Retry in a moment."}`
-      );
+      const snippet = rawText.slice(0, 200).replace(/\s+/g, " ").trim();
+      if (!response.ok) {
+        return {
+          success: false,
+          message: snippet || `Request failed (${response.status})`,
+          data: null,
+          meta: null,
+          errors: null,
+        } as ApiResponse<T>;
+      }
+      throw new Error(snippet || "Invalid response from server.");
     }
     if (!response.ok && body.success !== false) {
       return {

@@ -108,6 +108,15 @@ class DocumentService:
             "document.upload", "documents", doc.id, user_id, ip, ua,
             new_values={"file_name": filename, "size": len(file_data)},
         )
+        return await self.reload_document(doc.id)
+
+    async def reload_document(self, document_id: UUID) -> Document:
+        result = await self.db.execute(
+            select(Document)
+            .where(Document.id == document_id)
+            .options(selectinload(Document.category))
+        )
+        doc = result.scalar_one()
         return doc
 
     async def create_document_after_presigned(
@@ -175,7 +184,7 @@ class DocumentService:
             "document.upload", "documents", doc.id, user_id, ip, ua,
             new_values={"file_name": filename, "size": file_size, "presigned": True},
         )
-        return doc
+        return await self.reload_document(doc.id)
 
     async def get_document(
         self, document_id: UUID, user_id: UUID | None = None, is_staff: bool = False
@@ -218,7 +227,10 @@ class DocumentService:
 
         total = (await self.db.execute(count_q)).scalar() or 0
         result = await self.db.execute(
-            query.order_by(Document.created_at.desc()).offset(offset).limit(limit)
+            query.options(selectinload(Document.category))
+            .order_by(Document.created_at.desc())
+            .offset(offset)
+            .limit(limit)
         )
         return list(result.scalars().all()), total
 

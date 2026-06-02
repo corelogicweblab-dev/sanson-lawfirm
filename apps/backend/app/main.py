@@ -2,8 +2,9 @@ import os
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -94,6 +95,52 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+def _error_detail_message(detail: object) -> str:
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, list) and detail:
+        first = detail[0]
+        if isinstance(first, dict) and first.get("msg"):
+            return str(first["msg"])
+    return "Request failed"
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    msg = _error_detail_message(exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "message": msg,
+            "detail": exc.detail,
+            "data": None,
+            "meta": None,
+            "errors": None,
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    structlog.get_logger().exception(
+        "unhandled_api_error",
+        path=request.url.path,
+        error=str(exc)[:500],
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": str(exc)[:300] or "Internal server error",
+            "detail": str(exc)[:300] or "Internal server error",
+            "data": None,
+            "meta": None,
+            "errors": None,
+        },
+    )
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestMetricsMiddleware)
