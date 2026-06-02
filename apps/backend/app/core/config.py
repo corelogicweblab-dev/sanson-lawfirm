@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
+    supabase_storage_bucket: str = "documents"
 
     firebase_project_id: str = ""
     firebase_client_email: str = ""

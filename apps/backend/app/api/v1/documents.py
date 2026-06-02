@@ -1,7 +1,11 @@
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.core.dependencies import get_client_ip, get_current_user, get_user_agent, require_permission
@@ -31,6 +35,25 @@ def _optional_uuid(value: str | None, field: str) -> UUID | None:
 
 def _is_staff(user: AuthenticatedUser) -> bool:
     return user.role_name in ("LAWYER", "PARALEGAL", "ADMIN")
+
+
+def _upload_http_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, HTTPException):
+        return exc
+    if isinstance(exc, ValueError):
+        return HTTPException(400, str(exc))
+    if isinstance(exc, SQLAlchemyError):
+        logger.exception("document_upload_db_error")
+        return HTTPException(
+            400,
+            "Could not save document to the database. Verify the case exists and try again.",
+        )
+    logger.exception("document_upload_failed")
+    return HTTPException(
+        503,
+        "File storage is not ready on the server. Add SUPABASE_SERVICE_ROLE_KEY on Render "
+        "and create a Storage bucket named 'documents' in Supabase.",
+    )
 
 
 @router.get("/categories")
@@ -108,8 +131,8 @@ async def upload_document(
             ip=ip,
             ua=ua,
         )
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        raise _upload_http_error(exc) from exc
     return success_response(to_document(doc), "Document uploaded")
 
 
@@ -146,8 +169,8 @@ async def upload_document_json(
             ip=ip,
             ua=ua,
         )
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        raise _upload_http_error(exc) from exc
     return success_response(to_document(doc), "Document uploaded")
 
 
@@ -179,8 +202,8 @@ async def complete_presigned_upload(
             ip=ip,
             ua=ua,
         )
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        raise _upload_http_error(exc) from exc
     return success_response(to_document(doc), "Document uploaded")
 
 

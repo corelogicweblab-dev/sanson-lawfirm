@@ -50,15 +50,18 @@ export async function putToPresignedUrl(
   uploadUrl: string,
   file: File,
   mimeType: string,
-  timeoutMs: number
+  timeoutMs: number,
+  uploadToken?: string | null
 ): Promise<void> {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  const headers: Record<string, string> = { "Content-Type": mimeType };
+  if (uploadToken) headers.Authorization = `Bearer ${uploadToken}`;
   try {
     const res = await fetch(uploadUrl, {
       method: "PUT",
       body: file,
-      headers: { "Content-Type": mimeType },
+      headers,
       signal: controller.signal,
     });
     if (!res.ok) {

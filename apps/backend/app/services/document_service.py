@@ -25,14 +25,14 @@ from app.models.documents import (
 from app.services.audit_service import AuditService
 from app.services.document_ai_service import DocumentAiService
 from app.services.ocr_service import OcrService
-from app.services.r2_storage import R2StorageService
+from app.services.document_file_storage import DocumentFileStorage
 
 
 class DocumentService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.audit = AuditService(db)
-        self.storage = R2StorageService()
+        self.storage = DocumentFileStorage()
         self.ocr = OcrService()
         self.ai = DocumentAiService()
 
@@ -58,12 +58,8 @@ class DocumentService:
         ua: str | None = None,
     ) -> Document:
         self.storage.validate_file(filename, mime_type, len(file_data))
-        storage_path = self.storage.build_storage_path(user_id, filename)
-
-        if self.storage.configured:
-            self.storage.upload_bytes(storage_path, file_data, mime_type)
-        else:
-            storage_path = f"local-fallback/{storage_path}"
+        relative_path = self.storage.build_storage_path(user_id, filename)
+        storage_path = await self.storage.upload_bytes(relative_path, file_data, mime_type)
 
         doc = Document(
             file_name=filename,
@@ -115,11 +111,19 @@ class DocumentService:
         ip: str | None = None,
         ua: str | None = None,
     ) -> Document:
-        expected_prefix = f"documents/{user_id}/"
-        if not storage_path.startswith(expected_prefix):
-            raise ValueError("Invalid storage path for this user")
+        from app.services.supabase_storage import SupabaseStorageService
+
+        if storage_path.startswith(SupabaseStorageService.PREFIX):
+            if not self.storage.supabase.configured:
+                raise ValueError("Supabase Storage is not configured on the server")
+        else:
+            expected_prefix = f"documents/{user_id}/"
+            if not storage_path.startswith(expected_prefix) and not storage_path.startswith(
+                "local-fallback/"
+            ):
+                raise ValueError("Invalid storage path for this user")
         self.storage.validate_file(filename, mime_type, file_size)
-        if self.storage.configured and not self.storage.object_exists(storage_path):
+        if not await self.storage.object_exists(storage_path):
             raise ValueError("File not found in storage — upload may have failed")
 
         doc = Document(
@@ -204,9 +208,10 @@ class DocumentService:
         return list(result.scalars().all()), total
 
     async def get_download_url(self, doc: Document) -> str | None:
-        if not self.storage.configured:
+        try:
+            return await self.storage.download_url(doc.storage_path)
+        except ValueError:
             return None
-        return self.storage.generate_presigned_download_url(doc.storage_path)
 
     async def soft_delete(
         self, doc: Document, performed_by: UUID, ip: str | None = None, ua: str | None = None
@@ -227,9 +232,8 @@ class DocumentService:
         ua: str | None = None,
     ) -> DocumentVersion:
         self.storage.validate_file(filename, mime_type, len(file_data))
-        storage_path = self.storage.build_storage_path(user_id, filename)
-        if self.storage.configured:
-            self.storage.upload_bytes(storage_path, file_data, mime_type)
+        relative_path = self.storage.build_storage_path(user_id, filename)
+        storage_path = await self.storage.upload_bytes(relative_path, file_data, mime_type)
 
         new_ver = doc.version_number + 1
         version = DocumentVersion(
@@ -270,8 +274,8 @@ class DocumentService:
         await self.db.flush()
 
         try:
-            if self.storage.configured:
-                data = self.storage.download_bytes(doc.storage_path)
+            if self.storage.configured and not doc.storage_path.startswith("local-fallback/"):
+                data = await self.storage.download_bytes(doc.storage_path)
             else:
                 data = b""
             text, confidence, meta = self.ocr.extract_text(data, doc.mime_type, doc.file_name)
@@ -294,9 +298,9 @@ class DocumentService:
         ip: str | None = None, ua: str | None = None,
     ) -> DocumentAnalysis:
         text = ocr_text or ""
-        if not text and self.storage.configured:
+        if not text and self.storage.configured and not doc.storage_path.startswith("local-fallback/"):
             try:
-                data = self.storage.download_bytes(doc.storage_path)
+                data = await self.storage.download_bytes(doc.storage_path)
                 text, _, _ = self.ocr.extract_text(data, doc.mime_type, doc.file_name)
             except Exception:
                 text = ""
@@ -461,17 +465,7 @@ class DocumentService:
     async def get_presigned_upload(
         self, user_id: UUID, filename: str, mime_type: str, size: int
     ) -> dict:
-        self.storage.validate_file(filename, mime_type, size)
-        path = self.storage.build_storage_path(user_id, filename)
-        if not self.storage.configured:
-            return {
-                "upload_url": None,
-                "storage_path": path,
-                "direct_upload_required": True,
-                "message": "R2 not configured — use POST /documents/upload multipart",
-            }
-        presigned = self.storage.generate_presigned_upload_url(path, mime_type)
-        return {**presigned, "direct_upload_required": False}
+        return await self.storage.presigned_upload(user_id, filename, mime_type, size)
 
     async def process_document_pipeline(
         self, doc: Document, performed_by: UUID, ip: str | None = None, ua: str | None = None

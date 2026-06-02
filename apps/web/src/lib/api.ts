@@ -508,8 +508,10 @@ export class ApiClient {
 
       const presign = await this.requestSafe<{
         upload_url: string | null;
+        upload_token?: string | null;
         storage_path: string;
         direct_upload_required?: boolean;
+        storage_backend?: string;
       }>("/uploads/presign", {
         method: "POST",
         body: JSON.stringify({
@@ -528,7 +530,13 @@ export class ApiClient {
         !presign.data.direct_upload_required
       ) {
         try {
-          await putToPresignedUrl(presign.data.upload_url, file, mimeType, timeoutMs);
+          await putToPresignedUrl(
+            presign.data.upload_url,
+            file,
+            mimeType,
+            timeoutMs,
+            presign.data.upload_token
+          );
           const complete = await this.requestSafe<DocumentItem>("/documents/upload/complete", {
             method: "POST",
             body: JSON.stringify({

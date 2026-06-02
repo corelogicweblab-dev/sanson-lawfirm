@@ -44,8 +44,14 @@ export function friendlyUploadError(detail?: string): string {
   if (d.includes("empty file")) {
     return "The selected file is empty. Choose a different file.";
   }
+  if (d.includes("supabase storage") || d.includes("storage bucket")) {
+    return "Supabase file storage is not set up yet. In Supabase Dashboard → Storage, create a bucket named documents, then add SUPABASE_SERVICE_ROLE_KEY on Render and redeploy.";
+  }
   if (d.includes("r2 cors") || d.includes("storage upload failed")) {
     return "File storage blocked the upload. Your administrator must allow CORS on the Cloudflare R2 bucket for this website.";
+  }
+  if (d.includes("internal server error") || d.includes("server error (500)")) {
+    return "Server could not save the file. Check Supabase Storage bucket 'documents' and Render env SUPABASE_SERVICE_ROLE_KEY, then redeploy.";
   }
   if (
     d.includes("networkerror") ||

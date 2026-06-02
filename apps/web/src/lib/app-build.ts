@@ -1,2 +1,2 @@
 /** Bump when deploying UI — triggers one-time hard refresh for cached clients. */
-export const APP_BUILD_ID = "2026.06.02-json-upload-v54";
+export const APP_BUILD_ID = "2026.06.02-supabase-storage-v55";
