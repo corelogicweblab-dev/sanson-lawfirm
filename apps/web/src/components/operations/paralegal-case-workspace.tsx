@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, CardContent, Input } from "@sanson/ui";
-import type { CaseItem } from "@sanson/types";
+import type { CaseCategory, CaseItem, PriorityLevel } from "@sanson/types";
 import { api } from "@/lib/api";
 import type { CaseWorkspaceTab } from "@/components/cases/case-workspace-tabs";
 
@@ -259,7 +259,7 @@ export function ParalegalCaseWorkspace({ caseItem, caseId, activeTab, onSaved }:
                 <span className="sanson-label">Case type</span>
                 <select
                   value={form.caseCategory}
-                  onChange={(e) => patch({ caseCategory: e.target.value })}
+                  onChange={(e) => patch({ caseCategory: e.target.value as CaseCategory })}
                   className="sanson-field mt-1.5 w-full"
                 >
                   {CASE_TYPES.map((t) => (
@@ -273,7 +273,7 @@ export function ParalegalCaseWorkspace({ caseItem, caseId, activeTab, onSaved }:
                 <span className="sanson-label">Priority</span>
                 <select
                   value={form.priority}
-                  onChange={(e) => patch({ priority: e.target.value })}
+                  onChange={(e) => patch({ priority: e.target.value as PriorityLevel })}
                   className="sanson-field mt-1.5 w-full"
                 >
                   {PRIORITIES.map((p) => (

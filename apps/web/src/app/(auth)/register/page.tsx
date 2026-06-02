@@ -40,7 +40,6 @@ export default function RegisterPage() {
   const finishAuth = useCallback(
     (user: import("@sanson/types").User, token: string, redirectPath?: string) => {
       setToken(token);
-      api.setToken(token);
       setUser(user);
       router.push(redirectPath ?? getDashboardPath());
     },

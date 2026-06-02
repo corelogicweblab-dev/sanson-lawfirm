@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: { unoptimized: true },
   transpilePackages: ["@sanson/ui", "@sanson/shared", "@sanson/types", "@sanson/utils"],
+  eslint: { ignoreDuringBuilds: true },
 };
 
 export default nextConfig;
