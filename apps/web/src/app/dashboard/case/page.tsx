@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   PageContainer,
@@ -14,8 +15,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  LoadingPage,
 } from "@sanson/ui";
+import { useClientSearchParams } from "@/lib/use-client-search-params";
 import { CASE_SOURCE_LABELS } from "@sanson/shared";
 import type { CaseItem, CaseSourceType } from "@sanson/types";
 import { AuthGuard } from "@/components/auth/auth-guard";
@@ -36,13 +37,14 @@ import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
 function CaseWorkspaceContent() {
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   const caseId = searchParams.get("id") ?? "";
   const initialTab = (searchParams.get("tab") as CaseWorkspaceTab) || "overview";
   const role = useAuthStore((s) => s.getRole());
   const [caseItem, setCaseItem] = useState<CaseItem | null>(null);
   const [assignments, setAssignments] = useState<Record<string, unknown>[]>([]);
   const [tab, setTab] = useState<CaseWorkspaceTab>(initialTab);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -56,22 +58,37 @@ function CaseWorkspaceContent() {
           : "/dashboard/client";
 
   useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
     if (!caseId) {
-      setError("Missing case id");
+      setLoading(false);
+      setError("Missing case id in the URL.");
       return;
     }
+    let cancelled = false;
+    setLoading(true);
+    setError("");
     (async () => {
       const [c, a] = await Promise.all([
         api.getCase(caseId),
         api.listCaseAssignments(caseId),
       ]);
+      if (cancelled) return;
       if (!c.success || !c.data) {
-        setError(c.message || "Case not found");
-        return;
+        setCaseItem(null);
+        setError(c.message || "Case not found or access denied.");
+      } else {
+        setCaseItem(c.data);
+        setError("");
       }
-      setCaseItem(c.data);
       if (a.success && a.data) setAssignments(a.data);
+      setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [caseId, reloadKey]);
 
   const source = caseItem?.source_type as CaseSourceType | undefined;
@@ -95,8 +112,21 @@ function CaseWorkspaceContent() {
         {!caseId && (
           <p className="text-sm text-zinc-400">Select a case from Case Management.</p>
         )}
-        {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
-        {caseItem && (
+        {loading && (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-zinc-400">
+            <Loader2 className="h-10 w-10 animate-spin text-pink-400" />
+            <p className="text-sm">Loading case workspace…</p>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="sanson-panel mb-4 flex flex-wrap items-center justify-between gap-3 border-amber-500/35 bg-amber-500/10 p-4">
+            <p className="text-sm text-amber-100">{error}</p>
+            <Button size="sm" variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
+              Retry
+            </Button>
+          </div>
+        )}
+        {!loading && caseItem && (
           <>
             <SectionHeader
               title={caseItem.title}
@@ -319,9 +349,7 @@ function CaseWorkspaceContent() {
 export default function CaseWorkspacePage() {
   return (
     <AuthGuard allowedRoles={["PARALEGAL", "LAWYER", "ADMIN", "CLIENT"]}>
-      <Suspense fallback={<LoadingPage text="Loading case workspace..." />}>
-        <CaseWorkspaceContent />
-      </Suspense>
+      <CaseWorkspaceContent />
     </AuthGuard>
   );
 }

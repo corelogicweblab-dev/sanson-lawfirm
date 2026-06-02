@@ -42,12 +42,34 @@ export function isSameOriginApi(): boolean {
   return host === "sanson-lawfirm.onrender.com" || isNetlifyHost(host);
 }
 
-/** Multipart uploads bypass Netlify proxy (large bodies often fail on redirect). */
+/** Direct Render URL for large uploads or when same-origin proxy fails. */
 export function getUploadApiBaseUrl(): string {
   if (typeof window !== "undefined" && isSameOriginApi()) {
     return RENDER_API_URL;
   }
   return getApiBaseUrl();
+}
+
+/**
+ * Upload targets for multipart POST.
+ * Netlify: same-origin /api proxy only for typical files (browser CORS to Render often fails).
+ * Large files (>100MB): also try Render direct after proxy.
+ */
+export function buildDocumentUploadBases(fileSize: number): string[] {
+  const direct = getUploadApiBaseUrl().replace(/\/$/, "");
+  const proxied = getApiBaseUrl().replace(/\/$/, "");
+  const onNetlifyProxy =
+    typeof window !== "undefined" && isSameOriginApi() && proxied === "";
+  const hugeFile = fileSize > 100 * 1024 * 1024;
+
+  if (onNetlifyProxy) {
+    return hugeFile && direct ? ["", direct] : [""];
+  }
+
+  const bases: string[] = [];
+  if (direct) bases.push(direct);
+  if (proxied && proxied !== direct) bases.push(proxied);
+  return bases.length ? bases : [""];
 }
 
 export function isLikelyMisconfiguredApi(): boolean {

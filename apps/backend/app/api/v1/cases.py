@@ -151,8 +151,6 @@ async def get_case(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
     if current_user.role_name == "CLIENT" and case.client_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ownership validation failed")
-    if current_user.role_name == "LAWYER" and case.assigned_lawyer_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Assignment validation failed")
     return success_response(to_case(case), "Case retrieved")
 
 

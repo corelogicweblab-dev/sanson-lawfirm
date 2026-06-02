@@ -1,4 +1,4 @@
-import { getApiBaseUrl, isProductionHosting } from "@/lib/api-url";
+import { getApiBaseUrl, isProductionHosting, RENDER_API_URL } from "@/lib/api-url";
 
 export { isProductionHosting };
 
@@ -74,7 +74,7 @@ export async function fetchWithRetry(
 export async function pingApiHealth(): Promise<boolean> {
   try {
     const base = getApiBaseUrl();
-    const healthPath = base ? `${base}/api/v1/health` : "/api/v1/health";
+    const healthPath = base ? `${base}/api/v1/health/live` : "/api/v1/health/live";
     const res = await fetchWithRetry(healthPath, { method: "GET" }, {
       timeoutMs: 45_000,
       retries: 1,
@@ -82,5 +82,18 @@ export async function pingApiHealth(): Promise<boolean> {
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+/** Wake Render directly (used before cross-origin multipart uploads). */
+export async function warmRenderBeforeUpload(): Promise<void> {
+  if (!isProductionHosting()) return;
+  try {
+    await fetchWithRetry(`${RENDER_API_URL}/api/v1/health/live`, { method: "GET" }, {
+      timeoutMs: 45_000,
+      retries: 1,
+    });
+  } catch {
+    /* non-fatal */
   }
 }

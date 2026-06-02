@@ -14,7 +14,6 @@ import { printDocument } from "@/lib/print";
 import { Badge, Button, Card, CardContent, EmptyState } from "@sanson/ui";
 import type { DocumentCategory, DocumentItem } from "@sanson/types";
 import { api } from "@/lib/api";
-import { pingApiHealth } from "@/lib/api-request";
 import { friendlyUploadError } from "@/lib/user-messages";
 import { cn } from "@/lib/utils";
 
@@ -79,7 +78,6 @@ export function DocumentCenter({
     }
     setUploadError(null);
     setUploading(true);
-    await pingApiHealth();
     const list = Array.from(files);
     for (const file of list) {
       const res = await api.uploadDocument(file, {

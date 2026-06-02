@@ -27,7 +27,9 @@ import type {
 import { API_BASE_PATH } from "@sanson/shared";
 import { extractApiErrorMessage } from "@/lib/api-error";
 import { fetchWithRetry, isProductionHosting, pingApiHealth } from "@/lib/api-request";
-import { getApiBaseUrl, getUploadApiBaseUrl } from "@/lib/api-url";
+import { buildDocumentUploadBases, getApiBaseUrl } from "@/lib/api-url";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { useAuthStore } from "@/store/auth";
 
 export class ApiClient {
   private token: string | null = null;
@@ -440,6 +442,21 @@ export class ApiClient {
     return this.request(`/documents/?${params}`);
   }
 
+  private async refreshTokenForUpload(): Promise<void> {
+    const stored = useAuthStore.getState().firebaseToken;
+    if (stored) this.setToken(stored);
+    if (!isFirebaseConfigured()) return;
+    try {
+      const user = getFirebaseAuth().currentUser;
+      if (!user) return;
+      const token = await user.getIdToken(true);
+      this.setToken(token);
+      useAuthStore.getState().setToken(token);
+    } catch {
+      /* keep existing token */
+    }
+  }
+
   async uploadDocument(
     file: File,
     meta?: { categoryId?: string; caseId?: string; legalRequestId?: string }
@@ -453,8 +470,21 @@ export class ApiClient {
       return fd;
     };
 
-    const headers: Record<string, string> = {};
-    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    await this.refreshTokenForUpload();
+
+    if (!this.token) {
+      return {
+        success: false,
+        message: "Your session expired. Sign out, sign in again, then retry the upload.",
+        data: null,
+        meta: null,
+        errors: null,
+      };
+    }
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.token}`,
+    };
 
     const timeoutMs = Math.max(180_000, Math.min(900_000, file.size / 512 + 180_000));
     const path = `${API_BASE_PATH}/documents/upload`;
@@ -463,20 +493,21 @@ export class ApiClient {
       await pingApiHealth();
     }
 
-    const bases: string[] = [];
-    const direct = getUploadApiBaseUrl().replace(/\/$/, "");
-    const proxied = getApiBaseUrl().replace(/\/$/, "");
-    if (direct) bases.push(direct);
-    if (proxied && proxied !== direct) bases.push(proxied);
+    const bases = buildDocumentUploadBases(file.size);
 
     let lastMessage = "Upload failed. Please try again.";
 
     for (const base of bases) {
+      const url = `${base}${path}`;
+      const isProxy = base === "";
       try {
         const response = await fetchWithRetry(
-          `${base}${path}`,
+          url,
           { method: "POST", headers, body: buildForm() },
-          { timeoutMs, retries: isProductionHosting() ? 2 : 0 }
+          {
+            timeoutMs,
+            retries: isProxy ? 1 : isProductionHosting() ? 2 : 0,
+          }
         );
         let body: ApiResponse<DocumentItem> & Record<string, unknown>;
         try {
