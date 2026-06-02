@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { PageContainer, SectionHeader, EmptyState } from "@sanson/ui";
+import { PageContainer, SectionHeader } from "@sanson/ui";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { AdminUserManagement } from "@/components/admin/admin-user-management";
 
 export default function AdminUsersPage() {
   return (
@@ -14,14 +15,13 @@ export default function AdminUsersPage() {
         ]}
       >
         <PageContainer>
-          <SectionHeader title="User Management" description="Manage all platform users" />
-          <EmptyState
-            title="User management table"
-            description="Full user management UI will be enhanced in Phase 2. Use the API at GET /api/v1/users."
+          <SectionHeader
+            title="User management"
+            description="View, edit roles and profiles, deactivate, or remove platform users."
           />
+          <AdminUserManagement />
         </PageContainer>
       </DashboardShell>
     </AuthGuard>
   );
 }
-

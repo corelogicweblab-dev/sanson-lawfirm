@@ -127,10 +127,33 @@ export class ApiClient {
     return this.request("/workflow/stats");
   }
 
-  async listUsers(page = 1, role?: string): Promise<ApiResponse<User[]>> {
-    const params = new URLSearchParams({ page: String(page) });
+  async listUsers(page = 1, pageSize = 100, role?: string): Promise<ApiResponse<User[]>> {
+    const size = Math.min(100, Math.max(1, pageSize));
+    const params = new URLSearchParams({ page: String(page), page_size: String(size) });
     if (role) params.set("role", role);
     return this.request(`/users/?${params}`);
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<ApiResponse<User>> {
+    return this.request(`/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async updateUserStatus(userId: string, isActive: boolean): Promise<ApiResponse<User>> {
+    return this.request(`/users/${userId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  }
+
+  async deleteUser(userId: string): Promise<ApiResponse<null>> {
+    return this.request(`/users/${userId}`, { method: "DELETE" });
+  }
+
+  async deleteDocument(documentId: string): Promise<ApiResponse<null>> {
+    return this.request(`/documents/${documentId}`, { method: "DELETE" });
   }
 
   async getRecentAudit(): Promise<ApiResponse<unknown[]>> {
@@ -410,8 +433,9 @@ export class ApiClient {
     return this.request("/documents/categories");
   }
 
-  async listDocuments(caseId?: string, pageSize = 200): Promise<ApiResponse<DocumentItem[]>> {
-    const params = new URLSearchParams({ page_size: String(pageSize) });
+  async listDocuments(caseId?: string, pageSize = 100): Promise<ApiResponse<DocumentItem[]>> {
+    const size = Math.min(100, Math.max(1, pageSize));
+    const params = new URLSearchParams({ page_size: String(size) });
     if (caseId) params.set("case_id", caseId);
     return this.request(`/documents/?${params}`);
   }

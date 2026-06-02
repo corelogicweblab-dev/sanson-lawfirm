@@ -284,6 +284,34 @@ class UserService:
         )
         return user
 
+    async def soft_delete_user(
+        self,
+        user_id: UUID,
+        performed_by: UUID,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> User | None:
+        if user_id == performed_by:
+            raise ValueError("You cannot delete your own account")
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            return None
+        user.deleted_at = datetime.now(timezone.utc)
+        user.is_active = False
+        user.status = UserStatusEnum.INACTIVE
+        await self.user_repo.update(user)
+        await self.audit.log(
+            action="user.delete",
+            entity_type="users",
+            entity_id=user.id,
+            performed_by=performed_by,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            old_values={"email": user.email, "is_active": True},
+            new_values={"deleted": True},
+        )
+        return user
+
     async def set_active(
         self,
         user_id: UUID,

@@ -168,7 +168,7 @@ async def update_email(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if str(current_user.id) != str(user_id):
+    if str(current_user.id) != str(user_id) and not current_user.has_permission("users:write"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     service = UserService(db)
@@ -281,4 +281,27 @@ async def update_status(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return success_response(to_user_response(user), "User status updated")
+
+
+@router.delete("/{user_id}")
+async def delete_user(
+    user_id: UUID,
+    request: Request,
+    current_user: AuthenticatedUser = Depends(require_permission("users:delete")),
+    db: AsyncSession = Depends(get_db),
+):
+    service = UserService(db)
+    try:
+        user = await service.soft_delete_user(
+            user_id=user_id,
+            performed_by=current_user.id,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    await db.commit()
+    return success_response(None, "User removed from the platform")
 
