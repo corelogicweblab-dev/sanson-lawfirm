@@ -68,14 +68,16 @@ export class ApiClient {
       );
     }
 
+    const rawText = await response.text();
     let body: ApiResponse<T>;
     try {
-      body = (await response.json()) as ApiResponse<T>;
+      body = (rawText ? JSON.parse(rawText) : {}) as ApiResponse<T>;
     } catch {
+      const snippet = rawText.slice(0, 120).replace(/\s+/g, " ");
       throw new Error(
         response.ok
           ? "Invalid response from server."
-          : `Server error (${response.status}). The API may still be starting — wait and tap Retry.`
+          : `Server error (${response.status}). ${snippet || "Tap Retry in a moment."}`
       );
     }
     if (!response.ok && body.success !== false) {

@@ -852,13 +852,16 @@ class LegalWorkflowService:
             )
         ).scalar() or 0
 
-        ai_analyses_today = (
-            await self.db.execute(
-                select(func.count(DocumentAnalysis.id)).where(
-                    DocumentAnalysis.created_at >= today_start
+        try:
+            ai_analyses_today = (
+                await self.db.execute(
+                    select(func.count(DocumentAnalysis.id)).where(
+                        DocumentAnalysis.created_at >= today_start
+                    )
                 )
-            )
-        ).scalar() or 0
+            ).scalar() or 0
+        except Exception:
+            ai_analyses_today = 0
 
         todays_consultations = (
             await self.db.execute(

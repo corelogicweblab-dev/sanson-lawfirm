@@ -49,6 +49,7 @@ export function LawyerCommandCenter() {
   const [previewCases, setPreviewCases] = useState<CaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -56,19 +57,32 @@ export function LawyerCommandCenter() {
     (async () => {
       setLoading(true);
       setError(null);
+      setWarning(null);
       try {
         const dash = await api.getLawyerDashboard();
         if (cancelled) return;
 
         if (!dash.success || !dash.data) {
-          setError(dash.message || "Could not load lawyer dashboard from API.");
+          setStats(EMPTY_STATS);
+          setPreviewCases([]);
+          setError(
+            dash.message ||
+              "Could not load dashboard data. Tap Retry — API is at /api/v1 on this same site."
+          );
           return;
         }
 
         setStats(dash.data.stats);
         setPreviewCases(dash.data.preview_cases ?? []);
+        if (dash.data.degraded) {
+          setWarning(
+            "Some dashboard metrics could not be loaded from the database. Run Supabase migrations if this persists."
+          );
+        }
       } catch (err) {
         if (!cancelled) {
+          setStats(EMPTY_STATS);
+          setPreviewCases([]);
           setError(err instanceof Error ? err.message : "Failed to load dashboard.");
         }
       } finally {
@@ -140,30 +154,21 @@ export function LawyerCommandCenter() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="sanson-panel space-y-3 p-6 text-sm">
-        <p className="font-medium text-rose-200">Dashboard could not load</p>
-        <p className="text-rose-300">{error}</p>
-        <p className="text-zinc-400">
-          Open{" "}
-          <a
-            href="https://sanson-lawfirm.onrender.com/dashboard/lawyer/"
-            className="text-pink-300 underline"
-          >
-            sanson-lawfirm.onrender.com
-          </a>{" "}
-          (same-site API, no NetworkError). Hard-refresh with Ctrl+Shift+R, then Retry.
-        </p>
-        <Button size="sm" variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="sanson-panel flex flex-wrap items-center justify-between gap-3 border-amber-500/35 bg-amber-500/10 p-4 text-sm">
+          <p className="text-amber-100">{error}</p>
+          <Button size="sm" variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
+            Retry
+          </Button>
+        </div>
+      )}
+      {warning && !error && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+          {warning}
+        </p>
+      )}
       <LawyerWorkflowStrip />
 
       <div className="sanson-metrics-grid">
