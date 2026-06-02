@@ -100,6 +100,8 @@ export class ApiClient {
     return this.request("/auth/sync", {
       method: "POST",
       body: JSON.stringify(data),
+      timeoutMs: isProductionHosting() ? 90_000 : 25_000,
+      retries: isProductionHosting() ? 2 : 0,
     });
   }
 

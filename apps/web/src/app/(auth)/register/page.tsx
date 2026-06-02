@@ -17,7 +17,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@sanson/ui";
-import { inferRoleFromEmail, resolveSyncProfileNames } from "@sanson/shared";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { signInWithGoogle } from "@/lib/google-auth";
 import {
@@ -25,7 +24,6 @@ import {
   syncFirebaseUser,
   syncFromGoogleCredential,
 } from "@/lib/firebase-auth-flow";
-import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useGoogleAuthRedirect } from "@/hooks/use-google-auth-redirect";
 
@@ -77,20 +75,11 @@ export default function RegisterPage() {
         displayName: `${firstName} ${lastName}`.trim(),
       });
       const token = await credential.user.getIdToken();
-      const names = resolveSyncProfileNames(email, {
-        first_name: firstName,
-        last_name: lastName,
-      });
-      setToken(token);
-      api.setToken(token);
-      const response = await api.syncUser({
-        ...names,
-        role: inferRoleFromEmail(email),
-      });
-      if (response.success && response.data?.user) {
-        finishAuth(response.data.user, token);
+      const result = await syncFirebaseUser(credential.user);
+      if (result.ok) {
+        finishAuth(result.user, token, result.redirectPath);
       } else {
-        setError("Registration could not be completed. Please try again.");
+        setError(result.message);
       }
     } catch (err: unknown) {
       setError(firebaseAuthErrorMessage(err));
