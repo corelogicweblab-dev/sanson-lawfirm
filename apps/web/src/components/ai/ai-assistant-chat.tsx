@@ -85,6 +85,7 @@ export function AiAssistantChat() {
   const [suggested, setSuggested] = useState<string[]>([]);
   const [decisionLoading, setDecisionLoading] = useState(false);
   const [aiAvailable, setAiAvailable] = useState(true);
+  const [error, setError] = useState("");
   const messagesScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -131,13 +132,23 @@ export function AiAssistantChat() {
 
   const startNewSession = async () => {
     setSending(true);
-    const res = await api.createChatSession();
-    if (res.success && res.data) {
-      setActiveSession(res.data);
-      await loadSessions();
-      await loadMessages(res.data.id);
+    setError("");
+    try {
+      const res = await api.createChatSession();
+      if (res.success && res.data) {
+        setActiveSession(res.data);
+        await loadSessions();
+        await loadMessages(res.data.id);
+      } else {
+        setError(res.message || "Could not start a conversation. Please try again.");
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Could not start a conversation. Please try again."
+      );
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   const selectSession = async (session: ChatSession) => {
@@ -154,6 +165,7 @@ export function AiAssistantChat() {
     setSending(true);
     setStreaming(true);
     setStreamBuffer("");
+    setError("");
 
     const optimistic: ChatMessage = {
       id: `temp-${Date.now()}`,
@@ -179,12 +191,20 @@ export function AiAssistantChat() {
         content,
         (delta) => setStreamBuffer((b) => b + delta),
         finish,
-        async () => {
+        async (err) => {
           /* Stream failed — user message may already be saved; reload only (no duplicate POST). */
+          setError(
+            err && /maintenance/i.test(err)
+              ? err
+              : "The assistant could not respond just now. Please try again in a moment."
+          );
           await finish();
         }
       );
-    } catch {
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "The assistant could not respond. Please try again."
+      );
       await finish();
     }
   };
@@ -285,6 +305,12 @@ export function AiAssistantChat() {
                 Filipino (Tagalog), Cebuano, or your preferred language.
               </p>
               <Button onClick={startNewSession}>Begin intake</Button>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {error}
             </div>
           )}
 

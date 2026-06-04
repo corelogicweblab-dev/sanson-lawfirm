@@ -396,7 +396,15 @@ export class ApiClient {
     );
 
     if (!response.ok || !response.body) {
-      onError("Failed to send message");
+      let msg = "Failed to send message";
+      try {
+        const text = await response.text();
+        const parsed = text ? JSON.parse(text) : null;
+        if (parsed?.message) msg = String(parsed.message);
+      } catch {
+        /* keep default */
+      }
+      onError(msg);
       return;
     }
 
