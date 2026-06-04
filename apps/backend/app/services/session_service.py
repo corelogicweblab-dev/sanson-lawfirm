@@ -148,3 +148,52 @@ class SessionService:
             .limit(limit)
         )
         return list(result.scalars().all())
+
+    async def list_all_active_with_users(self, limit: int = 200) -> list[dict]:
+        """Active sessions joined with user identity for the admin monitor."""
+        from app.models import Role, User, UserProfile
+
+        result = await self.db.execute(
+            select(SessionDevice, User, UserProfile, Role)
+            .join(User, User.id == SessionDevice.user_id)
+            .outerjoin(UserProfile, UserProfile.user_id == User.id)
+            .outerjoin(Role, Role.id == User.role_id)
+            .where(SessionDevice.status == SessionStatusEnum.ACTIVE)
+            .order_by(SessionDevice.last_active_at.desc())
+            .limit(limit)
+        )
+        rows: list[dict] = []
+        for session, user, profile, role in result.all():
+            if profile:
+                full_name = " ".join(
+                    p
+                    for p in [
+                        profile.first_name,
+                        profile.middle_name,
+                        profile.last_name,
+                        profile.suffix,
+                    ]
+                    if p
+                ).strip()
+            else:
+                full_name = ""
+            rows.append(
+                {
+                    "id": str(session.id),
+                    "userId": str(session.user_id),
+                    "fullName": full_name or (user.email if user else "Unknown user"),
+                    "email": user.email if user else None,
+                    "role": role.name.value if role and role.name else None,
+                    "platform": session.platform or "WEB",
+                    "ipAddress": str(session.ip_address) if session.ip_address else None,
+                    "loginAt": session.created_at.isoformat() if session.created_at else None,
+                    "lastActiveAt": session.last_active_at.isoformat()
+                    if session.last_active_at
+                    else None,
+                    "expiresAt": session.expires_at.isoformat() if session.expires_at else None,
+                    "lastLoginAt": user.last_login_at.isoformat()
+                    if user and user.last_login_at
+                    else None,
+                }
+            )
+        return rows

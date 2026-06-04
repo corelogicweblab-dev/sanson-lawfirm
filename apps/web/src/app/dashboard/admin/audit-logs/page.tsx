@@ -100,7 +100,37 @@ export default function AuditLogsPage() {
               </>
             )}
           </div>
-          <Card className="sanson-panel">
+          {tab === "platform" && !loading && logs.length > 0 && (
+            <div className="mb-4 space-y-3 md:hidden">
+              {logs.map((row) => (
+                <Card key={String(row.id)} className="sanson-panel">
+                  <CardContent className="space-y-2 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-white">
+                        {String(row.action ?? row.actionType)}
+                      </p>
+                      <span className="whitespace-nowrap text-xs text-zinc-500">
+                        {String(row.created_at ?? "").slice(0, 16).replace("T", " ")}
+                      </span>
+                    </div>
+                    <dl className="grid grid-cols-3 gap-x-3 gap-y-1.5 text-xs">
+                      <dt className="text-zinc-500">Actor</dt>
+                      <dd className="col-span-2 text-zinc-200">
+                        {String(row.actor_name ?? row.actor_role ?? "—")}
+                      </dd>
+                      <dt className="text-zinc-500">Entity</dt>
+                      <dd className="col-span-2 truncate text-zinc-200">
+                        {String(row.entity_type ?? row.resource_type ?? "—")}
+                      </dd>
+                      <dt className="text-zinc-500">IP</dt>
+                      <dd className="col-span-2 text-zinc-200">{String(row.ip_address ?? "—")}</dd>
+                    </dl>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          <Card className={`sanson-panel ${tab === "platform" ? "hidden md:block" : ""}`}>
             <CardContent className="p-0 sm:p-0">
               {loading ? (
                 <p className="p-6 text-sm text-zinc-500">Loading logs…</p>
@@ -127,7 +157,9 @@ export default function AuditLogsPage() {
                           {String(row.entity_type ?? row.resource_type)}
                           {row.entity_id ? ` · ${String(row.entity_id).slice(0, 8)}` : ""}
                         </TableCell>
-                        <TableCell>{String(row.actor_role ?? row.performed_by ?? "—")}</TableCell>
+                        <TableCell>
+                          {String(row.actor_name ?? row.actor_role ?? row.performed_by ?? "—")}
+                        </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {String(row.ip_address ?? "—")}
                         </TableCell>

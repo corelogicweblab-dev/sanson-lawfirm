@@ -1,5 +1,9 @@
-﻿from fastapi import APIRouter, Depends
+﻿from uuid import UUID
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
@@ -9,6 +13,37 @@ from app.schemas.mappers import to_audit_response
 from app.services.audit_service import AuditService
 
 router = APIRouter()
+
+
+async def _actor_names(db: AsyncSession, ids: list[UUID]) -> dict[str, str]:
+    """Resolve performer ids to full names so admins see who acted, not raw ids."""
+    if not ids:
+        return {}
+    from app.models import User
+
+    result = await db.execute(
+        select(User).options(selectinload(User.profile)).where(User.id.in_(ids))
+    )
+    names: dict[str, str] = {}
+    for user in result.scalars().all():
+        profile = user.profile
+        if profile:
+            full = " ".join(
+                p
+                for p in [profile.first_name, profile.middle_name, profile.last_name, profile.suffix]
+                if p
+            ).strip()
+        else:
+            full = ""
+        names[str(user.id)] = full or user.email
+    return names
+
+
+def _attach_actor_names(rows: list[dict], names: dict[str, str]) -> list[dict]:
+    for row in rows:
+        actor_id = row.get("performed_by") or row.get("actor_id")
+        row["actor_name"] = names.get(str(actor_id)) if actor_id else None
+    return rows
 
 
 @router.get("/")
@@ -32,8 +67,10 @@ async def list_audit_logs(
         total=total,
         total_pages=(total + pagination.page_size - 1) // pagination.page_size,
     )
+    rows = [to_audit_response(log) for log in logs]
+    names = await _actor_names(db, [log.performed_by for log in logs if log.performed_by])
     return success_response(
-        [to_audit_response(log) for log in logs],
+        _attach_actor_names(rows, names),
         "Audit logs retrieved",
         meta=meta.model_dump(),
     )
@@ -46,8 +83,10 @@ async def recent_audit_logs(
 ):
     service = AuditService(db)
     logs = await service.recent(limit=10)
+    rows = [to_audit_response(log) for log in logs]
+    names = await _actor_names(db, [log.performed_by for log in logs if log.performed_by])
     return success_response(
-        [to_audit_response(log) for log in logs],
+        _attach_actor_names(rows, names),
         "Recent audit activity retrieved",
     )
 

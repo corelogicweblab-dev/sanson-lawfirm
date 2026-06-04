@@ -25,10 +25,22 @@ const ROLES: UserRole[] = ["CLIENT", "LAWYER", "PARALEGAL", "ADMIN"];
 function displayName(u: User): string {
   const p = u.profile;
   if (p) {
-    const n = [p.first_name, p.last_name].filter(Boolean).join(" ");
+    const n = [p.first_name, p.middle_name, p.last_name, p.suffix].filter(Boolean).join(" ");
     if (n) return n;
   }
   return u.email;
+}
+
+function fmtLogin(value: string | null): string {
+  if (!value) return "Never";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value.slice(0, 16).replace("T", " ");
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function AdminUserManagement() {
@@ -227,60 +239,118 @@ export function AdminUserManagement() {
       ) : users.length === 0 ? (
         <EmptyState title="No users" description="Users appear after registration or firm intake." />
       ) : (
-        <Card className="sanson-panel overflow-x-auto">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium text-white">{displayName(u)}</TableCell>
-                    <TableCell className="text-zinc-400">{u.email}</TableCell>
-                    <TableCell>
-                      <Badge>{ROLE_DISPLAY[u.role?.name as UserRole] ?? u.role?.name ?? "—"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        className="sanson-field min-w-[9rem] text-xs"
-                        value={u.role?.name ?? "CLIENT"}
-                        disabled={roleSavingId === u.id}
-                        onChange={(e) => void quickSetRole(u, e.target.value as UserRole)}
-                      >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {ROLE_DISPLAY[r]}
-                          </option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>{u.is_active ? "Active" : "Inactive"}</TableCell>
-                    <TableCell className="flex justify-end gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(u)}>
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={u.id === me?.id}
-                        onClick={() => void remove(u)}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
+        <>
+          {/* Mobile: stacked cards (no horizontal scroll) */}
+          <div className="space-y-3 md:hidden">
+            {users.map((u) => (
+              <Card key={u.id} className="sanson-panel">
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-white">{displayName(u)}</p>
+                      <p className="truncate text-xs text-zinc-400">{u.email}</p>
+                    </div>
+                    <Badge>{u.is_active ? "Active" : "Inactive"}</Badge>
+                  </div>
+                  <p className="text-xs text-zinc-500">
+                    Last login: <span className="text-zinc-300">{fmtLogin(u.last_login_at)}</span>
+                  </p>
+                  <label className="block text-xs text-zinc-400">
+                    Assign role
+                    <select
+                      className="sanson-field mt-1 w-full text-sm"
+                      value={u.role?.name ?? "CLIENT"}
+                      disabled={roleSavingId === u.id}
+                      onChange={(e) => void quickSetRole(u, e.target.value as UserRole)}
+                    >
+                      {ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_DISPLAY[r]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(u)}>
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      disabled={u.id === me?.id}
+                      onClick={() => void remove(u)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <Card className="sanson-panel hidden md:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Assign role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden lg:table-cell">Last login</TableHead>
+                    <TableHead />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {users.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell>
+                        <p className="font-medium text-white">{displayName(u)}</p>
+                        <p className="text-xs text-zinc-400">{u.email}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge>{ROLE_DISPLAY[u.role?.name as UserRole] ?? u.role?.name ?? "—"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <select
+                          className="sanson-field min-w-[9rem] text-xs"
+                          value={u.role?.name ?? "CLIENT"}
+                          disabled={roleSavingId === u.id}
+                          onChange={(e) => void quickSetRole(u, e.target.value as UserRole)}
+                        >
+                          {ROLES.map((r) => (
+                            <option key={r} value={r}>
+                              {ROLE_DISPLAY[r]}
+                            </option>
+                          ))}
+                        </select>
+                      </TableCell>
+                      <TableCell>{u.is_active ? "Active" : "Inactive"}</TableCell>
+                      <TableCell className="hidden lg:table-cell whitespace-nowrap text-xs text-zinc-400">
+                        {fmtLogin(u.last_login_at)}
+                      </TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => openEdit(u)}>
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={u.id === me?.id}
+                          onClick={() => void remove(u)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

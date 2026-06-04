@@ -40,19 +40,8 @@ async def list_all_sessions(
     db: AsyncSession = Depends(get_db),
 ):
     svc = SessionService(db)
-    sessions = await svc.list_all_active()
-    return success_response(
-        [
-            {
-                "id": str(s.id),
-                "userId": str(s.user_id),
-                "platform": s.platform,
-                "lastActiveAt": s.last_active_at.isoformat(),
-            }
-            for s in sessions
-        ],
-        "All active sessions",
-    )
+    sessions = await svc.list_all_active_with_users()
+    return success_response(sessions, "All active sessions")
 
 
 @router.delete("/{session_id}")

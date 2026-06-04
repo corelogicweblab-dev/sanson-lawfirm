@@ -169,8 +169,7 @@ export function DashboardShell({ children, title, breadcrumbs }: DashboardShellP
     ? NAV_BY_ROLE[role][0]?.href ?? "/dashboard"
     : "/dashboard";
 
-  const displayName =
-    user?.profile?.nickname?.trim() || formatUserDisplayName(user);
+  const displayName = formatUserDisplayName(user);
   const profileTitle = getUserTitle(user);
 
   useEffect(() => {
