@@ -236,8 +236,37 @@ export function AiAssistantChat() {
   }
 
   return (
-    <div className="sanson-ai-chat-root grid h-full min-h-0 grid-cols-1 gap-3 md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-4 xl:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,260px)]">
-      <Card className="sanson-panel flex max-h-[min(28vh,220px)] min-h-0 flex-col overflow-hidden p-3 backdrop-blur-md md:max-h-none md:h-full">
+    <div className="sanson-ai-chat-root flex h-full min-h-0 flex-col gap-3">
+      {/* Mobile: compact session strip so the chat fills the screen */}
+      <div className="flex shrink-0 items-center gap-2 overflow-x-auto pb-1 md:hidden">
+        <Button
+          size="sm"
+          className="shrink-0 gap-1.5"
+          onClick={startNewSession}
+          disabled={sending}
+        >
+          <MessageSquarePlus className="h-4 w-4" />
+          New
+        </Button>
+        {sessions.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => selectSession(s)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1.5 font-mono text-[11px] transition",
+              activeSession?.id === s.id
+                ? "border-pink-500/40 bg-pink-500/20 text-pink-100"
+                : "border-white/10 text-zinc-400 hover:text-zinc-200"
+            )}
+          >
+            {s.sessionReference.replace("CHAT-", "")}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 md:grid md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] md:gap-4 xl:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,260px)]">
+      <Card className="sanson-panel hidden min-h-0 flex-col overflow-hidden p-3 backdrop-blur-md md:flex md:h-full">
         <Button
           className="mb-3 w-full shrink-0 gap-2"
           onClick={startNewSession}
@@ -272,7 +301,7 @@ export function AiAssistantChat() {
         </div>
       </Card>
 
-      <Card className="flex h-full min-h-0 flex-col overflow-hidden border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-md">
+      <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-white/10 bg-gradient-to-b from-white/8 to-transparent backdrop-blur-md md:h-full">
         <div className="shrink-0 border-b border-white/10 px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 shrink-0 text-pink-400" />
@@ -468,6 +497,7 @@ export function AiAssistantChat() {
             </div>
           )}
         </Card>
+      </div>
       </div>
     </div>
   );
