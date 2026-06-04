@@ -79,11 +79,21 @@ class SystemService:
 
         qdrant = QdrantService()
 
+        if self.settings.gemini_configured:
+            ai_provider = "gemini"
+        elif self.settings.openai_configured:
+            ai_provider = "openai"
+        else:
+            ai_provider = "none"
+
         return {
             "uptime": "operational",
             "database": "connected" if db_ok else "unavailable",
             "api_version": self.settings.api_version,
             "openai_configured": self.settings.openai_configured,
+            "gemini_configured": self.settings.gemini_configured,
+            "ai_chat_configured": self.settings.ai_chat_configured,
+            "ai_provider": ai_provider,
             "qdrant_configured": qdrant.configured,
             "r2_configured": self.settings.r2_configured,
             "firebase_configured": self.settings.firebase_configured,

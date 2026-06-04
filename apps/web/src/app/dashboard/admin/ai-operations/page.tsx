@@ -32,6 +32,8 @@ export default function AiOperationsPage() {
   }, []);
 
   const ai = (health.ai_usage || {}) as Record<string, number>;
+  const aiConfigured = Boolean(health.ai_chat_configured);
+  const provider = String(health.ai_provider ?? "none");
 
   return (
     <AuthGuard allowedRoles={["ADMIN"]}>
@@ -43,8 +45,18 @@ export default function AiOperationsPage() {
             title="AI Operations"
             description="Token usage, models, and audit trail."
           />
+          {!aiConfigured && (
+            <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              The client AI assistant has no model configured. Set <code>GEMINI_API_KEY</code> (free
+              tier) or <code>OPENAI_API_KEY</code> in the Render backend environment, then redeploy.
+              Until then, clients see a fallback reply instead of AI answers.
+            </p>
+          )}
           <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <StatCard title="OpenAI" value={health.openai_configured ? "On" : "Off"} />
+            <StatCard
+              title="AI Assistant"
+              value={aiConfigured ? `On (${provider})` : "Off"}
+            />
             <StatCard title="Calls" value={ai.total_calls ?? 0} />
             <StatCard title="Tokens in" value={ai.tokens_input ?? 0} />
             <StatCard title="Tokens out" value={ai.tokens_output ?? 0} />

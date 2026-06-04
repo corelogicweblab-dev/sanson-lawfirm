@@ -84,6 +84,7 @@ export function AiAssistantChat() {
   const [streamBuffer, setStreamBuffer] = useState("");
   const [suggested, setSuggested] = useState<string[]>([]);
   const [decisionLoading, setDecisionLoading] = useState(false);
+  const [aiAvailable, setAiAvailable] = useState(true);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -112,6 +113,16 @@ export function AiAssistantChat() {
       if (sq.success && sq.data) setSuggested(sq.data);
       setLoading(false);
     })();
+    api
+      .getSystemHealth()
+      .then((r) => {
+        if (r.success && r.data && "ai_chat_configured" in r.data) {
+          setAiAvailable(Boolean((r.data as Record<string, unknown>).ai_chat_configured));
+        }
+      })
+      .catch(() => {
+        /* health is best-effort; keep chat usable */
+      });
   }, [loadSessions]);
 
   useEffect(() => {
@@ -254,6 +265,13 @@ export function AiAssistantChat() {
           {activeSession && (
             <p className="mt-1 truncate font-mono text-[10px] text-zinc-500 sm:text-xs">
               {activeSession.sessionReference}
+            </p>
+          )}
+          {!aiAvailable && (
+            <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              The AI assistant is being configured and may not reply right now. Your messages are
+              still saved, and you can use <strong>Request representation</strong> to reach our
+              team directly.
             </p>
           )}
         </div>
